@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "maskbench"
+version = "0.1.0"
+description = ""
+authors = ["Tim Riedel <tim.riedel@student.hpi.de", "Zainab Zafari <zainab.zafari@student.hpi.de"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,8 @@
+services:
+    runner:
+        container_name: maskbench
+        build: .                # Build the image from the Dockerfile inside the current directory
+        volumes:
+          - ./src:/src          # Mount the app directory for live updates
+        tty: true               # Keep the container running interactively
+        stdin_open: true
