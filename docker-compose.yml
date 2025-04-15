@@ -3,6 +3,7 @@ services:
         container_name: maskbench
         build: .                # Build the image from the Dockerfile inside the current directory
         volumes:
-          - ./src:/src          # Mount the app directory for live updates
+          - ./src:/src          # Mount the src directory for live updates
+          - ./output:/output    # Mount the output directory for results
         tty: true               # Keep the container running interactively
         stdin_open: true
