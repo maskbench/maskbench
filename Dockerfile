@@ -14,8 +14,6 @@ RUN poetry config virtualenvs.create false \
 
 WORKDIR /src
 COPY src/ /src/
-COPY datasets/ /datasets/
-COPY output/ /output/
 
 # Default command when the container starts
 CMD ["python3", "main.py"]
