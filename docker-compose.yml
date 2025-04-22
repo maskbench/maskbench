@@ -8,5 +8,13 @@ services:
           - ./src:/src          # Mount the src directory for live updates
           - ${MASKBENCH_DATASET_DIR}:/datasets  
           - ${MASKBENCH_OUTPUT_DIR}:/output
+          - ${MASKBENCH_WEIGHTS_DIR}:/weights
         tty: true               # Keep the container running interactively
         stdin_open: true
+        deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  count: 1
+                  capabilities: [ gpu ]
