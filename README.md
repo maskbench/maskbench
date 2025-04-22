@@ -4,11 +4,14 @@ This repository contains the code, experiments and documentation for the master'
 
 ## Installation Instructions
 1. Install [Docker](https://www.docker.com/) and make sure the Docker daemon is running.
-2. Run `docker-compose build` to build the docker container from the provided image. This must only be done once or whenever
+2. Pull the repository.
+3. Copy the env files `cp .env.dist .env`.
+4. Open the .env file with `vim .env` or `nano .env`. Inside this file we need to specify the absolute path to the `MASKBENCH_DATASET_DIR` and the `MASKBENCH_OUTPUT_DIR`. If you do not have an input and/or output folder, you can create them either within the maskbench repository or outside with `mkdir input && mkdir output` and add the absolute path to the .env file.
+5. Run `docker compose build` to build the docker container from the provided image. This must only be done once or whenever
    - changing the `Dockerfile`
    - changing the `docker-compose.yml`
    - you add dependencies and change the `pyproject.toml` or `poetry.lock`
-3. Run `docker-compose up` to run the docker container. You need to execute this command whenever you make changes to the code base.
+6. Run `docker compose up` to run the docker container. You need to execute this command whenever you make changes to the code base.
 
 ## Commit Guideline
 We use the [Conventional Commits Specification v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/#summary) for writing commit messages. Refer to the website for instructions.
