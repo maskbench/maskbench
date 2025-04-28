@@ -1,6 +1,6 @@
 services:
     runner:
-        container_name: maskbench
+        container_name: ${USER}_maskbench_dev
         build: .                # Build the image from the Dockerfile inside the current directory
         env_file: 
           - .env
