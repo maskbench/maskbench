@@ -4,6 +4,8 @@ services:
         build: .                # Build the image from the Dockerfile inside the current directory
         env_file: 
           - .env
+        depends_on:
+          - openpose
         volumes:
           - ./src:/src          # Mount the src directory for live updates
           - ./poetry.lock:/poetry.lock # Mount these files to the container, so that we can can use `docker compose run poetry add ...` to add dependencies
@@ -20,3 +22,21 @@ services:
                 - driver: nvidia
                   count: 1
                   capabilities: [ gpu ]
+
+    openpose:
+      image: ghcr.io/maskanyone/maskanyone/openpose:0.3.0
+      restart: on-failure
+      environment:
+        OPENPOSE_MODEL_DIR: "/workspace/openpose/models"
+      deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                count: 1
+                capabilities: [ gpu ]
+      devices:
+        - /dev/nvidia0:/dev/nvidia0
+        - /dev/nvidiactl:/dev/nvidiactl
+        - /dev/nvidia-uvm:/dev/nvidia-uvm
+        - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
