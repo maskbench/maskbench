@@ -10,6 +10,8 @@ python = "^3.12"
 moviepy = "^2.1.2"
 ultralytics = "^8.3.113"
 lap = "^0.5.12"
+opencv-python = "^4.11.0.86"
+mediapipe = "^0.10.21"
 
 [build-system]
 requires = ["poetry-core"]
