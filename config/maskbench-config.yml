@@ -1,0 +1,9 @@
+video_input_folder: /ted-talks
+models:
+  - name: yolopose
+    enabled: false
+    module: models.yolo_pose.model
+    class: YoloPoseModel
+    config:
+      weights: "yolov8n-pose.pt"
+      confidence_threshold: 0.85
