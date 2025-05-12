@@ -7,3 +7,9 @@ models:
     config:
       weights: "yolo11n-pose.pt"
       confidence_threshold: 0.85
+
+    name: MediapipePose
+    module: models.mediapipe_pose_estimator
+    class: MediapipePoseEstimator
+    config:
+    
