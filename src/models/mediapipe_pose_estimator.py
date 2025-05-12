@@ -1,0 +1,86 @@
+import os
+import cv2
+import numpy as np
+import mediapipe as mp
+from mediapipe.tasks.python import BaseOptions
+from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions, RunningMode
+from models.pose_estimator import PoseEstimator
+
+class MediaPipePoseEstimator(PoseEstimator):
+    def __init__(self, model_name: str, config: dict):
+        """
+        Initialize the MediaPipePoseEstimator with a model name and configuration.
+        Args:
+            model_name (str): The name of the model (e.g. "mediapipe_pose").
+            config (dict): Configuration dictionary for the model. It must contain the key "weights" with the path to the weights file relative to the weights folder. 
+        """
+
+        super().__init__(model_name, config)
+
+        weights_file_name = self.config.get("weights")
+        weights_file_path = os.path.join("/weights", weights_file_name)
+        if not os.path.exists(weights_file_path):
+            raise ValueError(f"Could not find weights file under {weights_file_path}. Please download the weights from https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker#models and place them in the weights folder.")
+
+        options = PoseLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=weights_file_path),
+            running_mode=RunningMode.VIDEO, # informs model we will provide videos/ sequence of frames | adds temporal sequencing
+            output_segmentation_masks=False
+        )
+        
+        detector = PoseLandmarker.create_from_options(options)
+        self.model = detector
+        
+
+    def estimate_pose(self, video_path: str) -> list:
+        """
+        Estimate the pose of a video using MediaPipe pose estimation.
+
+        Args:
+            video_path (str): The path to the input video file.
+        Returns:
+            list: A list of numpy containing the keypoints for each frame. Shape: (# of frames, # of people, 33 keypoints, (x,y))
+        """
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise IOError(f"Cannot open video file {video_path}")
+
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        frame_number = 0
+        all_keypoints = [] # for all frames
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+            result = self.model.detect_for_video(mp_image, int(frame_number * 1000 / fps))
+
+            frame_keypoints = [] # for this frame
+            if result.pose_landmarks: # if any pose is detected
+                for person_landmarks in result.pose_landmarks: # for every person detected 
+                    # we only extract x, y and ignore z, visibility and presence
+                    # we also convert normalized landmarks to image coordinates 
+                    individual_keypoints = [] # only store x, y of keypoints
+                    for lm in person_landmarks: # for every keypoint
+                        x = int(lm.x * width)
+                        y = int(lm.y * height)
+                        individual_keypoints.append([x, y])
+                   
+                    frame_keypoints.append(individual_keypoints) 
+
+            all_keypoints.append(frame_keypoints)
+                
+            frame_number += 1
+            print(f"Processed frame {frame_number}/{total_frames}", end='\r')
+
+        cap.release()
+
+        print(np.array(all_keypoints).shape)
+        
+        return all_keypoints

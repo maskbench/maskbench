@@ -1,5 +1,12 @@
 video_input_folder: /ted-talks
 models:
+  - name: MediaPipePose
+    enabled: true
+    module: models.mediapipe_pose_estimator
+    class: MediaPipePoseEstimator
+    config:
+      weights: "mediapipe_pose.task"
+
   - name: YoloPose
     enabled: true
     module: models.yolo_pose_estimator
