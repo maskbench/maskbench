@@ -1,7 +1,6 @@
 datasets/
 output/
 weights/
-my_ref/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
