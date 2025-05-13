@@ -1,11 +1,13 @@
 import os
 from pathlib import Path
 import cv2
-
+import json
 from ultralytics import YOLO, settings
 
 from models.pose_estimator import PoseEstimator
 
+def get_yolo_pair_points():
+    return [(15, 13), (16, 14),(13, 11),(12, 14),(11, 12),(11, 5),(12, 6),(5, 6),(5, 7),(6, 8),(7, 9),(8, 10),(0, 1),(0, 2),(1, 3),(2, 4)]
 
 class YoloPoseEstimator(PoseEstimator):
     def __init__(self, model_name: str, config: dict):
@@ -27,7 +29,7 @@ class YoloPoseEstimator(PoseEstimator):
         self.model = YOLO(weights_file_name)
         
 
-    def estimate_pose(self, video_path: str) -> list:
+    def estimate_pose(self, video_path: str, output_path: str) -> list:
         """
         Estimate the pose of a video using YOLO pose estimation.
 
@@ -43,7 +45,13 @@ class YoloPoseEstimator(PoseEstimator):
         keypoints_tensor_list = []
 
         for result in results:
-            keypoints_tensor_list.append(result.keypoints.xy)
+            if result.keypoints: # if no keypoints detected
+                keypoints_tensor_list.append(result.keypoints.xy.int().tolist()) # convert floats to int and make it list so its serializable
+            else: 
+                keypoints_tensor_list.append([])
+
+        with open(os.path.join(output_path, "yolo.json"), "w+") as f:
+            json.dump(keypoints_tensor_list, f)
 
         # TODO: we migth refactor this to use an xarray with a frame, person, keypoint and dimension
         # or create a dedicated PoseData class that also stores the layout of the keypoints
