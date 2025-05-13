@@ -80,7 +80,5 @@ class MediaPipePoseEstimator(PoseEstimator):
             print(f"Processed frame {frame_number}/{total_frames}", end='\r')
 
         cap.release()
-
-        print(np.array(all_keypoints).shape)
         
         return all_keypoints
