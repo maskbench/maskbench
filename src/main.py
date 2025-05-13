@@ -4,16 +4,15 @@ import yaml
 
 from video_chunker import VideoChunker
 
-
 def main():
     config = load_config()
 
     pose_estimator_specifications = config.get("models")
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
-    yolo_pose_estimator = pose_estimators[0]
-
-    video_path = "/datasets/ted-talks/original.mp4"
-    yolo_pose_estimator.estimate_pose(video_path)
+    print(f"Available Pose Estimators: {pose_estimators}")
+    
+    video_path = "/datasets/ted-talks/ted_kid.mp4"
+    keypoints = pose_estimators[0].estimate_pose(video_path) # right now, this is mediapipe estimator 
 
 
 def load_config():
