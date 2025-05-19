@@ -1,64 +1,94 @@
 import cv2
 import os
-from models.mediapipe_pose_estimator import get_mediapipe_pair_points
-from models.yolo_pose_estimator import get_yolo_pair_points
+import json
 
-PAIR_MAPPING = {"MediaPipePose": get_mediapipe_pair_points(), "YoloPose": get_yolo_pair_points()}
-COLOR_MAPPING = {"MediaPipePose": (255,255,0), "YoloPose": (0,255,255)}
+COLORS = [ # these are colors that even color-blind people can see
+(0, 115, 178), # blue
+(204, 102, 0), # orange
+(0, 153, 127), # green-blue
+(242, 229, 64), # yellow
+(89, 178, 229), # cyan
+(204, 153, 178), # pink
+(229, 153, 0), # gold
+]
 
 class PoseRender():
     def __init__(self):
         pass
-    def render(self, video_path: str, output_path: str, keypoints: dict):
-        cap = cv2.VideoCapture(video_path)
+    
+    """ Fetch keypoints from json for specific video and model """
+    def get_keypoints(self, output_path:str, model_name: str): 
+        file_path = os.path.join(output_path, model_name + ".json")
+        with open(file_path) as f:
+            keypoints = json.load(f)
+        return keypoints
+    
+    def render_video(self, video_path: str, output_path:str,  model_list: list, points_pair: dict):
+        """
+        Args:
+        Input:
+            video_path: video path of 1 video
+            model_list: list of models classes
+            points_pair: dict of shape -> {model_name: list of pair points} showing how to pair keypoints
+        """       
+        cap = cv2.VideoCapture(video_path) # load the video
         if not cap.isOpened():
             raise IOError(f"Cannot open video file {video_path}")
-
-        fps = int(cap.get(cv2.CAP_PROP_FPS))
+    
+        fps = int(cap.get(cv2.CAP_PROP_FPS)) # get video specs 
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        frame_number = 0
-        video_writers = []
 
-        for video_name in keypoints.keys(): # video writer for every model
-            out = cv2.VideoWriter(f"{output_path}/{video_name}.mp4", fourcc, fps, (width, height))
+        video_writers = [] # initialize video writers 
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
+        for model_name in points_pair.keys(): # video writer for every model
+            out = cv2.VideoWriter(f"{output_path}/{model_name}.mp4", fourcc, fps, (width, height))
             video_writers.append(out)
-        
+
+        keypoints = dict()
+        for model_name in points_pair.keys(): # should we join this and above loop into 1?
+            keypoints[model_name] = self.get_keypoints(output_path, model_name)
+
+        frame_number = 0
         while cap.isOpened(): # for every frame
             ret, frame = cap.read()
             if not ret:
                 break
             frame_copies = [frame.copy() for _ in range(len(video_writers))] # deep copy of frames to avoid overwriting
+            model_idx = 0
 
-            for i, model_name in enumerate(keypoints.keys()): # for every model
+            for idx, (model_name, model_points_pair) in enumerate(points_pair.items()): # for every model
                 frame_keypoints = keypoints[model_name][frame_number] # get keypoint for specific frame
-                self.draw_keypoints(frame_copies[i], frame_keypoints, PAIR_MAPPING[model_name], COLOR_MAPPING[model_name])
-                video_writers[i].write(frame_copies[i]) # write rendered frame
+                self.draw_keypoints(frame_copies[idx], frame_keypoints, model_points_pair, COLORS[model_idx]) # draw keypoints on frame
+                video_writers[idx].write(frame_copies[idx]) # write rendered frame
+                model_idx += 1
+
             frame_number += 1
-        
+    
         cap.release()
         for i in video_writers:
             i.release()
-
+    
+    """ Draw keypoints and join keypoint pairs on 1 frame """
     def draw_keypoints(self, frame, frame_keypoints, pairs, color):
         if not frame_keypoints: # if this frame has no keypoints
             return frame  
 
         for person_keypoints in frame_keypoints: # every person
-            for keypoint in person_keypoints: # every keypoint
-               cv2.circle(frame, (keypoint[0], keypoint[1]), 4, color, -1) # draw the keypoint
-            
-            for pair in pairs: # add lines between keypoints
-                point1 = (person_keypoints[pair[0]])
-                point2 = (person_keypoints[pair[1]])
-                if point1 is None or point2 is None or \
-                            point1[0] < 1 and point1[1] < 1 or \
-                            point2[0] < 1 and point2[1] < 1:
-                    continue
-                cv2.line(frame, point1, point2, color=color, thickness=2) 
+            if person_keypoints:
+                for keypoint in person_keypoints: # every keypoint
+                    cv2.circle(frame, (keypoint[0], keypoint[1]), 4, color, -1) # draw the keypoint
+                
+                for pair in pairs: # add lines between keypoints
+                    point1 = (person_keypoints[pair[0]])
+                    point2 = (person_keypoints[pair[1]])
+                    if point1 is None or point2 is None or \
+                                point1[0] < 1 and point1[1] < 1 or \
+                                point2[0] < 1 and point2[1] < 1:
+                        continue
+                    cv2.line(frame, point1, point2, color=color, thickness=2) 
         
         return frame  
 

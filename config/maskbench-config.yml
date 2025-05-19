@@ -14,8 +14,3 @@ models:
     config:
       weights: "yolo11n-pose.pt"
       confidence_threshold: 0.85
-
-renderers:
-  - name : PoseRender
-    module: render.pose_render 
-    class: PoseRender
