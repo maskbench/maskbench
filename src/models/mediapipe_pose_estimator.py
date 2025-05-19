@@ -6,6 +6,7 @@ import mediapipe as mp
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions, RunningMode
 from models.pose_estimator import PoseEstimator
+import torch
 # from pose_estimator import PoseEstimator
 
 class MediaPipePoseEstimator(PoseEstimator):
@@ -23,11 +24,14 @@ class MediaPipePoseEstimator(PoseEstimator):
         weights_file_path = os.path.join("/weights", weights_file_name)
         if not os.path.exists(weights_file_path):
             raise ValueError(f"Could not find weights file under {weights_file_path}. Please download the weights from https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker#models and place them in the weights folder.")
-
+        
+        # device = BaseOptions.Delegate.GPU if torch.cuda.is_available() else ''
+        # print("mediapipe is using", device)
+        device = 0
         self.options = PoseLandmarkerOptions(
-            base_options=BaseOptions(model_asset_path=weights_file_path),
+            base_options=BaseOptions(model_asset_path=weights_file_path, delegate=device),
             running_mode=RunningMode.VIDEO, # informs model we will provide videos/ sequence of frames | adds temporal sequencing
-            output_segmentation_masks=False
+            output_segmentation_masks=False,
         )
 
         
