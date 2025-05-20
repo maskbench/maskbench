@@ -25,8 +25,6 @@ class MediaPipePoseEstimator(PoseEstimator):
         if not os.path.exists(weights_file_path):
             raise ValueError(f"Could not find weights file under {weights_file_path}. Please download the weights from https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker#models and place them in the weights folder.")
         
-        # device = BaseOptions.Delegate.GPU if torch.cuda.is_available() else ''
-        # print("mediapipe is using", device)
         device = 0
         self.options = PoseLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=weights_file_path, delegate=device),
