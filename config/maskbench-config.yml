@@ -14,3 +14,17 @@ models:
     config:
       weights: "yolo11n-pose.pt"
       confidence_threshold: 0.85
+
+dataloaders:
+  - name: TedTalks
+    enabled: true
+    module: dataloader.TED_dataloader
+    class: TED_DATALOADER
+    config:
+      dataset_folder: /datasets/ted-talks
+      video_folder: ""
+      ground_truth_folder: ""
+      video_extension: .mp4 
+      ground_truth_extension: .eaf
+      batch_size: 1
+      shuffle: false

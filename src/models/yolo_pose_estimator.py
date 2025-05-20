@@ -26,7 +26,9 @@ class YoloPoseEstimator(PoseEstimator):
 
         settings.update({"weights_dir": "/weights"})
         self.model = YOLO(weights_file_name)
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+        # only for dev
+        device = torch.device("cuda:1" if torch.cuda.is_available() else 'cpu')
         print("yolo is using", device)
         self.model.to(device)
 

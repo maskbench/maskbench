@@ -7,21 +7,22 @@ import os
 
 
 class TED_DATALOADER(DatasetLoader):
-    def __init__(self, dataset_folder: Path, batch_size: int = 1, shuffle: bool = True):
-        self.ground_truth_folder = ""
-        self.ground_truth_ext = ".eaf"
-        self.videos_folder = ""
-        self.video_ext = ".mp4"
-        super().__init__(dataset_folder, batch_size, shuffle)
+    def __init__(self, config: dict):
+        super().__init__(config)
+        self.samples = self._load_samples()
         
         
-    def _load_samples(self, dataset_folder: Path) -> List[VideoSample]:
+    def _load_samples(self) -> List[VideoSample]:
         # assuming videos and ground truths are named the same
-        videos_list = glob.glob(f"{dataset_folder}/{self.videos_folder}/*{self.video_ext}")
-        ground_truth_list = glob.glob(f"{dataset_folder}/{self.ground_truth_folder}/*{self.ground_truth_ext}")
-
-        print(videos_list)
-        print(ground_truth_list)
+        videos_path = os.path.join(
+            self.config.get("dataset_folder"), self.config.get("video_folder"), f"*{self.config.get("video_extension")}"
+        )
+        ground_truth_path = os.path.join(
+            self.config.get("dataset_folder"), self.config.get("ground_truth_folder"), f"*{self.config.get("ground_truth_extension")}"
+        )
+        
+        videos_list = glob.glob(videos_path)
+        ground_truth_list = glob.glob(ground_truth_path)
 
         if not len(videos_list) == len(ground_truth_list):
             print("# of Videos != # of Ground Truths")

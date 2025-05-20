@@ -5,29 +5,23 @@ import yaml
 from video_chunker import VideoChunker
 from inference.engine import InferenceEngine
 from render.pose_render import PoseRender
-from dataloader.TED_dataloader import TED_DATALOADER
 
 def main():
     config = load_config()
     pose_estimator_specifications = config.get("models")
+    dataloader_specifications = config.get("dataloaders")
     pose_render = PoseRender()
 
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
+    dataloaders = load_dataloaders(dataloader_specifications)
     print(f"Available Pose Estimators: {pose_estimators}")
+    print(f"Available Dataloaders Estimators: {dataloaders}")
 
-    ted_dataset = TED_DATALOADER("/datasets/ted-talks")
-
-    # for batch in ted_dataset:
-    #     print(batch[0].get_info())
-    
-    dataloaders = [ted_dataset]
-
-    # video_path = ["/datasets/ted-talks/ted_kid.mp4", "/datasets/ted-talks/Y3.mp4", "/datasets/ted-talks/Y_2.mp4"]
     inference_engine = InferenceEngine(pose_estimators)
     inference_engine.get_keypoints_engine(dataloaders) # processing
     
     # # # [optional] select videos and models you want to render
-    # inference_engine.render_engine(video_path, pose_estimators, pose_render) #render
+    inference_engine.render_engine(dataloaders, pose_estimators, pose_render) #render
 
     # evaluate 
 
@@ -43,6 +37,26 @@ def load_config():
     
     return config
 
+
+def load_dataloaders(dataloader_specifications: list):
+    dataloaders = {}
+    for spec in dataloader_specifications:
+        dataloader_name = spec.get("name")
+        dataloader_config = spec.get("config", {})
+        dataloader_enabled = spec.get("enabled", True)
+
+        if not dataloader_enabled:
+            continue
+
+        try:
+            dataloader_module = importlib.import_module(spec.get("module"))
+            dataloader_class = getattr(dataloader_module, spec.get("class"))
+            dataloader = dataloader_class(dataloader_config)
+            dataloaders[dataloader_name] =  dataloader
+        except (ImportError, AttributeError, TypeError) as e:
+            print(f"Error instantiating dataloader {dataloader_name}: {e}")
+
+    return dataloaders
 
 def load_pose_estimators(pose_estimator_specifications: list):
     pose_estimators = {}
