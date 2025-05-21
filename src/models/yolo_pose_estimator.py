@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 import cv2
-import json
 from ultralytics import YOLO, settings
 import torch
 
