@@ -1,6 +1,5 @@
 import os
 import cv2
-import json
 import numpy as np
 import mediapipe as mp
 from mediapipe.tasks.python import BaseOptions
