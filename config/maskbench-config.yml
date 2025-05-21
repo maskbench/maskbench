@@ -5,14 +5,14 @@ models:
     module: models.mediapipe_pose_estimator
     class: MediaPipePoseEstimator
     config:
-      weights: "mediapipe_pose.task"
+      weights: /weights/mediapipe_pose.task
 
   - name: YoloPose
     enabled: true
     module: models.yolo_pose_estimator
     class: YoloPoseEstimator
     config:
-      weights: "yolo11n-pose.pt"
+      weights: /weights/yolo11n-pose.pt
       confidence_threshold: 0.85
 
 dataloader:
