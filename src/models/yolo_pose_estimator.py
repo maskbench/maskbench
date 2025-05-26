@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
 import cv2
-
+import json
 from ultralytics import YOLO, settings
+import torch
 
 from models.pose_estimator import PoseEstimator
 
@@ -25,7 +26,16 @@ class YoloPoseEstimator(PoseEstimator):
 
         settings.update({"weights_dir": "/weights"})
         self.model = YOLO(weights_file_name)
-        
+
+        # only for dev
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print("yolo is using", device)
+        self.model.to(device)
+
+    
+    def get_pair_points(self):
+        return [(15, 13), (16, 14),(13, 11),(12, 14),(11, 12),(11, 5),(12, 6),(5, 6),(5, 7),(6, 8),(7, 9),(8, 10),(0, 1),(0, 2),(1, 3),(2, 4)]
+
 
     def estimate_pose(self, video_path: str) -> list:
         """
@@ -38,12 +48,15 @@ class YoloPoseEstimator(PoseEstimator):
         """
 
         confidence = self.config.get("confidence_threshold", 0.85)
-        results = self.model.track(video_path, conf=confidence, stream=True)
+        results = self.model.track(video_path, conf=confidence, stream=True, verbose=False)
 
         keypoints_tensor_list = []
 
         for result in results:
-            keypoints_tensor_list.append(result.keypoints.xy)
+            if result.keypoints: # if no keypoints detected
+                keypoints_tensor_list.append(result.keypoints.xy.int().tolist()) # convert floats to int and make it list so its serializable
+            else: 
+                keypoints_tensor_list.append([])
 
         # TODO: we migth refactor this to use an xarray with a frame, person, keypoint and dimension
         # or create a dedicated PoseData class that also stores the layout of the keypoints

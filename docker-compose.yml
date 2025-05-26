@@ -23,6 +23,12 @@ services:
                 - driver: nvidia
                   count: 1
                   capabilities: [ gpu ]
+        devices:
+            - /dev/nvidia1:/dev/nvidia0
+            - /dev/nvidiactl:/dev/nvidiactl
+            - /dev/nvidia-uvm:/dev/nvidia-uvm
+            - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+
 
     openpose:
       image: ghcr.io/maskanyone/maskanyone/openpose:0.3.0
@@ -37,7 +43,7 @@ services:
                 count: 1
                 capabilities: [ gpu ]
       devices:
-        - /dev/nvidia0:/dev/nvidia0
+        - /dev/nvidia1:/dev/nvidia0
         - /dev/nvidiactl:/dev/nvidiactl
         - /dev/nvidia-uvm:/dev/nvidia-uvm
         - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools

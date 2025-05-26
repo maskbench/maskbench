@@ -3,17 +3,23 @@ import os
 import yaml
 
 from video_chunker import VideoChunker
+from inference.engine import InferenceEngine
+from render.pose_render import PoseRender
 
 def main():
+    base_output_path = os.getenv("MASKBENCH_OUTPUT_PATH", "/output")
     config = load_config()
-
     pose_estimator_specifications = config.get("models")
-    pose_estimators = load_pose_estimators(pose_estimator_specifications)
-    print(f"Available Pose Estimators: {pose_estimators}")
-    
-    video_path = "/datasets/ted-talks/ted_kid.mp4"
-    keypoints = pose_estimators[0].estimate_pose(video_path) # right now, this is mediapipe estimator 
+    dataloader_specification = config.get("dataloader")
+    pose_render = PoseRender()
 
+    dataloader = load_dataloader(dataloader_specification)
+    pose_estimators = load_pose_estimators(pose_estimator_specifications)
+    print(f"Available Pose Estimators: {pose_estimators.keys()}")
+
+    inference_engine = InferenceEngine(dataloader, pose_estimators, base_output_path)
+    inference_engine.get_keypoints_engine() # processing
+    inference_engine.render_engine(pose_estimators, pose_render) #rendering
 
 def load_config():
     config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")
@@ -28,8 +34,22 @@ def load_config():
     return config
 
 
+def load_dataloader(dataloader_specification: dict):
+    shuffle = dataloader_specification.get("shuffle", False)
+    batch_size = dataloader_specification.get("batch_size", 1)
+    dataset_folder = dataloader_specification.get("dataset_folder", "/datasets")
+    
+    try:
+        dataloader_module = importlib.import_module(dataloader_specification.get("module"))
+        dataloader_class = getattr(dataloader_module, dataloader_specification.get("class"))
+        dataloader = dataloader_class(dataset_folder, shuffle, batch_size) # initialize dataloader
+    except (ImportError, AttributeError, TypeError) as e:
+        print(f"Error instantiating dataloader {dataloader_specification.get("name")}: {e}")
+
+    return dataloader
+
 def load_pose_estimators(pose_estimator_specifications: list):
-    pose_estimators = []
+    pose_estimators = {}
     for spec in pose_estimator_specifications:
         estimator_name = spec.get("name")
         estimator_config = spec.get("config", {})
@@ -42,12 +62,11 @@ def load_pose_estimators(pose_estimator_specifications: list):
             estimator_module = importlib.import_module(spec.get("module"))
             estimator_class = getattr(estimator_module, spec.get("class"))
             pose_estimator = estimator_class(estimator_name, estimator_config)
-            pose_estimators.append(pose_estimator)
+            pose_estimators[estimator_name] =  pose_estimator
         except (ImportError, AttributeError, TypeError) as e:
             print(f"Error instantiating pose estimator {estimator_name}: {e}")
 
     return pose_estimators
-
 
 if __name__ == "__main__":
     main()

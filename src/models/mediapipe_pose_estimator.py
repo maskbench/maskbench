@@ -5,6 +5,7 @@ import mediapipe as mp
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions, RunningMode
 from models.pose_estimator import PoseEstimator
+import torch
 
 class MediaPipePoseEstimator(PoseEstimator):
     def __init__(self, model_name: str, config: dict):
@@ -21,16 +22,23 @@ class MediaPipePoseEstimator(PoseEstimator):
         weights_file_path = os.path.join("/weights", weights_file_name)
         if not os.path.exists(weights_file_path):
             raise ValueError(f"Could not find weights file under {weights_file_path}. Please download the weights from https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker#models and place them in the weights folder.")
-
-        options = PoseLandmarkerOptions(
-            base_options=BaseOptions(model_asset_path=weights_file_path),
+        
+        device = 0
+        self.options = PoseLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=weights_file_path, delegate=device),
             running_mode=RunningMode.VIDEO, # informs model we will provide videos/ sequence of frames | adds temporal sequencing
-            output_segmentation_masks=False
+            output_segmentation_masks=False,
         )
+
         
-        detector = PoseLandmarker.create_from_options(options)
-        self.model = detector
-        
+    def get_pair_points(self):
+        return [
+        (0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8),
+        (9, 10), (11, 12), (11, 13), (13, 15), (15, 19), (15, 17), (17, 19), (15, 21),
+        (12, 14), (14, 16), (16, 20), (16, 18), (18, 20), (11, 23), (12, 24), (16, 22),
+        (23, 25), (24, 26), (25, 27), (26, 28), (23, 24),
+        (28, 30), (28, 32), (30, 32), (27, 29), (27, 31), (29, 31)
+        ]
 
     def estimate_pose(self, video_path: str) -> list:
         """
@@ -41,6 +49,8 @@ class MediaPipePoseEstimator(PoseEstimator):
         Returns:
             list: A list of numpy containing the keypoints for each frame. Shape: (# of frames, # of people, 33 keypoints, (x,y))
         """
+        detector = PoseLandmarker.create_from_options(self.options) # init the model
+
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             raise IOError(f"Cannot open video file {video_path}")
@@ -48,7 +58,6 @@ class MediaPipePoseEstimator(PoseEstimator):
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         frame_number = 0
         all_keypoints = [] # for all frames
@@ -59,9 +68,10 @@ class MediaPipePoseEstimator(PoseEstimator):
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
-            result = self.model.detect_for_video(mp_image, int(frame_number * 1000 / fps))
-
+            timestamp = int(((frame_number+1) * 1_000_000 / fps))
+            result = detector.detect_for_video(mp_image, timestamp)
             frame_keypoints = [] # for this frame
+
             if result.pose_landmarks: # if any pose is detected
                 for person_landmarks in result.pose_landmarks: # for every person detected 
                     # we only extract x, y and ignore z, visibility and presence
@@ -77,8 +87,8 @@ class MediaPipePoseEstimator(PoseEstimator):
             all_keypoints.append(frame_keypoints)
                 
             frame_number += 1
-            print(f"Processed frame {frame_number}/{total_frames}", end='\r')
 
         cap.release()
-        
+        detector.close() # close the model
+       
         return all_keypoints

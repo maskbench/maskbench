@@ -24,3 +24,7 @@ class PoseEstimator(ABC):
             list: A list of tensors containing the keypoints for each frame.
         """
         pass
+    
+    @abstractmethod
+    def get_pair_points(self) -> list:
+        pass

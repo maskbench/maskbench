@@ -14,3 +14,10 @@ models:
     config:
       weights: "yolo11n-pose.pt"
       confidence_threshold: 0.85
+dataloader:
+  name: TedTalks
+  module: dataloader.TED_dataloader
+  class: TedDataloader
+  dataset_folder: /datasets/ted-talks
+  batch_size: 1
+  shuffle: false
