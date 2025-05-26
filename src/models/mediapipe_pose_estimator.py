@@ -1,13 +1,11 @@
 import os
 import cv2
-import json
 import numpy as np
 import mediapipe as mp
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions, RunningMode
 from models.pose_estimator import PoseEstimator
 import torch
-# from pose_estimator import PoseEstimator
 
 class MediaPipePoseEstimator(PoseEstimator):
     def __init__(self, model_name: str, config: dict):
@@ -100,5 +98,3 @@ class MediaPipePoseEstimator(PoseEstimator):
         detector.close() # close the model
        
         return all_keypoints
-
-
