@@ -1,8 +1,6 @@
 services:
     runner:
         container_name: ${USER}_maskbench_dev
-        ports:
-          - "8000:8000"
         build: .                
         env_file: 
           - .env
