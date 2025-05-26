@@ -7,7 +7,7 @@ RUN pip install --upgrade pip && pip install poetry
 WORKDIR /
 
 # download model weights
-RUN mkdir -p /weights
+RUN mkdir -p /weights/pre_built
 
 # Mediapipe
 RUN curl -L -o /weights/pre_built/pose_landmarker_lite.task "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task"
