@@ -11,6 +11,7 @@ services:
           - ./poetry.lock:/poetry.lock 
           - ./pyproject.toml:/pyproject.toml
           - ./config:/config
+          - ${MASKBENCH_USER_WEIGHTS_DIR}:/weights/user_weights  
           - ${MASKBENCH_DATASET_DIR}:/datasets  
           - ${MASKBENCH_OUTPUT_DIR}:/output
           - ${MASKBENCH_CSV_DIR}:/mediapipe_csv

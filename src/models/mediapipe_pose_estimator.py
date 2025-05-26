@@ -20,8 +20,15 @@ class MediaPipePoseEstimator(PoseEstimator):
 
         super().__init__(model_name, config)
 
-        weights_file_path = self.config.get("weights")
-        if not os.path.exists(weights_file_path):
+        weights_file = self.config.get("weights")
+        pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
+        user_weights_file_path = os.path.join("/weights/user_weights", weights_file)
+          
+        if os.path.exists(pre_built_weights_file_path): # if weights are pre-built
+            weights_file_path = pre_built_weights_file_path
+        elif os.path.exists(user_weights_file_path): # if weights are custom installed 
+            weights_file_path = user_weights_file_path
+        else: # if weight file not found
             raise ValueError(f"Could not find weights file under {weights_file_path}. Please download the weights from https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker#models and place them in the weights folder.")
         
         device = 0
