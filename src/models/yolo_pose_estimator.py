@@ -6,6 +6,7 @@ from ultralytics import YOLO, settings
 import torch
 
 from models.pose_estimator import PoseEstimator
+from evaluation.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 
 
 class YoloPoseEstimator(PoseEstimator):
@@ -36,8 +37,10 @@ class YoloPoseEstimator(PoseEstimator):
         print("yolo is using", device)
         self.model.to(device)
 
-    def get_pair_points(self):
+
+    def get_point_pairs(self):
         return [(15, 13), (16, 14),(13, 11),(12, 14),(11, 12),(11, 5),(12, 6),(5, 6),(5, 7),(6, 8),(7, 9),(8, 10),(0, 1),(0, 2),(1, 3),(2, 4)]
+
 
     def estimate_pose(self, video_path: str) -> list:
         """
@@ -49,17 +52,43 @@ class YoloPoseEstimator(PoseEstimator):
             list: A list of tensors containing the keypoints for each frame.
         """
 
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise IOError(f"Cannot open video file {video_path}")
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        cap.release()
+
         confidence = self.config.get("confidence_threshold", 0.85)
         results = self.model.track(video_path, conf=confidence, stream=True, verbose=False)
 
-        keypoints_tensor_list = []
+        frame_results = []
+        for frame_idx, result in enumerate(results):
+            if not result.keypoints: # if no keypoints detected
+                continue
 
-        for result in results:
-            if result.keypoints: # if no keypoints detected
-                keypoints_tensor_list.append(result.keypoints.xy.int().tolist()) # convert floats to int and make it list so its serializable
-            else: 
-                keypoints_tensor_list.append([])
+            persons = []
+            num_persons = result.keypoints.shape[0]
+            num_keypoints = result.keypoints.shape[1]
 
-        # TODO: we migth refactor this to use an xarray with a frame, person, keypoint and dimension
-        # or create a dedicated PoseData class that also stores the layout of the keypoints
-        return keypoints_tensor_list
+            for i in range(num_persons):
+                keypoints = []
+                for j in range(num_keypoints):
+                    xy = result.keypoints.xy
+                    conf = result.keypoints.conf
+                    kp = PoseKeypoint(
+                        x=xy[i, j, 0],
+                        y=xy[i, j, 1],
+                        confidence=conf[i, j] if conf is not None else None
+                    )
+
+                    keypoints.append(kp)
+                persons.append(PersonPoseResult(keypoints=keypoints))
+            frame_results.append(FramePoseResult(persons=persons, frame_idx=frame_idx))
+
+        video_result = VideoPoseResult(
+            fps=fps,
+            frame_width=result.orig_shape[1],
+            frame_height=result.orig_shape[0],
+            frames=frame_results
+        )
+        return video_result
