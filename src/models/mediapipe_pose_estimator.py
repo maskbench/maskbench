@@ -92,5 +92,3 @@ class MediaPipePoseEstimator(PoseEstimator):
         detector.close() # close the model
        
         return all_keypoints
-
-
