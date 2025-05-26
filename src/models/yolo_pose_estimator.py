@@ -19,23 +19,25 @@ class YoloPoseEstimator(PoseEstimator):
 
         super().__init__(model_name, config)
 
-        weights_file_name = self.config.get("weights")
-        weights_file_path = os.path.join("/weights", weights_file_name)
-        if not os.path.exists(weights_file_path):
-            raise ValueError(f"Could not find weights file under {weights_file_path}. Please download the weights from https://docs.ultralytics.com/tasks/pose/ and place them in the weights folder.")
+        weights_file = self.config.get("weights")
+        pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
+        user_weights_file_path = os.path.join("/weights/user_weights", weights_file)
+          
+        if os.path.exists(pre_built_weights_file_path):
+            weights_file_path = pre_built_weights_file_path
+        elif os.path.exists(user_weights_file_path):
+            weights_file_path = user_weights_file_path 
+        else:
+            raise ValueError(f"Could not find weights file under {weights_file}. Please download the weights from https://docs.ultralytics.com/tasks/pose/ and place them in the weights folder.")
 
-        settings.update({"weights_dir": "/weights"})
-        self.model = YOLO(weights_file_name)
-
+        self.model = YOLO(weights_file_path)
         # only for dev
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print("yolo is using", device)
         self.model.to(device)
 
-    
     def get_pair_points(self):
         return [(15, 13), (16, 14),(13, 11),(12, 14),(11, 12),(11, 5),(12, 6),(5, 6),(5, 7),(6, 8),(7, 9),(8, 10),(0, 1),(0, 2),(1, 3),(2, 4)]
-
 
     def estimate_pose(self, video_path: str) -> list:
         """
