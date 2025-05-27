@@ -41,14 +41,14 @@ class YoloPoseEstimator(PoseEstimator):
         return [(15, 13), (16, 14),(13, 11),(12, 14),(11, 12),(11, 5),(12, 6),(5, 6),(5, 7),(6, 8),(7, 9),(8, 10),(0, 1),(0, 2),(1, 3),(2, 4)]
 
 
-    def estimate_pose(self, video_path: str) -> list:
+    def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
         Estimate the pose of a video using YOLO pose estimation.
 
         Args:
             video_path (str): The path to the input video file.
         Returns:
-            list: A list of tensors containing the keypoints for each frame.
+            VideoPoseResult: A standardized result object containing the pose estimation results for the video.
         """
 
         cap = cv2.VideoCapture(video_path)

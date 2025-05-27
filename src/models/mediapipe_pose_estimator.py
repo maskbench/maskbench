@@ -47,14 +47,14 @@ class MediaPipePoseEstimator(PoseEstimator):
         ]
 
 
-    def estimate_pose(self, video_path: str) -> list:
+    def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
         Estimate the pose of a video using MediaPipe pose estimation.
 
         Args:
             video_path (str): The path to the input video file.
         Returns:
-            list: A list of numpy containing the keypoints for each frame. Shape: (# of frames, # of people, 33 keypoints, (x,y))
+            VideoPoseResult: A standardized result object containing the pose estimation results for the video.
         """
         self.detector = PoseLandmarker.create_from_options(self.options) # init the model
 

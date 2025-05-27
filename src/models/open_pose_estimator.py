@@ -27,7 +27,7 @@ class OpenPoseEstimator(PoseEstimator):
         Args:
             video_path (str): The path to the input video file.
         Returns:
-            list: A list of lists containing the keypoints for each frame.
+            VideoPoseResult: A standardized result object containing the pose estimation results for the video.
         """
         pose_data, video_metadata = self._query_openpose_container(video_path) 
         video_pose_result = self._convert_to_video_pose_result(pose_data, video_metadata)

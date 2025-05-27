@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import cv2
 
+from evaluation.pose_result import VideoPoseResult
+
 class PoseEstimator(ABC):
     def __init__(self, model_name: str, config: dict = None):
         """
@@ -14,7 +16,7 @@ class PoseEstimator(ABC):
         self.config = config if config else {}
 
     @abstractmethod
-    def estimate_pose(self, video_path: str) -> list:
+    def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
         Abstract method to estimate the pose of a video using the specific pose estimation model.
         This method should be implemented by subclasses.
