@@ -1,4 +1,3 @@
-video_input_folder: /ted-talks
 models:
   - name: MediaPipePose
     enabled: true
@@ -14,6 +13,12 @@ models:
     config:
       weights: yolo11n-pose.pt
       confidence_threshold: 0.85
+
+  - name: OpenPose
+    enabled: true
+    module: models.open_pose_estimator
+    class: OpenPoseEstimator      
+
 dataloader:
   name: TedTalks
   module: dataloader.TED_dataloader
