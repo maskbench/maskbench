@@ -1,6 +1,9 @@
 import os
+
 import cv2
 import mediapipe as mp
+
+import utils
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions, RunningMode
 from evaluation.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
@@ -58,18 +61,15 @@ class MediaPipePoseEstimator(PoseEstimator):
         """
         self.detector = PoseLandmarker.create_from_options(self.options) # init the model
 
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            raise IOError(f"Cannot open video file {video_path}")
-
-        fps = int(cap.get(cv2.CAP_PROP_FPS))
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        cap, video_metadata = utils.get_video_metadata(video_path) # get video metadata
+        width = video_metadata.get("width")
+        height = video_metadata.get("height")
+        fps = video_metadata.get("fps")
 
         frame_number = 0
         frame_results = [] 
         while cap.isOpened():
-            ret, frame = cap.read()            
+            ret, frame = cap.read()       
             if not ret:
                 break
             result = self._execute_on_frame(frame, frame_number, fps)

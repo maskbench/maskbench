@@ -1,9 +1,9 @@
 import os
-from pathlib import Path
-import cv2
-from ultralytics import YOLO, settings
-import torch
 
+import torch
+from ultralytics import YOLO
+
+import utils
 from models.pose_estimator import PoseEstimator
 from evaluation.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 
@@ -51,10 +51,7 @@ class YoloPoseEstimator(PoseEstimator):
             VideoPoseResult: A standardized result object containing the pose estimation results for the video.
         """
 
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            raise IOError(f"Cannot open video file {video_path}")
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        cap, video_metadata = utils.get_video_metadata(video_path)
         cap.release()
 
         confidence = self.config.get("confidence_threshold", 0.85)
@@ -85,9 +82,9 @@ class YoloPoseEstimator(PoseEstimator):
             frame_results.append(FramePoseResult(persons=persons, frame_idx=frame_idx))
 
         video_result = VideoPoseResult(
-            fps=fps,
-            frame_width=result.orig_shape[1],
-            frame_height=result.orig_shape[0],
+            fps=video_metadata.get("fps"),
+            frame_width=video_metadata.get("width"),
+            frame_height=video_metadata.get("height"),
             frames=frame_results
         )
         return video_result
