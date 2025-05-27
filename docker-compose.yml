@@ -6,6 +6,8 @@ services:
           - .env
         depends_on:
           - openpose
+          - sam2
+          - maskanyone
         volumes:
           - ./src:/src          
           - ./poetry.lock:/poetry.lock 
@@ -23,9 +25,34 @@ services:
                 - driver: nvidia
                   device_ids: ['1']
                   capabilities: [ gpu ]
-
+    
+    sam2:
+      image: ghcr.io/maskanyone/maskanyone/sam2:${MASK_ANYONE_VERSION}
+      restart: on-failure
+      environment:
+        SAM2_OFFLOAD_VIDEO_TO_CPU: false
+        SAM2_OFFLOAD_STATE_TO_CPU: false
+      deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                device_ids: ['1']
+                capabilities: [ gpu ]
+  
+    maskanyone:
+      image: ghcr.io/maskanyone/maskanyone/api:${MASK_ANYONE_VERSION}
+      restart: on-failure
+      deploy:
+        resources:
+          reservations:
+            devices:
+              - driver: nvidia
+                device_ids: ['1']
+                capabilities: [ gpu ]
+    
     openpose:
-      image: ghcr.io/maskanyone/maskanyone/openpose:0.3.0
+      image: ghcr.io/maskanyone/maskanyone/openpose:${MASK_ANYONE_VERSION}
       restart: on-failure
       environment:
         OPENPOSE_MODEL_DIR: "/workspace/openpose/models"
@@ -36,3 +63,4 @@ services:
               - driver: nvidia
                 device_ids: ['1']
                 capabilities: [ gpu ]
+
