@@ -37,7 +37,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         )
 
         
-    def get_pair_points(self):
+    def get_point_pairs(self):
         return [
         (0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8),
         (9, 10), (11, 12), (11, 13), (13, 15), (15, 19), (15, 17), (17, 19), (15, 21),

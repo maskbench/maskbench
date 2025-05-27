@@ -4,49 +4,40 @@ import shutil
 import time 
 
 class InferenceEngine():
-    def __init__(self, dataloader:dict, model_list: dict, base_output_path: str):
+    def __init__(self, dataloader:dict, models_dict: dict):
         self.dataloader = dataloader
-        self.model_list = model_list
-        self.base_output_path = base_output_path
-        self.pair_points = dict()
+        self.model_list = models_dict
+        self.base_output_path = "/output"
+        self.models_point_pairs = dict()
 
         # get keypoint pairing points for each model
         for model_name, model in self.model_list.items():
-            self.pair_points[model_name] = model.get_pair_points()
+            self.models_point_pairs[model_name] = model.get_point_pairs()
         
     
-    def get_keypoints_engine(self):
-        for video_batch in  self.dataloader: # every batches of video within this dataloader
+    def estimate_pose_keypoints(self):
+        for video_batch in self.dataloader: # every batches of video within this dataloader
             for video in video_batch: # every video
-                for video_path in video.get_video_path():
-                    print("running inference on", video_path)
-                    video_name = os.path.splitext(os.path.basename(video_path))[0]
-                    output_path = os.path.join(self.base_output_path, video_name)
+                print("Running inference for", video.path)
 
-                    if os.path.exists(output_path): 
-                        shutil.rmtree(output_path)
+                for model_name, model in self.model_list.items(): # for every model 
+                    start_time = time.time()
 
-                    os.makedirs(output_path, exist_ok=True)
+                    video_pose_result = model.estimate_pose(video.path) 
+                    video.add_result(video_pose_result, model_name)
 
-                    for model_name, model in self.model_list.items(): # for every model 
-                        start_time = time.time()
-                        keypoints = model.estimate_pose(video_path) 
-                        with open(os.path.join(output_path, model_name + ".json"), "w+") as f:
-                            json.dump(keypoints, f)
-                        print(f"inference time: {model_name} - {time.time() - start_time}")
+                    print(f"Inference time: {model_name} - {time.time() - start_time}")
 
     # only render for provided videos and models
-    def render_engine(self, model_list: str, renderer):
-        for video_batch in  self.dataloader: # every batches of video within this dataloader
-            for video in video_batch: # every video
-                for video_path in video.get_video_path():
-                    start_time = time.time()
-                    video_name = os.path.splitext(os.path.basename(video_path))[0]
-                    output_path = os.path.join(self.base_output_path, video_name)
-                    os.makedirs(output_path, exist_ok=True) # create folder if doesnt exist 
-                    
-                    renderer.render_video(video_path, output_path, model_list, self.pair_points)
-                    print(f"render: {video_path} - {time.time() - start_time}")
+    def render_all_videos(self, renderer):
+        for video_batch in self.dataloader:
+            for video in video_batch:
+                start_time = time.time()
+                output_path = os.path.join(self.base_output_path, video.get_filename())
+                os.makedirs(output_path, exist_ok=True) # create folder if doesnt exist 
+                
+                print(f"Rendering {video.path} - {time.time() - start_time}")
+                renderer.render_video(video, output_path, self.models_point_pairs)
 
             
  

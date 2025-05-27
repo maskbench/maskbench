@@ -7,7 +7,6 @@ from inference.engine import InferenceEngine
 from render.pose_render import PoseRender
 
 def main():
-    base_output_path = os.getenv("MASKBENCH_OUTPUT_PATH", "/output")
     config = load_config()
     pose_estimator_specifications = config.get("models")
     dataloader_specification = config.get("dataloader")
@@ -17,9 +16,10 @@ def main():
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
     print(f"Available Pose Estimators: {pose_estimators.keys()}")
 
-    inference_engine = InferenceEngine(dataloader, pose_estimators, base_output_path)
-    inference_engine.get_keypoints_engine() # processing
-    inference_engine.render_engine(pose_estimators, pose_render) #rendering
+    inference_engine = InferenceEngine(dataloader, pose_estimators)
+    inference_engine.estimate_pose_keypoints() # processing
+    inference_engine.render_all_videos(pose_render) #rendering
+    print("Done")
 
 def load_config():
     config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")
@@ -62,7 +62,7 @@ def load_pose_estimators(pose_estimator_specifications: list):
             estimator_module = importlib.import_module(spec.get("module"))
             estimator_class = getattr(estimator_module, spec.get("class"))
             pose_estimator = estimator_class(estimator_name, estimator_config)
-            pose_estimators[estimator_name] =  pose_estimator
+            pose_estimators[estimator_name] = pose_estimator
         except (ImportError, AttributeError, TypeError) as e:
             print(f"Error instantiating pose estimator {estimator_name}: {e}")
 

@@ -26,5 +26,5 @@ class PoseEstimator(ABC):
         pass
     
     @abstractmethod
-    def get_pair_points(self) -> list:
+    def get_point_pairs(self) -> list:
         pass
