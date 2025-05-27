@@ -21,14 +21,8 @@ services:
             reservations:
               devices:
                 - driver: nvidia
-                  count: 1
+                  device_ids: ['1']
                   capabilities: [ gpu ]
-        devices:
-            - /dev/nvidia1:/dev/nvidia0
-            - /dev/nvidiactl:/dev/nvidiactl
-            - /dev/nvidia-uvm:/dev/nvidia-uvm
-            - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
-
 
     openpose:
       image: ghcr.io/maskanyone/maskanyone/openpose:0.3.0
@@ -40,10 +34,5 @@ services:
           reservations:
             devices:
               - driver: nvidia
-                count: 1
+                device_ids: ['1']
                 capabilities: [ gpu ]
-      devices:
-        - /dev/nvidia1:/dev/nvidia0
-        - /dev/nvidiactl:/dev/nvidiactl
-        - /dev/nvidia-uvm:/dev/nvidia-uvm
-        - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
