@@ -19,6 +19,6 @@ class TedDataloader(DatasetLoader):
         for filename in os.listdir(self.dataset_folder):
             video_path = os.path.join(self.dataset_folder, filename)
             if filename.endswith(video_extensions):
-                samples.append(VideoSample([video_path]))
+                samples.append(VideoSample(video_path))
 
         return samples
