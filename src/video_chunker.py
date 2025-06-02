@@ -16,7 +16,7 @@ class VideoChunker:
         self.slide = slide
 
 
-    def chunk_video(self, video_path: str) -> list:
+    def chunk_video(self, video_path: str, output_path:str) -> list:
         """
         Chunk the video into smaller segments of specified length.
 
@@ -28,11 +28,12 @@ class VideoChunker:
         """
 
         # These are locations within the docker container (mounted directories)
-        video_path = os.path.join("/datasets", video_path)
+        # video_path = os.path.join("/datasets", video_path)
+        os.makedirs(output_path, exist_ok=True)  # Ensure output directory exists
         video_file_name = os.path.splitext(os.path.basename(video_path))[0]
         chunks = []
 
-        with VideoFileClip(video_path) as video:
+        with VideoFileClip(video_path, audio=False) as video: # we need to look into audio. writing chunk will change accordingly 
             if not video:
                 raise ValueError(f"Could not open video file: {video_path}")
             duration = video.duration
@@ -44,9 +45,17 @@ class VideoChunker:
                 start = i
                 end = min(start + self.chunk_length, duration)
 
-                chunk = video.subclipped(start, end)
-                chunk.filename = f"{video_file_name}_chunk{chunk_num}.mp4"
-                chunks.append(chunk)
+                if end - start > 0:
+                    chunk = video.subclipped(start, end).without_audio()
+                    chunk.filename = f"{video_file_name}_chunk{chunk_num}.mp4"
+                    chunk_path = os.path.join(output_path, chunk.filename)
+                    if not chunk.audio:
+                        chunk.write_videofile(chunk_path, codec="libx264", audio=False)
+                    else:
+                        chunk.write_videofile(chunk_path, codec="libx264", audio_codec="aac")  
+                    chunks.append(chunk_path)
+                else: 
+                    break
 
                 i += step
                 chunk_num += 1

@@ -19,7 +19,7 @@ def main():
 
     inference_engine = InferenceEngine(dataloader, pose_estimators, base_output_path)
     inference_engine.get_keypoints_engine() # processing
-    inference_engine.render_engine(pose_estimators, pose_render) #rendering
+    # inference_engine.render_engine(pose_estimators, pose_render) #rendering
 
 def load_config():
     config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")
