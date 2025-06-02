@@ -1,9 +1,8 @@
 import os
-
 import torch
+import utils
 from ultralytics import YOLO
 
-import utils
 from models.pose_estimator import PoseEstimator
 from evaluation.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 

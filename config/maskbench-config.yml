@@ -1,4 +1,3 @@
-video_input_folder: /ted-talks
 models:
   - name: MediaPipePose
     enabled: true

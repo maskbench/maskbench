@@ -1,9 +1,9 @@
-import requests
-import pickle
-import json
 import io
+import json
 import os
+import pickle
 
+import requests
 import utils
 from evaluation.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models.pose_estimator import PoseEstimator
