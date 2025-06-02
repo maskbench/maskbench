@@ -1,11 +1,14 @@
 import os
+
 import cv2
-import numpy as np
 import mediapipe as mp
+
+import utils
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions, RunningMode
+from evaluation.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models.pose_estimator import PoseEstimator
-import torch
+
 
 class MediaPipePoseEstimator(PoseEstimator):
     def __init__(self, model_name: str, config: dict):
@@ -37,7 +40,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         )
 
         
-    def get_pair_points(self):
+    def get_point_pairs(self):
         return [
         (0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8),
         (9, 10), (11, 12), (11, 13), (13, 15), (15, 19), (15, 17), (17, 19), (15, 21),
@@ -46,55 +49,64 @@ class MediaPipePoseEstimator(PoseEstimator):
         (28, 30), (28, 32), (30, 32), (27, 29), (27, 31), (29, 31)
         ]
 
-    def estimate_pose(self, video_path: str) -> list:
+
+    def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
         Estimate the pose of a video using MediaPipe pose estimation.
 
         Args:
             video_path (str): The path to the input video file.
         Returns:
-            list: A list of numpy containing the keypoints for each frame. Shape: (# of frames, # of people, 33 keypoints, (x,y))
+            VideoPoseResult: A standardized result object containing the pose estimation results for the video.
         """
-        detector = PoseLandmarker.create_from_options(self.options) # init the model
+        self.detector = PoseLandmarker.create_from_options(self.options) # init the model
 
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            raise IOError(f"Cannot open video file {video_path}")
-
-        fps = int(cap.get(cv2.CAP_PROP_FPS))
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        cap, video_metadata = utils.get_video_metadata(video_path) # get video metadata
+        width = video_metadata.get("width")
+        height = video_metadata.get("height")
+        fps = video_metadata.get("fps")
 
         frame_number = 0
-        all_keypoints = [] # for all frames
+        frame_results = [] 
         while cap.isOpened():
-            ret, frame = cap.read()
+            ret, frame = cap.read()       
             if not ret:
                 break
+            result = self._execute_on_frame(frame, frame_number, fps)
 
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
-            timestamp = int(((frame_number+1) * 1_000_000 / fps))
-            result = detector.detect_for_video(mp_image, timestamp)
-            frame_keypoints = [] # for this frame
+            if not result.pose_landmarks: 
+                continue
 
-            if result.pose_landmarks: # if any pose is detected
-                for person_landmarks in result.pose_landmarks: # for every person detected 
-                    # we only extract x, y and ignore z, visibility and presence
-                    # we also convert normalized landmarks to image coordinates 
-                    individual_keypoints = [] # only store x, y of keypoints
-                    for lm in person_landmarks: # for every keypoint
-                        x = int(lm.x * width)
-                        y = int(lm.y * height)
-                        individual_keypoints.append([x, y])
-                   
-                    frame_keypoints.append(individual_keypoints) 
+            persons = [] 
+            for person_landmarks in result.pose_landmarks: 
+                keypoints = [] 
 
-            all_keypoints.append(frame_keypoints)
-                
+                # we only extract x, y and ignore z, visibility and presence
+                # we also convert normalized landmarks to image coordinates 
+                for lm in person_landmarks: # for every keypoint
+                    x = int(lm.x * width)
+                    y = int(lm.y * height)
+                    keypoints.append(PoseKeypoint(x=x, y=y))
+            
+                persons.append(PersonPoseResult(keypoints=keypoints)) 
+
+            frame_results.append(FramePoseResult(persons=persons, frame_idx=frame_number))
             frame_number += 1
 
         cap.release()
-        detector.close() # close the model
+        self.detector.close() # close the model
+
+        return VideoPoseResult(
+            fps=fps,
+            frame_width=width,
+            frame_height=height,
+            frames=frame_results
+        )
+
+
+    def _execute_on_frame(self, frame, frame_number: int, fps: int):
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+        timestamp = int(((frame_number + 1) * 1_000_000 / fps))
+        return self.detector.detect_for_video(mp_image, timestamp)
        
-        return all_keypoints
