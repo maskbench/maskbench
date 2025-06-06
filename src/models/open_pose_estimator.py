@@ -5,18 +5,18 @@ import pickle
 
 import requests
 import utils
-from inference.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
-from models.pose_estimator import PoseEstimator
+from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from models import PoseEstimator
 
 class OpenPoseEstimator(PoseEstimator):
-    def __init__(self, model_name: str, config: dict):
+    def __init__(self, name: str, config: dict):
         """
-        Initialize the OpenPoseEstimator with a model name and configuration.
+        Initialize the OpenPoseEstimator with a name and configuration.
         """
-        super().__init__(model_name, config)
+        super().__init__(name, config)
         
 
-    def get_point_pairs(self):
+    def get_keypoint_pairs(self):
         return [(0, 1), (0, 2), (1, 3), (2, 4), (5, 7), (6, 8), (7, 9), (8, 10), (5, 11), (6, 12), (11, 13), (12, 14), (13, 15), (14, 16), (15, 19), (19, 20), (15, 21), (16, 22), (22, 23), (16, 24), (5, 17), (6, 17), (11, 12), (17, 18), (5, 6)]
 
 

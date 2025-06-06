@@ -1,9 +1,11 @@
+import time
+from typing import Dict, List
 import cv2
 import os
 import json
 
-from dataloader.video_sample import VideoSample
-from inference.pose_result import FramePoseResult
+from inference import FramePoseResult, VideoPoseResult
+from datasets import Dataset, VideoSample
 
 COLORS = [ # these are colors that even color-blind people can see
     (0, 115, 178), # blue
@@ -15,26 +17,46 @@ COLORS = [ # these are colors that even color-blind people can see
     (229, 153, 0), # gold
 ]
 
-class PoseRender():
-    def __init__(self):
-        pass
+class PoseRenderer():
+    def __init__(self, dataset: Dataset, estimators_point_pairs: dict):
+        self.dataset = dataset
+        self.base_output_path = "/output"
+        self.estimators_point_pairs = estimators_point_pairs
+
     
-    def get_keypoints(self, output_path:str, model_name: str): 
+    def get_keypoints(self, output_path: str, estimator_name: str): 
         """ Fetch keypoints from json for specific video and model """
-        file_path = os.path.join(output_path, model_name + ".json")
+        file_path = os.path.join(output_path, estimator_name + ".json")
         with open(file_path) as f:
             keypoints = json.load(f)
         return keypoints
+
+    
+    def render_all_videos(self, pose_results: Dict[str, List[VideoPoseResult]]):
+        """
+        Render all videos in the dataset with the provided pose results.
+        Args:
+            pose_results (Dict[str, List[VideoPoseResult]]): Dictionary where keys are estimator names and values are lists of VideoPoseResult objects.
+        """
+        for idx, video in enumerate(self.dataset):
+            start_time = time.time()
+            output_path = os.path.join(self.base_output_path, video.get_filename())
+            os.makedirs(output_path, exist_ok=True) # create folder if doesnt exist 
+
+            video_pose_results = {estimator: pose_results[estimator][idx] for estimator in pose_results}
+            self.render_video(video, video_pose_results, output_path)
+
+            print(f"Rendering {video.path} - {time.time() - start_time}")
     
 
-    def render_video(self, video: VideoSample, output_path:str, models_point_pairs: dict):
+    def render_video(self, video: VideoSample, video_pose_results: Dict[str, VideoPoseResult], output_path: str):
         """
+        Render video with keypoints and save it to output path.
         Args:
-        Input:
-            video_path: video path of 1 video
-            model_list: list of models classes
-            points_pair: dict of shape -> {model_name: list of pair points} showing how to pair keypoints
-        """       
+            video (VideoSample): The video sample to render.
+            video_pose_results (Dict[str, VideoPoseResult]): Dictionary of pose results for each estimator.
+            output_path (str): The path where the rendered video will be saved.
+        """
         cap = cv2.VideoCapture(video.path) # load the video
         if not cap.isOpened():
             raise IOError(f"Cannot open video file {video.path}")
@@ -47,8 +69,8 @@ class PoseRender():
 
         video_writers = [] # initialize video writers 
 
-        for model_name in models_point_pairs.keys(): # video writer for every model
-            out = cv2.VideoWriter(f"{output_path}/{model_name}.mp4", fourcc, fps, (width, height))
+        for estimator_name in self.estimators_point_pairs.keys(): # video writer for every model
+            out = cv2.VideoWriter(f"{output_path}/{estimator_name}.mp4", fourcc, fps, (width, height))
             video_writers.append(out)
 
 
@@ -60,8 +82,8 @@ class PoseRender():
             frame_copies = [frame.copy() for _ in range(len(video_writers))] # deep copy of frames to avoid overwriting
             model_idx = 0
 
-            for idx, (model_name, model_points_pair) in enumerate(models_point_pairs.items()): # for every model
-                frame_keypoints = video.pose_results[model_name].frames[frame_number]
+            for idx, (estimator_name, model_points_pair) in enumerate(self.estimators_point_pairs.items()): # for every model
+                frame_keypoints = video_pose_results[estimator_name].frames[frame_number]
                 frame_copies[idx] = self.draw_keypoints(frame_copies[idx], frame_keypoints, model_points_pair, COLORS[model_idx]) # draw keypoints on frame
                 video_writers[idx].write(frame_copies[idx]) # write rendered frame
                 model_idx += 1

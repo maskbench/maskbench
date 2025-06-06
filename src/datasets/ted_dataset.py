@@ -1,18 +1,16 @@
-from dataloader.dataset_loader import DatasetLoader
-from dataloader.video_sample import VideoSample 
-from pathlib import Path
-from typing import List
 import os
+from typing import List
+
+from .dataset import Dataset
+from .video_sample import VideoSample
 
 
-class TedDataloader(DatasetLoader):
-    def __init__(self, dataset_folder: str, shuffle: bool = False, batch_size: int = 1):
-        super().__init__(dataset_folder, shuffle, batch_size)
+class TedDataset(Dataset):
+    def __init__(self, dataset_folder: str):
+        super().__init__(dataset_folder)
         self.samples = self._load_samples()
         
     def _load_samples(self) -> List[VideoSample]:
-        # assuming videos and ground truths are named the same
-        # Collect video files
         video_extensions = (".avi", ".mp4")
         samples = []
 

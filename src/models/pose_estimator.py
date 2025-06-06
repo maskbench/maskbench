@@ -4,15 +4,15 @@ import cv2
 from inference.pose_result import VideoPoseResult
 
 class PoseEstimator(ABC):
-    def __init__(self, model_name: str, config: dict = None):
+    def __init__(self, name: str, config: dict = None):
         """
-        Initialize the PoseEstimator with a model name and configuration.
+        Initialize the PoseEstimator with a name and configuration.
         Args:
-            model_name (str): The name of the model (e.g. "yolo-pose-v8", "mediapipe", "openpose", ...).
-            config (dict): Configuration dictionary for the model. This can include arbitrary parameters for the model that are necessary for inference (e.g. "confidence_threshold", "weights_file_name", ...).
+            name (str): The name of the estimator (e.g. "yolo-pose-v8", "mediapipe", "openpose", ...).
+            config (dict): Configuration dictionary for the pose estimator. This can include arbitrary parameters for the model that are necessary for inference (e.g. "confidence_threshold", "weights_file_name", ...).
         """
 
-        self.model_name = model_name
+        self.name = name
         self.config = config if config else {}
 
     @abstractmethod
@@ -28,5 +28,5 @@ class PoseEstimator(ABC):
         pass
     
     @abstractmethod
-    def get_point_pairs(self) -> list:
+    def get_keypoint_pairs(self) -> list:
         pass

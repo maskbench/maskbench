@@ -1,4 +1,4 @@
-models:
+pose_estimators:
   - name: MediaPipePose
     enabled: true
     module: models.mediapipe_pose_estimator
@@ -19,10 +19,8 @@ models:
     module: models.open_pose_estimator
     class: OpenPoseEstimator      
 
-dataloader:
+dataset:
   name: TedTalks
-  module: dataloader.TED_dataloader
-  class: TedDataloader
+  module: datasets.ted_dataset
+  class: TedDataset
   dataset_folder: /datasets/ted-talks
-  batch_size: 1
-  shuffle: false

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from typing import List, Optional
-import numpy as np
 
 @dataclass
 class PoseKeypoint:
@@ -10,7 +9,7 @@ class PoseKeypoint:
 
 @dataclass
 class PersonPoseResult:
-    keypoints: List[PoseKeypoint]  # Fixed length per model (e.g., 17 for COCO)
+    keypoints: List[PoseKeypoint]  # Fixed length per pose estimator (e.g., 17 for COCO)
     id: Optional[int] = None # for tracking across frames
 
 @dataclass

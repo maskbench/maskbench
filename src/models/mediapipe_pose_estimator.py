@@ -6,20 +6,21 @@ import mediapipe as mp
 import utils
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions, RunningMode
-from inference.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
-from models.pose_estimator import PoseEstimator
+
+from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from models import PoseEstimator
 
 
 class MediaPipePoseEstimator(PoseEstimator):
-    def __init__(self, model_name: str, config: dict):
+    def __init__(self, name: str, config: dict):
         """
-        Initialize the MediaPipePoseEstimator with a model name and configuration.
+        Initialize the MediaPipePoseEstimator with a name and configuration.
         Args:
-            model_name (str): The name of the model (e.g. "mediapipe_pose").
-            config (dict): Configuration dictionary for the model. It must contain the key "weights" with the path to the weights file relative to the weights folder. 
+            estimator_name (str): The name of the estimator (e.g. "mediapipe_pose").
+            config (dict): Configuration dictionary for the estimator. It must contain the key "weights" with the path to the weights file relative to the weights folder. 
         """
 
-        super().__init__(model_name, config)
+        super().__init__(name, config)
 
         weights_file = self.config.get("weights")
         pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
@@ -40,7 +41,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         )
 
         
-    def get_point_pairs(self):
+    def get_keypoint_pairs(self):
         return [
         (0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8),
         (9, 10), (11, 12), (11, 13), (13, 15), (15, 19), (15, 17), (17, 19), (15, 21),
@@ -59,9 +60,9 @@ class MediaPipePoseEstimator(PoseEstimator):
         Returns:
             VideoPoseResult: A standardized result object containing the pose estimation results for the video.
         """
-        self.detector = PoseLandmarker.create_from_options(self.options) # init the model
+        self.detector = PoseLandmarker.create_from_options(self.options)
 
-        cap, video_metadata = utils.get_video_metadata(video_path) # get video metadata
+        cap, video_metadata = utils.get_video_metadata(video_path)
         width = video_metadata.get("width")
         height = video_metadata.get("height")
         fps = video_metadata.get("fps")
@@ -94,7 +95,7 @@ class MediaPipePoseEstimator(PoseEstimator):
             frame_number += 1
 
         cap.release()
-        self.detector.close() # close the model
+        self.detector.close()
 
         return VideoPoseResult(
             fps=fps,

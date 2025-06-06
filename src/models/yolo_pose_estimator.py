@@ -3,20 +3,20 @@ import torch
 import utils
 from ultralytics import YOLO
 
-from models.pose_estimator import PoseEstimator
-from inference.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from models import PoseEstimator
+from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 
 
 class YoloPoseEstimator(PoseEstimator):
-    def __init__(self, model_name: str, config: dict):
+    def __init__(self, name: str, config: dict):
         """
         Initialize the YoloPoseEstimator with a model name and configuration.
         Args:
-            model_name (str): The name of the model (e.g. "yolo-pose-v8", "yolo-pose-v11").
+            name (str): The name of the model (e.g. "yolo-pose-v8", "yolo-pose-v11").
             config (dict): Configuration dictionary for the model. It must contain the key "weights" with the path to the weights file relative to the weights folder. Note that MaskBench does not download the weights for you. Please visit https://docs.ultralytics.com/tasks/pose/ to download the weights.
         """
 
-        super().__init__(model_name, config)
+        super().__init__(name, config)
 
         weights_file = self.config.get("weights")
         pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
@@ -32,11 +32,10 @@ class YoloPoseEstimator(PoseEstimator):
         self.model = YOLO(weights_file_path)
         # only for dev
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print("yolo is using", device)
         self.model.to(device)
 
 
-    def get_point_pairs(self):
+    def get_keypoint_pairs(self):
         return [(15, 13), (16, 14),(13, 11),(12, 14),(11, 12),(11, 5),(12, 6),(5, 6),(5, 7),(6, 8),(7, 9),(8, 10),(0, 1),(0, 2),(1, 3),(2, 4)]
 
 
