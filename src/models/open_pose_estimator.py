@@ -5,7 +5,7 @@ import pickle
 
 import requests
 import utils
-from evaluation.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from inference.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models.pose_estimator import PoseEstimator
 
 class OpenPoseEstimator(PoseEstimator):

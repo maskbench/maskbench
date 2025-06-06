@@ -3,7 +3,7 @@ import uuid
 from typing import List, Optional 
 from pathlib import Path
 
-from evaluation.pose_result import VideoPoseResult
+from inference.pose_result import VideoPoseResult
 
 class VideoSample:
     def __init__(self, video_path: Path, gt_pose_path: Optional[Path] = None, metadata: Optional[dict] = None):

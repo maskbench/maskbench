@@ -3,16 +3,16 @@ import os
 import json
 
 from dataloader.video_sample import VideoSample
-from evaluation.pose_result import FramePoseResult
+from inference.pose_result import FramePoseResult
 
 COLORS = [ # these are colors that even color-blind people can see
-(0, 115, 178), # blue
-(204, 102, 0), # orange
-(0, 153, 127), # green-blue
-(242, 229, 64), # yellow
-(89, 178, 229), # cyan
-(204, 153, 178), # pink
-(229, 153, 0), # gold
+    (0, 115, 178), # blue
+    (204, 102, 0), # orange
+    (0, 153, 127), # green-blue
+    (242, 229, 64), # yellow
+    (89, 178, 229), # cyan
+    (204, 153, 178), # pink
+    (229, 153, 0), # gold
 ]
 
 class PoseRender():

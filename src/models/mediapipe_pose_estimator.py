@@ -6,7 +6,7 @@ import mediapipe as mp
 import utils
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import PoseLandmarker, PoseLandmarkerOptions, RunningMode
-from evaluation.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from inference.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models.pose_estimator import PoseEstimator
 
 

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import cv2
 
-from evaluation.pose_result import VideoPoseResult
+from inference.pose_result import VideoPoseResult
 
 class PoseEstimator(ABC):
     def __init__(self, model_name: str, config: dict = None):

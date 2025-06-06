@@ -4,7 +4,7 @@ import utils
 from ultralytics import YOLO
 
 from models.pose_estimator import PoseEstimator
-from evaluation.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from inference.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 
 
 class YoloPoseEstimator(PoseEstimator):
