@@ -9,7 +9,7 @@ class TedDataset(Dataset):
     def __init__(self, dataset_folder: str):
         super().__init__(dataset_folder)
         self.samples = self._load_samples()
-        
+
     def _load_samples(self) -> List[VideoSample]:
         video_extensions = (".avi", ".mp4")
         samples = []

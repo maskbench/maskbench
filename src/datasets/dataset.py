@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from .video_sample import VideoSample
-from inference import VideoPoseResult 
+from inference import VideoPoseResult
+
 
 class Dataset(ABC):
     def __init__(self, dataset_folder: str):

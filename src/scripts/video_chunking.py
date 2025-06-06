@@ -6,11 +6,30 @@ from moviepy import VideoFileClip
 
 def main():
     parser = argparse.ArgumentParser(description="Chunk a video into smaller segments.")
-    parser.add_argument("--video_path", type=str, help="The path to the input video file relative to the dataset directory configured in the .env file.")
-    parser.add_argument("--output_folder", type=str, default="", help="Path to the output folder for video chunks.")
-    parser.add_argument("--chunk_length", type=float, default=10, help="Duration of each video chunk in seconds (default: 10).")
-    parser.add_argument("--slide", type=float, default=0.01, help="Slide duration between chunks in seconds (default: 0.01).")
-    
+    parser.add_argument(
+        "--video_path",
+        type=str,
+        help="The path to the input video file relative to the dataset directory configured in the .env file.",
+    )
+    parser.add_argument(
+        "--output_folder",
+        type=str,
+        default="",
+        help="Path to the output folder for video chunks.",
+    )
+    parser.add_argument(
+        "--chunk_length",
+        type=float,
+        default=10,
+        help="Duration of each video chunk in seconds (default: 10).",
+    )
+    parser.add_argument(
+        "--slide",
+        type=float,
+        default=0.01,
+        help="Slide duration between chunks in seconds (default: 0.01).",
+    )
+
     args = parser.parse_args()
 
     chunk_length = args.chunk_length
@@ -36,10 +55,13 @@ def main():
             end = min(start + chunk_length, duration)
 
             chunk = video.subclipped(start, end)
-            chunk.write_videofile(os.path.join(out_dir, f"{video_file_name}_chunk{chunk_num}.mp4"))
+            chunk.write_videofile(
+                os.path.join(out_dir, f"{video_file_name}_chunk{chunk_num}.mp4")
+            )
 
             i += step
             chunk_num += 1
+
 
 if __name__ == "__main__":
     main()

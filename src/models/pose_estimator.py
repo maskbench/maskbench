@@ -3,6 +3,7 @@ import cv2
 
 from inference.pose_result import VideoPoseResult
 
+
 class PoseEstimator(ABC):
     def __init__(self, name: str, config: dict = None):
         """
@@ -21,12 +22,12 @@ class PoseEstimator(ABC):
         Abstract method to estimate the pose of a video using the specific pose estimation model.
         This method should be implemented by subclasses.
         Args:
-            video_path (str): The full path to the input video file. 
+            video_path (str): The full path to the input video file.
         Returns:
             list: A list of tensors containing the keypoints for each frame.
         """
         pass
-    
+
     @abstractmethod
     def get_keypoint_pairs(self) -> list:
         pass

@@ -21,23 +21,40 @@ class YoloPoseEstimator(PoseEstimator):
         weights_file = self.config.get("weights")
         pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
         user_weights_file_path = os.path.join("/weights/user_weights", weights_file)
-          
+
         if os.path.exists(pre_built_weights_file_path):
             weights_file_path = pre_built_weights_file_path
         elif os.path.exists(user_weights_file_path):
-            weights_file_path = user_weights_file_path 
+            weights_file_path = user_weights_file_path
         else:
-            raise ValueError(f"Could not find weights file under {weights_file}. Please download the weights from https://docs.ultralytics.com/tasks/pose/ and place them in the weights folder.")
+            raise ValueError(
+                f"Could not find weights file under {weights_file}. Please download the weights from https://docs.ultralytics.com/tasks/pose/ and place them in the weights folder."
+            )
 
         self.model = YOLO(weights_file_path)
         # only for dev
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model.to(device)
 
-
     def get_keypoint_pairs(self):
-        return [(15, 13), (16, 14),(13, 11),(12, 14),(11, 12),(11, 5),(12, 6),(5, 6),(5, 7),(6, 8),(7, 9),(8, 10),(0, 1),(0, 2),(1, 3),(2, 4)]
-
+        return [
+            (15, 13),
+            (16, 14),
+            (13, 11),
+            (12, 14),
+            (11, 12),
+            (11, 5),
+            (12, 6),
+            (5, 6),
+            (5, 7),
+            (6, 8),
+            (7, 9),
+            (8, 10),
+            (0, 1),
+            (0, 2),
+            (1, 3),
+            (2, 4),
+        ]
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -53,11 +70,13 @@ class YoloPoseEstimator(PoseEstimator):
         cap.release()
 
         confidence = self.config.get("confidence_threshold", 0.85)
-        results = self.model.track(video_path, conf=confidence, stream=True, verbose=False)
+        results = self.model.track(
+            video_path, conf=confidence, stream=True, verbose=False
+        )
 
         frame_results = []
         for frame_idx, result in enumerate(results):
-            if not result.keypoints: # if no keypoints detected
+            if not result.keypoints:  # if no keypoints detected
                 continue
 
             persons = []
@@ -72,7 +91,7 @@ class YoloPoseEstimator(PoseEstimator):
                     kp = PoseKeypoint(
                         x=xy[i, j, 0],
                         y=xy[i, j, 1],
-                        confidence=conf[i, j] if conf is not None else None
+                        confidence=conf[i, j] if conf is not None else None,
                     )
 
                     keypoints.append(kp)
@@ -83,6 +102,6 @@ class YoloPoseEstimator(PoseEstimator):
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
-            frames=frame_results
+            frames=frame_results,
         )
         return video_result
