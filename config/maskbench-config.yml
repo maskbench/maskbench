@@ -1,13 +1,13 @@
 models:
   - name: MediaPipePose
-    enabled: false
+    enabled: true
     module: models.mediapipe_pose_estimator
     class: MediaPipePoseEstimator
     config:
       weights: pose_landmarker_lite.task
 
   - name: YoloPose
-    enabled: false
+    enabled: true
     module: models.yolo_pose_estimator
     class: YoloPoseEstimator
     config:
@@ -23,7 +23,7 @@ models:
       overlay_strategy: mp_pose
       
   - name: OpenPose
-    enabled: false
+    enabled: true
     module: models.open_pose_estimator
     class: OpenPoseEstimator      
 
