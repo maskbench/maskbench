@@ -1,21 +1,29 @@
 models:
   - name: MediaPipePose
-    enabled: true
+    enabled: false
     module: models.mediapipe_pose_estimator
     class: MediaPipePoseEstimator
     config:
       weights: pose_landmarker_lite.task
 
   - name: YoloPose
-    enabled: true
+    enabled: false
     module: models.yolo_pose_estimator
     class: YoloPoseEstimator
     config:
       weights: yolo11n-pose.pt
       confidence_threshold: 0.85
-
-  - name: OpenPose
+  
+  - name: MaskAnyone
     enabled: true
+    module: models.maskanyone_pose_estimator
+    class: MaskAnyonePoseEstimator
+    config:
+      hiding_strategy: pixelation
+      overlay_strategy: mp_pose
+      
+  - name: OpenPose
+    enabled: false
     module: models.open_pose_estimator
     class: OpenPoseEstimator      
 

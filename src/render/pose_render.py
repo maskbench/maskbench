@@ -61,8 +61,11 @@ class PoseRender():
             model_idx = 0
 
             for idx, (model_name, model_points_pair) in enumerate(models_point_pairs.items()): # for every model
-                frame_keypoints = video.pose_results[model_name].frames[frame_number]
-                frame_copies[idx] = self.draw_keypoints(frame_copies[idx], frame_keypoints, model_points_pair, COLORS[model_idx]) # draw keypoints on frame
+                try: # in case no keypoints for this frame
+                    frame_keypoints = video.pose_results[model_name].frames[frame_number]
+                    frame_copies[idx] = self.draw_keypoints(frame_copies[idx], frame_keypoints, model_points_pair, COLORS[model_idx]) # draw keypoints on frame
+                except:
+                    pass
                 video_writers[idx].write(frame_copies[idx]) # write rendered frame
                 model_idx += 1
 
@@ -90,8 +93,8 @@ class PoseRender():
                     point1 = (int(person.keypoints[pair[0]].x), int(person.keypoints[pair[0]].y))
                     point2 = (int(person.keypoints[pair[1]].x), int(person.keypoints[pair[1]].y))
                 except IndexError:
-                    print(person.keypoints)
-
+                    print("error in pose renderer", person.keypoints)
+                
                 if point1 is None or point2 is None or \
                             point1[0] < 1 and point1[1] < 1 or \
                             point2[0] < 1 and point2[1] < 1:
