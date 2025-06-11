@@ -93,11 +93,11 @@ class PoseRender():
                     point1 = (int(person.keypoints[pair[0]].x), int(person.keypoints[pair[0]].y))
                     point2 = (int(person.keypoints[pair[1]].x), int(person.keypoints[pair[1]].y))
                 except IndexError:
-                    print("error", person.keypoints)
+                    print("error in pose renderer", person.keypoints)
+                
                 if point1 is None or point2 is None or \
                             point1[0] < 1 and point1[1] < 1 or \
                             point2[0] < 1 and point2[1] < 1:
-                    print("POINTS", point1, point2)
                     continue
                 cv2.line(frame, point1, point2, color=color, thickness=2) 
         

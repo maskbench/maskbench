@@ -8,8 +8,7 @@ from models.pose_estimator import PoseEstimator
 from models.postprocessing.maskanyone import combine_json_files
 from evaluation.pose_result import VideoPoseResult
 from video_chunker import VideoChunker
-from datetime import datetime
-
+import shutil
 
 class MaskAnyonePoseEstimator(PoseEstimator):
     def __init__(self, model_name: str, config: dict):
@@ -27,9 +26,7 @@ class MaskAnyonePoseEstimator(PoseEstimator):
         (23, 25), (24, 26), (25, 27), (26, 28), (23, 24),
         (28, 30), (28, 32), (30, 32), (27, 29), (27, 31), (29, 31)
         ]
-        # return [(15, 13), (16, 14),(13, 11),(12, 14),(11, 12),(11, 5),(12, 6),(5, 6),(5, 7),(6, 8),(7, 9),(8, 10),(0, 1),(0, 2),(1, 3),(2, 4)]
-    # [(0, 1), (0, 2), (1, 3), (2, 4), (5, 7), (6, 8), (7, 9), (8, 10), (5, 11), (6, 12), (11, 13), (12, 14), (13, 15), (14, 16), (15, 19), (19, 20), (15, 21), (16, 22), (22, 23), (16, 24), (5, 17), (6, 17), (11, 12), (17, 18), (5, 6)]
-
+        
     def estimate_pose(self, video_path: str) -> list:
         """
         Estimate the pose of a video using Mask Anyone estimation.
@@ -40,9 +37,9 @@ class MaskAnyonePoseEstimator(PoseEstimator):
             list: A list of lists containing the keypoints for each frame.
 
         """
-        current_time = str(datetime.now().strftime("%d %H:%M:%S"))
-        chunk_output_dir = "temp_chunk_dir" + current_time  # Temporary directory for video chunks
-        processed_output_dir = "temp_processed_dir" + current_time # Temporary directory for processed chunks
+        
+        chunk_output_dir = "temp_chunk_dir" # Temporary directory for video chunks
+        processed_output_dir = "temp_processed_dir" # Temporary directory for processed chunks
 
         _, video_metadata = utils.get_video_metadata(video_path) # get video metadata
         width = video_metadata.get("width")
@@ -57,8 +54,8 @@ class MaskAnyonePoseEstimator(PoseEstimator):
         frame_results = combine_json_files(processed_output_dir)  # Combine the JSON files from processed chunks
         print("Combined Chunks Json")
 
-        # shutil.rmtree(chunk_output_dir)  # Clean up temporary output directory
-        # shutil.rmtree(processed_output_dir)  # Clean up temporary output directory
+        shutil.rmtree(chunk_output_dir)  # Clean up temporary output directory
+        shutil.rmtree(processed_output_dir)  # Clean up temporary output directory
         
         return VideoPoseResult(
             fps=fps,
