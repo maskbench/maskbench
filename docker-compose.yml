@@ -18,6 +18,7 @@ services:
           - ${MASKBENCH_OUTPUT_DIR}:/output
         tty: true               # Keep the container running interactively
         stdin_open: true
+        restart: on-failure
         deploy:
           resources:
             reservations:

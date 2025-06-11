@@ -30,7 +30,6 @@ class VideoChunker:
         # These are locations within the docker container (mounted directories)
         # video_path = os.path.join("/datasets", video_path)
         os.makedirs(output_path, exist_ok=True)  # Ensure output directory exists
-        video_file_name = os.path.splitext(os.path.basename(video_path))[0]
         chunks = []
 
         with VideoFileClip(video_path, audio=False) as video: # we need to look into audio. writing chunk will change accordingly 
@@ -47,7 +46,7 @@ class VideoChunker:
 
                 if end - start > 0:
                     chunk = video.subclipped(start, end).without_audio()
-                    chunk.filename = f"{video_file_name}_chunk{chunk_num}.mp4"
+                    chunk.filename = f"chunk_{chunk_num}.mp4"
                     chunk_path = os.path.join(output_path, chunk.filename)
                     if not chunk.audio:
                         chunk.write_videofile(chunk_path, codec="libx264", audio=False)

@@ -1,4 +1,3 @@
-video_input_folder: /ted-talks
 models:
   - name: MediaPipePose
     enabled: false
@@ -23,6 +22,10 @@ models:
       hiding_strategy: pixelation
       overlay_strategy: mp_pose
       
+  - name: OpenPose
+    enabled: false
+    module: models.open_pose_estimator
+    class: OpenPoseEstimator      
 
 dataloader:
   name: TedTalks

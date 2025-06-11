@@ -12,22 +12,13 @@ class TedDataloader(DatasetLoader):
         
     def _load_samples(self) -> List[VideoSample]:
         # assuming videos and ground truths are named the same
-        videos_list = [os.path.join(self.dataset_folder, f) 
-        for f in os.listdir(self.dataset_folder) 
-        if f.lower().endswith((".avi", ".mp4"))]
-        
-        ground_truth_list = [os.path.join(self.dataset_folder, f)
-         for f in os.listdir(self.dataset_folder) 
-         if f.lower().endswith((".eaf", ".json"))]
-        
-        if not len(videos_list) == len(ground_truth_list):
-            print("# of Videos != # of Ground Truths")
-
+        # Collect video files
+        video_extensions = (".avi", ".mp4")
         samples = []
-        for video, ground_truth in zip(sorted(videos_list), sorted(ground_truth_list)):
-            print("adding", video, ground_truth)
-            samples.append(
-                VideoSample([video], ground_truth)
-            )
+
+        for filename in os.listdir(self.dataset_folder):
+            video_path = os.path.join(self.dataset_folder, filename)
+            if filename.endswith(video_extensions):
+                samples.append(VideoSample(video_path))
 
         return samples
