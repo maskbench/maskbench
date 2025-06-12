@@ -1,55 +1,69 @@
 import importlib
 import os
 import yaml
+from typing import List
 
-from video_chunker import VideoChunker
-from inference.engine import InferenceEngine
-from render.pose_render import PoseRender
+from datasets import Dataset
+from inference import InferenceEngine
+from models import PoseEstimator
+from rendering import PoseRenderer
+
 
 def main():
     config = load_config()
-    pose_estimator_specifications = config.get("models")
-    dataloader_specification = config.get("dataloader")
-    pose_render = PoseRender()
+    pose_estimator_specifications = config.get("pose_estimators")
+    dataset_specification = config.get("dataset")
 
-    dataloader = load_dataloader(dataloader_specification)
+    dataset = load_dataset(dataset_specification)
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
-    print(f"Available Pose Estimators: {pose_estimators.keys()}")
+    print("Avaliable pose estimators:", [est.name for est in pose_estimators])
 
-    inference_engine = InferenceEngine(dataloader, pose_estimators)
-    inference_engine.estimate_pose_keypoints() # processing
-    inference_engine.render_all_videos(pose_render) #rendering
+    run(dataset, pose_estimators)
+
     print("Done")
 
-def load_config():
+
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator]):
+    inference_engine = InferenceEngine(dataset, pose_estimators)
+    pose_results = inference_engine.estimate_pose_keypoints()
+    gt_pose_results = dataset.get_gt_pose_results()
+
+    estimators_point_pairs = {
+        est.name: est.get_keypoint_pairs() for est in pose_estimators
+    }
+    pose_renderer = PoseRenderer(dataset, estimators_point_pairs)
+    pose_renderer.render_all_videos(pose_results)
+
+
+def load_config() -> dict:
     config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")
     config_file_path = os.path.join("/config", config_file_name)
-    
-    with open(config_file_path, 'r') as f:
+
+    with open(config_file_path, "r") as f:
         config = yaml.safe_load(f)
 
     if config is None:
         raise ValueError("Configuration file is empty or not found.")
-    
+
     return config
 
 
-def load_dataloader(dataloader_specification: dict):
-    shuffle = dataloader_specification.get("shuffle", False)
-    batch_size = dataloader_specification.get("batch_size", 1)
-    dataset_folder = dataloader_specification.get("dataset_folder", "/datasets")
-    
+def load_dataset(dataset_specification: dict) -> Dataset:
+    dataset_folder = dataset_specification.get("dataset_folder", "/datasets")
+
     try:
-        dataloader_module = importlib.import_module(dataloader_specification.get("module"))
-        dataloader_class = getattr(dataloader_module, dataloader_specification.get("class"))
-        dataloader = dataloader_class(dataset_folder, shuffle, batch_size) # initialize dataloader
+        dataset_module = importlib.import_module(dataset_specification.get("module"))
+        dataset_class = getattr(dataset_module, dataset_specification.get("class"))
+        dataset = dataset_class(dataset_folder)  # initialize dataset
     except (ImportError, AttributeError, TypeError) as e:
-        print(f"Error instantiating dataloader {dataloader_specification.get("name")}: {e}")
+        print(f"Error instantiating dataset {dataset_specification.get('name')}: {e}")
+        raise e
 
-    return dataloader
+    return dataset
 
-def load_pose_estimators(pose_estimator_specifications: list):
-    pose_estimators = {}
+
+def load_pose_estimators(pose_estimator_specifications: dict) -> List[PoseEstimator]:
+    pose_estimators = []
     for spec in pose_estimator_specifications:
         estimator_name = spec.get("name")
         estimator_config = spec.get("config", {})
@@ -62,11 +76,12 @@ def load_pose_estimators(pose_estimator_specifications: list):
             estimator_module = importlib.import_module(spec.get("module"))
             estimator_class = getattr(estimator_module, spec.get("class"))
             pose_estimator = estimator_class(estimator_name, estimator_config)
-            pose_estimators[estimator_name] = pose_estimator
+            pose_estimators.append(pose_estimator)
         except (ImportError, AttributeError, TypeError) as e:
             print(f"Error instantiating pose estimator {estimator_name}: {e}")
 
     return pose_estimators
+
 
 if __name__ == "__main__":
     main()

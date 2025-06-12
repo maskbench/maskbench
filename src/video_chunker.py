@@ -15,7 +15,6 @@ class VideoChunker:
         self.chunk_length = chunk_length
         self.slide = slide
 
-
     def chunk_video(self, video_path: str) -> list:
         """
         Chunk the video into smaller segments of specified length.
