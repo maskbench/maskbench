@@ -28,8 +28,10 @@ class VideoPoseResult:
         frame_width: int,
         frame_height: int,
         frames: List[FramePoseResult],
+        video_name: str,
     ):
         self.fps = fps
         self.frame_width = frame_width
         self.frame_height = frame_height
         self.frames = frames
+        self.video_name = video_name
