@@ -6,8 +6,17 @@ import cv2
 
 def main():
     parser = argparse.ArgumentParser(description="Run YOLOE on a video file.")
-    parser.add_argument("--video_path", type=str, help="The path to the input video file relative to the dataset directory configured in the .env file.")
-    parser.add_argument("--model", choices=["yolo-pose", "yoloe"], default="yoloe", help="The model to use: 'yolo-pose' (uses yolov8n-pose) or 'yoloe' (uses yolov-11l-seg-pf).")
+    parser.add_argument(
+        "--video_path",
+        type=str,
+        help="The path to the input video file relative to the dataset directory configured in the .env file.",
+    )
+    parser.add_argument(
+        "--model",
+        choices=["yolo-pose", "yoloe"],
+        default="yoloe",
+        help="The model to use: 'yolo-pose' (uses yolov8n-pose) or 'yoloe' (uses yolov-11l-seg-pf).",
+    )
     args = parser.parse_args()
 
     # These are locations within the docker container (mounted directories)
@@ -25,7 +34,6 @@ def main():
         results = model.track(video_path, conf=0.85, stream=True)
     else:
         raise ValueError("Invalid model choice. Use 'yolo-pose' or 'yoloe'.")
-
 
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -46,6 +54,7 @@ def main():
     if writer:
         writer.release()
         print("Video saved to", output_path)
+
 
 if __name__ == "__main__":
     main()

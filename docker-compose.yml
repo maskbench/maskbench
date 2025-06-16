@@ -7,7 +7,7 @@ services:
         depends_on:
           - openpose
           - sam2
-          - maskanyone
+          - maskanyone_api
         volumes:
           - ./src:/src          
           - ./poetry.lock:/poetry.lock 
@@ -24,7 +24,7 @@ services:
             reservations:
               devices:
                 - driver: nvidia
-                  device_ids: ['1']
+                  device_ids: ["${MASKBENCH_GPU_ID:-0}"]
                   capabilities: [ gpu ]
     
     sam2:
@@ -57,11 +57,12 @@ services:
       restart: on-failure
       environment:
         OPENPOSE_MODEL_DIR: "/workspace/openpose/models"
+        NVIDIA_VISIBLE_DEVICES: ${MASKBENCH_GPU_IDS:-all}
       deploy:
         resources:
           reservations:
             devices:
               - driver: nvidia
-                device_ids: ['1']
+                device_ids: ["${MASKBENCH_GPU_ID:-0}"]
                 capabilities: [ gpu ]
 

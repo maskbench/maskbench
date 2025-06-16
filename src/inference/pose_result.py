@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Optional
-import numpy as np
+
 
 @dataclass
 class PoseKeypoint:
@@ -8,10 +8,12 @@ class PoseKeypoint:
     y: float
     confidence: Optional[float] = None
 
+
 @dataclass
 class PersonPoseResult:
-    keypoints: List[PoseKeypoint]  # Fixed length per model (e.g., 17 for COCO)
-    id: Optional[int] = None # for tracking across frames
+    keypoints: List[PoseKeypoint]  # Fixed length per pose estimator (e.g., 17 for COCO)
+    id: Optional[int] = None  # for tracking across frames
+
 
 @dataclass
 class FramePoseResult:
@@ -20,7 +22,13 @@ class FramePoseResult:
 
 
 class VideoPoseResult:
-    def __init__(self, fps: int, frame_width: int, frame_height: int, frames: List[FramePoseResult]):
+    def __init__(
+        self,
+        fps: int,
+        frame_width: int,
+        frame_height: int,
+        frames: List[FramePoseResult],
+    ):
         self.fps = fps
         self.frame_width = frame_width
         self.frame_height = frame_height

@@ -9,9 +9,17 @@ import argparse
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run MediaPipe Pose Landmarker on a video file.")
-    parser.add_argument("--video_path", type=str, help="The path to the input video file relative to the dataset directory configured in the .env file.")
-    parser.add_argument("--model_path", type=str, help="The path to the pose landmarker model file.")
+    parser = argparse.ArgumentParser(
+        description="Run MediaPipe Pose Landmarker on a video file."
+    )
+    parser.add_argument(
+        "--video_path",
+        type=str,
+        help="The path to the input video file relative to the dataset directory configured in the .env file.",
+    )
+    parser.add_argument(
+        "--model_path", type=str, help="The path to the pose landmarker model file."
+    )
     args = parser.parse_args()
 
     video_path = os.path.join("/datasets", args.video_path)
@@ -34,7 +42,7 @@ def main():
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter(video_output_path, fourcc, fps, (width, height))
 
     BaseOptions = mp.tasks.BaseOptions
@@ -45,14 +53,13 @@ def main():
     options = PoseLandmarkerOptions(
         base_options=python.BaseOptions(model_asset_path=model_path),
         running_mode=VisionRunningMode.VIDEO,
-        output_segmentation_masks=False
+        output_segmentation_masks=False,
     )
 
-    
     landmarker = PoseLandmarker.create_from_options(options)
-    
+
     csv_data = []
-    csv_data.append(['frame', 'landmark', 'x', 'y', 'z', 'visibility'])
+    csv_data.append(["frame", "landmark", "x", "y", "z", "visibility"])
 
     frame_number = 0
     while cap.isOpened():
@@ -66,29 +73,34 @@ def main():
         result = landmarker.detect_for_video(mp_image, int(frame_number * 1000 / fps))
 
         if result.pose_landmarks:
-            for person_landmarks in result.pose_landmarks:  
-            
-                for landmark_idx, landmark in enumerate(person_landmarks):  
+            for person_landmarks in result.pose_landmarks:
+
+                for landmark_idx, landmark in enumerate(person_landmarks):
                     x_px = int(landmark.x * width)
                     y_px = int(landmark.y * height)
                     cv2.circle(frame, (x_px, y_px), 4, (0, 255, 0), -1)
 
-                    csv_data.append([
-                        frame_number,
-                        f"Landmark_{landmark_idx}",
-                        landmark.x, landmark.y, landmark.z, landmark.visibility
-                    ])
+                    csv_data.append(
+                        [
+                            frame_number,
+                            f"Landmark_{landmark_idx}",
+                            landmark.x,
+                            landmark.y,
+                            landmark.z,
+                            landmark.visibility,
+                        ]
+                    )
 
         out.write(frame)
 
         frame_number += 1
-        print(f"Processed frame {frame_number}/{total_frames}", end='\r')
+        print(f"Processed frame {frame_number}/{total_frames}", end="\r")
 
     cap.release()
     out.release()
     cv2.destroyAllWindows()
 
-    with open(csv_path, mode='w', newline='') as f:
+    with open(csv_path, mode="w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(csv_data)
 
@@ -97,5 +109,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    
