@@ -7,26 +7,34 @@ from datasets import Dataset
 from inference import InferenceEngine
 from models import PoseEstimator
 from rendering import PoseRenderer
+from evaluation import Evaluator
+from evaluation.metrics import Metric
 
 
 def main():
     config = load_config()
-    pose_estimator_specifications = config.get("pose_estimators")
-    dataset_specification = config.get("dataset")
+    dataset_specification = config.get("dataset", {})
+    pose_estimator_specifications = config.get("pose_estimators", [])
+    metric_specifications = config.get("metrics", [])
 
     dataset = load_dataset(dataset_specification)
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
     print("Avaliable pose estimators:", [est.name for est in pose_estimators])
 
-    run(dataset, pose_estimators)
+    metrics = load_metrics(metric_specifications)
+    print("Avaliable metrics:", [metric.name for metric in metrics])
+    run(dataset, pose_estimators, metrics)
 
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator]):
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric]):
     inference_engine = InferenceEngine(dataset, pose_estimators)
     pose_results = inference_engine.estimate_pose_keypoints()
     gt_pose_results = dataset.get_gt_pose_results()
+
+    evaluator = Evaluator(metrics=metrics)
+    results = evaluator.evaluate(pose_results, gt_pose_results)
 
     estimators_point_pairs = {
         est.name: est.get_keypoint_pairs() for est in pose_estimators
@@ -81,6 +89,23 @@ def load_pose_estimators(pose_estimator_specifications: dict) -> List[PoseEstima
             print(f"Error instantiating pose estimator {estimator_name}: {e}")
 
     return pose_estimators
+
+
+def load_metrics(metric_specifications: List[dict]) -> List[Metric]:
+    metrics = []
+    for spec in metric_specifications:
+        metric_name = spec.get("name")
+        metric_config = spec.get("config", {})
+
+        try:
+            metric_module = importlib.import_module(spec.get("module"))
+            metric_class = getattr(metric_module, spec.get("class"))
+            metric = metric_class(config=metric_config)
+            metrics.append(metric)
+        except (ImportError, AttributeError, TypeError) as e:
+            print(f"Error instantiating metric {metric_name}: {e}")
+
+    return metrics
 
 
 if __name__ == "__main__":
