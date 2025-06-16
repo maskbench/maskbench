@@ -55,7 +55,11 @@ class VideoPoseResult:
         # Get dimensions
         num_frames = len(self.frames)
         max_persons = max(len(frame.persons) for frame in self.frames)
-        num_keypoints = len(self.frames[0].persons[0].keypoints) if self.frames[0].persons else 0
+        num_keypoints = max(
+            len(person.keypoints)
+            for frame in self.frames
+            for person in frame.persons
+        ) if any(frame.persons for frame in self.frames) else 0
         
         if max_persons == 0 or num_keypoints == 0:
             print("Warning: No persons or keypoints found in video pose result.")
