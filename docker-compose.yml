@@ -41,7 +41,7 @@ services:
                 device_ids: ['1']
                 capabilities: [ gpu ]
   
-    maskanyone:
+    maskanyone_api:
       image: ghcr.io/maskanyone/maskanyone/api:${MASK_ANYONE_VERSION}
       restart: on-failure
       deploy:

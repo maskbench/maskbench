@@ -13,10 +13,10 @@ import shutil
 class MaskAnyonePoseEstimator(PoseEstimator):
     def __init__(self, model_name: str, config: dict):
         """
-        Initialize the OpenPoseEstimator with a model name and configuration.
+        Initialize the MaskAnyoneAPIPoseEstimator with a model name and configuration.
         """
         super().__init__(model_name, config)
-        self.docker_url = "http://maskanyone:8000/mask-video"
+        self.docker_url = "http://maskanyone_api:8000/mask-video"
         
     def get_point_pairs(self):
         return [
