@@ -29,7 +29,7 @@ class VideoChunker:
         os.makedirs(output_path, exist_ok=True)  # Ensure output directory exists
         chunks = []
 
-        with VideoFileClip(video_path, audio=False) as video: # we need to look into audio. writing chunk will change accordingly 
+        with VideoFileClip(video_path, audio=False) as video:
             if not video:
                 raise ValueError(f"Could not open video file: {video_path}")
             duration = video.duration
