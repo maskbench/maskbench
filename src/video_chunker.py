@@ -26,9 +26,6 @@ class VideoChunker:
         Returns:
             list: A list video file chunks.
         """
-
-        # These are locations within the docker container (mounted directories)
-        # video_path = os.path.join("/datasets", video_path)
         os.makedirs(output_path, exist_ok=True)  # Ensure output directory exists
         chunks = []
 
