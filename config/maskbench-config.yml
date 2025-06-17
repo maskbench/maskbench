@@ -14,6 +14,13 @@ pose_estimators:
       weights: yolo11n-pose.pt
       confidence_threshold: 0.85
 
+  - name: MaskAnyoneUi
+    enabled: true
+    module: models.maskanyone_ui_pose_estimator
+    class: MaskAnyoneUiPoseEstimator  
+    config:
+      dataset_folder_path: /maskanyone_ui/dataset    
+
   - name: OpenPose
     enabled: true
     module: models.open_pose_estimator

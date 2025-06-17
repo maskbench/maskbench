@@ -21,8 +21,12 @@ class InferenceEngine:
                 print(f"Running estimator '{estimator.name}' on video {video.path}")
 
                 start_time = time.time()
-                video_pose_result = estimator.estimate_pose(video.path)
-                results[estimator.name].append(video_pose_result)
+                try:
+                    video_pose_result = estimator.estimate_pose(video.path)
+                    results[estimator.name].append(video_pose_result)
+                except Exception as e:
+                    print(f"Faced Exception: {e} on Video: {video}")
+                    
                 end_time = time.time()
 
                 print(f"Inference time: '{estimator.name}': {end_time - start_time}")
