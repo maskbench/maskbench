@@ -95,15 +95,16 @@ class PoseRenderer:
             for idx, (estimator_name, model_points_pair) in enumerate(
                 self.estimators_point_pairs.items()
             ):  # for every model
-                frame_keypoints = video_pose_results[estimator_name].frames[
-                    frame_number
-                ]
-                frame_copies[idx] = self.draw_keypoints(
-                    frame_copies[idx],
-                    frame_keypoints,
-                    model_points_pair,
-                    COLORS[model_idx],
-                )  # draw keypoints on frame
+                try:
+                    frame_keypoints = video_pose_results[estimator_name].frames[frame_number]
+                    frame_copies[idx] = self.draw_keypoints(
+                        frame_copies[idx],
+                        frame_keypoints,
+                        model_points_pair,
+                        COLORS[model_idx],
+                    )  # draw keypoints on frame
+                except:
+                    print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
                 video_writers[idx].write(frame_copies[idx])  # write rendered frame
                 model_idx += 1
 
@@ -125,31 +126,23 @@ class PoseRenderer:
                 continue
 
             for keypoint in person.keypoints:  # every keypoint
-                center = (int(keypoint.x), int(keypoint.y))
-                cv2.circle(frame, center, 4, color, -1)  # draw the keypoint
+                if keypoint:
+                    center = (int(keypoint.x), int(keypoint.y))
+                    cv2.circle(frame, center, 4, color, -1)  # draw the keypoint
 
             for pair in point_pairs:  # add lines between keypoints
                 try:
-                    point1 = (
-                        int(person.keypoints[pair[0]].x),
-                        int(person.keypoints[pair[0]].y),
-                    )
-                    point2 = (
-                        int(person.keypoints[pair[1]].x),
-                        int(person.keypoints[pair[1]].y),
-                    )
-                except IndexError:
-                    print(person.keypoints)
-
-                if (
-                    point1 is None
-                    or point2 is None
-                    or point1[0] < 1
-                    and point1[1] < 1
-                    or point2[0] < 1
-                    and point2[1] < 1
-                ):
+                    point1 = person.keypoints[pair[0]]
+                    point2 = person.keypoints[pair[1]]
+                except:
                     continue
+
+                if (point1 is None) or (point2 is None) or \
+                    (point1.x < 1) and (point1.y < 1) or (point2.x < 1) and (point2.y < 1):
+                    continue
+
+                point1 = (int(point1.x), int(point1.y))
+                point2 = (int(point2.x), int(point2.y))
                 cv2.line(frame, point1, point2, color=color, thickness=2)
 
         return frame
