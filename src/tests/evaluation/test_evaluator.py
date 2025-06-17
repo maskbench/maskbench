@@ -5,7 +5,7 @@ import numpy.ma as ma
 from evaluation.evaluator import Evaluator
 from evaluation.metrics import Metric, MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
 from inference.pose_result import VideoPoseResult, FramePoseResult, PersonPoseResult, PoseKeypoint
-from tests.utils import create_test_pose_result
+from tests.utils import create_example_video_pose_result
 
 
 class XCoordinateMappingMetric(Metric):
@@ -54,14 +54,14 @@ class TestEvaluator(unittest.TestCase):
         video1_poses = [
             # Frame 0: 2 persons
             [
-                [[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]],  # Person 1: x=1,2,3
-                [[4.0, 4.0], [5.0, 5.0], [6.0, 6.0]]   # Person 2: x=4,5,6
+                [(1.0, 1.0), (2.0, 2.0), (3.0, 3.0)],
+                [(4.0, 4.0), (5.0, 5.0), (6.0, 6.0)]
             ],
             # Frame 1: 3 persons
             [
-                [[7.0, 7.0], [8.0, 8.0], [9.0, 9.0]],    # Person 1: x=7,8,9
-                [[10.0, 10.0], [11.0, 11.0], [12.0, 12.0]],  # Person 2: x=10,11,12
-                [[13.0, 13.0], [14.0, 14.0], [15.0, 15.0]]   # Person 3: x=13,14,15
+                [(7.0, 7.0), (8.0, 8.0), (9.0, 9.0)],
+                [(10.0, 10.0), (11.0, 11.0), (12.0, 12.0)],
+                [(13.0, 13.0), (14.0, 14.0), (15.0, 15.0)]
             ]
         ]
         
@@ -69,25 +69,22 @@ class TestEvaluator(unittest.TestCase):
         video2_poses = [
             # Frame 0: 1 person
             [
-                [[16.0, 16.0], [17.0, 17.0], [18.0, 18.0]]  # Person 1: x=16,17,18
+                [(16.0, 16.0), (17.0, 17.0), (18.0, 18.0)]
             ],
             # Frame 1: 2 persons
             [
-                [[19.0, 19.0], [20.0, 20.0], [21.0, 21.0]],  # Person 1: x=19,20,21
-                [[22.0, 22.0], [23.0, 23.0], [24.0, 24.0]]   # Person 2: x=22,23,24
+                [(19.0, 19.0), (20.0, 20.0), (21.0, 21.0)],
+                [(22.0, 22.0), (23.0, 23.0), (24.0, 24.0)]
             ]
         ]
         
-        # Create VideoPoseResult objects using the utility function
-        self.video1 = create_test_pose_result(video1_poses, video_name="video1")
-        self.video2 = create_test_pose_result(video2_poses, video_name="video2")
+        self.video1 = create_example_video_pose_result(video1_poses, video_name="video1")
+        self.video2 = create_example_video_pose_result(video2_poses, video_name="video2")
         
-        # Create model results
         self.model_results = {
             "model1": [self.video1, self.video2]
         }
         
-        # Create evaluator with our test metric
         self.evaluator = Evaluator(metrics=[XCoordinateMappingMetric()])
     
     def test_evaluate_model(self):
