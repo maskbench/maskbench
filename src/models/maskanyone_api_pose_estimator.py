@@ -81,7 +81,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         frame_results = self.combine_json_files(self.processed_output_dir)  # Combine the JSON files from processed chunks
 
         shutil.rmtree(self.chunk_output_dir)  # Clean up temporary output directory
-        # shutil.rmtree(self.processed_output_dir)  # Clean up temporary output directory
+        shutil.rmtree(self.processed_output_dir)  # Clean up temporary output directory
         
         return VideoPoseResult(
             fps=video_metadata.get("fps"),
@@ -126,7 +126,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
                         with zipfile.ZipFile(zip_content, 'r') as zip_file:
                             zip_file.extractall(output_dir)  # Extract to the 'output' directory
                     else:
-                        print(f"Received Response Status Code: {response}")
+                        print(f"Received Response Status Code: {response.status_code}")
                 except Exception as e:
                     print(f"Error in MaskAnyone API for {chunk_path}: {e}")
     
