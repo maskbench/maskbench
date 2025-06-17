@@ -16,7 +16,7 @@ services:
           - ${MASKBENCH_WEIGHTS_DIR}:/weights/user_weights
           - ${MASKBENCH_DATASET_DIR}:/datasets  
           - ${MASKBENCH_OUTPUT_DIR}:/output
-        tty: true               # Keep the container running interactively
+        tty: true              # Keep the container running interactively
         stdin_open: true
         restart: on-failure
         deploy:
