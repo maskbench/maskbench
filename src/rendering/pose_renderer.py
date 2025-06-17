@@ -116,12 +116,10 @@ class PoseRenderer:
     ):
         """Draw keypoints and join keypoint pairs on 1 frame"""
         if not frame_pose_result.persons:  # if this frame has no keypoints
-            print("this has no keypoints", frame_pose_result.persons)
             return frame
 
         for person in frame_pose_result.persons:  # every person
             if not person or not person.keypoints:
-                print("this person has no keypoints", person)
                 continue
 
             for keypoint in person.keypoints:  # every keypoint
@@ -134,7 +132,6 @@ class PoseRenderer:
                     point1 = person.keypoints[pair[0]]
                     point2 = person.keypoints[pair[1]]
                 except:
-                    print(f"{pair} not found in keypoints {person.keypoints}")
                     continue
                 
                 if (point1 is None) or (point2 is None) or \
