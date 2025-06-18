@@ -27,7 +27,13 @@ pose_estimators:
     class: OpenPoseEstimator      
 
 dataset:
-  name: TedTalks
-  module: datasets.ted_dataset
-  class: TedDataset
-  dataset_folder: /datasets/ted-talks
+  name: TragicTalkers
+  module: datasets.tragic_talkers_dataset
+  class: TragicTalkersDataset
+  dataset_folder: /datasets/tragic_talkers
+
+# dataset:
+#   name: TedTalks
+#   module: datasets.ted_dataset
+#   class: TedDataset
+#   dataset_folder: /datasets/ted-talks
