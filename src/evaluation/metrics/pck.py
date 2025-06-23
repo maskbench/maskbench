@@ -3,7 +3,7 @@ import numpy.ma as ma
 from typing import Dict, Optional, Any
 
 from .metric import Metric
-from .metric_result import MetricResult
+from .metric_result import FRAME_AXIS, MetricResult
 from inference.pose_result import VideoPoseResult
 
 
@@ -41,7 +41,7 @@ class PCKMetric(Metric):
         pred_poses = video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
         gt_poses = gt_video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
 
-
+        values = []
         for frame_idx in range(pred_poses.shape[0]):
             pred_poses_frame = pred_poses[frame_idx]
             gt_poses_frame = gt_poses[frame_idx]
@@ -61,8 +61,15 @@ class PCKMetric(Metric):
 
             distances = self._calculate_distances_for_frame(pred_poses_frame, gt_poses_frame, norm_factors)
             percentage_correct = (distances < self.threshold).sum() / distances.size
-            # TODO: this currently returns a float but no MetricResult, should return a MetricResult    
-            return percentage_correct
+            values.append(percentage_correct)
+
+        return MetricResult(
+            values=np.array(values),
+            axis_names=[FRAME_AXIS],
+            metric_name=self.name,
+            video_name=video_result.video_name,
+            model_name=model_name,
+        )
 
     def _calculate_distances_for_frame(self, pred_poses: ma.MaskedArray, gt_poses: ma.MaskedArray, norm_factors: np.ndarray) -> ma.MaskedArray:
         """
