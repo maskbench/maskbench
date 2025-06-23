@@ -55,8 +55,9 @@ class OpenPoseEstimator(PoseEstimator):
             VideoPoseResult: A standardized result object containing the pose estimation results for the video.
         """
         pose_data, video_metadata = self._query_openpose_container(video_path)
+        video_name = os.path.splitext(os.path.basename(video_path))[0]
         video_pose_result = self._convert_to_video_pose_result(
-            pose_data, video_metadata
+            pose_data, video_metadata, video_name
         )
         return video_pose_result
 
@@ -88,7 +89,7 @@ class OpenPoseEstimator(PoseEstimator):
         return pose_data, video_metadata
 
     def _convert_to_video_pose_result(
-        self, pose_data, video_metadata: dict
+        self, pose_data, video_metadata: dict, video_name: str
     ) -> VideoPoseResult:
         frame_results = []
         for idx, frame in enumerate(pose_data):  # every frame
@@ -110,4 +111,5 @@ class OpenPoseEstimator(PoseEstimator):
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
             fps=video_metadata.get("fps"),
+            video_name=video_name
         )

@@ -1,3 +1,9 @@
+dataset:
+  name: TedTalks
+  module: datasets.ted_dataset
+  class: TedDataset
+  dataset_folder: /datasets/ted-talks
+
 pose_estimators:
   - name: MediaPipePose
     enabled: true
@@ -19,8 +25,8 @@ pose_estimators:
     module: models.open_pose_estimator
     class: OpenPoseEstimator      
 
-dataset:
-  name: TedTalks
-  module: datasets.ted_dataset
-  class: TedDataset
-  dataset_folder: /datasets/ted-talks
+
+metrics:
+  - name: DummyMetric
+    module: evaluation.metrics.metric
+    class: DummyMetric
