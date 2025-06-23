@@ -12,8 +12,7 @@ class PCKMetric(Metric):
     PCK (Percentage of Correct Keypoints) metric.
     Args:
         config: Configuration for the PCK metric. It must contain the following fields:
-            - keypoint_format: The format of the keypoints. Currently only "coco" is supported.
-            - threshold: The threshold for the PCK metric. Default is 0.2.
+            - threshold: The threshold for the PCK metric.
             - normalize_by: The normalization strategy to use. Can be "bbox", "head" or "torso". Default is "bbox".
     """
     
@@ -24,6 +23,8 @@ class PCKMetric(Metric):
             raise ValueError("Config is required for PCK computation")
         if config["normalize_by"] not in ["bbox", "head", "torso"]:
             raise ValueError("Invalid normalization strategy. Must be one of 'bbox', 'head' or 'torso'")
+        if config["normalize_by"] == "head" or config["normalize_by"] == "torso":
+            raise NotImplementedError("Head and torso normalization is not implemented yet.")
 
         self.normalize_by = config["normalize_by"]
         self.threshold = config["threshold"]
@@ -46,7 +47,6 @@ class PCKMetric(Metric):
         if gt_video_result is None:
             raise ValueError("Ground truth video result is required for PCK computation")
             
-        # TODO: add to method that undetected keypoints or keypoints with low confidence should be masked
         pred_poses = video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
         gt_poses = gt_video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
 
@@ -57,16 +57,11 @@ class PCKMetric(Metric):
 
             pred_poses_frame = self._sort_predictions_by_ground_truth(pred_poses_frame, gt_poses_frame)
             
-
             norm_factors = None # shape: (N,)
             if self.normalize_by == "bbox":
                 norm_factors = self.calculate_bbox_sizes_for_persons_in_frame(gt_poses_frame)
-            elif self.normalize_by == "head":
-                raise NotImplementedError("Head normalization is not implemented yet")
-            elif self.normalize_by == "torso":
-                raise NotImplementedError("Torso normalization is not implemented yet")
-
-            
+            else:
+                raise NotImplementedError("Normalization by head or torso is not implemented yet.")
             norm_factors = np.array([norm_factors, norm_factors]).reshape(gt_poses_frame.shape[0], 2)
 
             distances = self._calculate_distances_for_frame(pred_poses_frame, gt_poses_frame, norm_factors)
@@ -94,7 +89,6 @@ class PCKMetric(Metric):
                         and each pose has K keypoints with x,y coordinates.
             norm_factors: Normalization factors for each person of shape (N,).
         """
-
         N, K, _ = gt_poses.shape
         M, _, _ = pred_poses.shape
 
@@ -110,7 +104,6 @@ class PCKMetric(Metric):
             diff[:n_pred] = gt_poses[:n_pred] - pred_poses[:n_pred]
 
         diff_norm = diff / norm_factors[:, None, :]
-
         distances = np.linalg.norm(diff_norm, axis=-1)
         return distances
 
@@ -126,14 +119,11 @@ class PCKMetric(Metric):
             np.ndarray: Array of shape (M,) containing the bounding box size for each person,
                        calculated as the maximum of width and height of the bounding box.
         """
-        # Get min/max x,y coordinates for each person
         min_coords = gt_poses.min(axis=1)  # Shape: (M, 2)
         max_coords = gt_poses.max(axis=1)  # Shape: (M, 2)
         
-        # Calculate width and height of bounding boxes
         widths = max_coords[..., 0] - min_coords[..., 0]  # Shape: (M,)
         heights = max_coords[..., 1] - min_coords[..., 1]  # Shape: (M,)
         
-        # Return the maximum of width and height for each person
         return np.maximum(widths, heights)
         
