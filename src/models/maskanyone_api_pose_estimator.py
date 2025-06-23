@@ -18,8 +18,8 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         """
         super().__init__(name, config)
         self.docker_url = "http://maskanyone_api:8000/mask-video"
-        self.chunk_output_dir = "temp_chunk_dir" # Temporary directory for video chunks
-        self.processed_output_dir = "temp_processed_dir" # Temporary directory for processed chunks
+        self.chunk_output_dir = "/tmp/chunks" # Temporary directory for video chunks
+        self.processed_output_dir = "/tmp/processed_chunks" # Temporary directory for processed chunks
 
     def get_keypoint_pairs(self):
         return [
