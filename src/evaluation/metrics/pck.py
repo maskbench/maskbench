@@ -3,7 +3,7 @@ import numpy.ma as ma
 from typing import Dict, Optional, Any
 
 from .metric import Metric
-from .metric_result import MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
+from .metric_result import MetricResult
 from inference.pose_result import VideoPoseResult
 
 
@@ -57,10 +57,11 @@ class PCKMetric(Metric):
                 raise NotImplementedError("Torso normalization is not implemented yet")
 
             
-            norm_factors = np.array([norm_factors, norm_factors]).reshape(-1, 2)
+            norm_factors = np.array([norm_factors, norm_factors]).reshape(gt_poses_frame.shape[0], 2)
 
             distances = self._calculate_distances_for_frame(pred_poses_frame, gt_poses_frame, norm_factors)
             percentage_correct = (distances < self.threshold).sum() / distances.size
+            # TODO: this currently returns a float but no MetricResult, should return a MetricResult    
             return percentage_correct
 
     def _calculate_distances_for_frame(self, pred_poses: ma.MaskedArray, gt_poses: ma.MaskedArray, norm_factors: np.ndarray) -> ma.MaskedArray:
@@ -70,22 +71,30 @@ class PCKMetric(Metric):
         https://github.com/open-mmlab/mmpose/blob/main/mmpose/evaluation/functional/keypoint_eval.py#L10
         
         Args:
-            pred_poses: Predicted poses array of shape (N, K, 2) where N is number of persons
-                        and each pose has K keypoints with x,y coordinates.
+            pred_poses: Predicted poses array of shape (M, K, 2) where M is number of persons
+                        and each pose has K keypoints with x,y coordinates. Note that M can be different from N.
             gt_poses: Ground truth poses array of shape (N, K, 2) where N is number of persons
                         and each pose has K keypoints with x,y coordinates.
             norm_factors: Normalization factors for each person of shape (N,).
         """
 
-        N, K, _ = pred_poses.shape
+        N, K, _ = gt_poses.shape
+        M, _, _ = pred_poses.shape
 
         distances = np.full((N, K), -1, dtype=np.float32)
         norm_factors[np.where(norm_factors <= 0)] = 1e6
         
-        diff = gt_poses - pred_poses
+        # Initialize diff array with infinity for all ground truth persons
+        diff = np.full_like(gt_poses, np.inf, dtype=np.float32)
+        
+        # Calculate diff only for persons that exist in predictions and ground truth
+        n_pred = min(M, N)
+        if n_pred > 0:
+            diff[:n_pred] = gt_poses[:n_pred] - pred_poses[:n_pred]
+
         diff_norm = diff / norm_factors[:, None, :]
 
-        distances = np.linalg.norm((gt_poses - pred_poses) / norm_factors[:, None, :], axis=-1)
+        distances = np.linalg.norm(diff_norm, axis=-1)
         return distances
 
 

@@ -1,4 +1,4 @@
-
+import unittest
 import numpy as np
 import numpy.ma as ma
 import pytest
@@ -32,10 +32,26 @@ def create_example_video_pose_result(keypoints_data, video_name="example_video")
         video_name=video_name
     )
 
+def compute_pck_metric(gt_data, pred_data, threshold=0.1, normalize_by="bbox"):
+    """Compute the PCK metric."""
+    gt_video_result = create_example_video_pose_result(gt_data, "ground_truth")
+    pred_video_result = create_example_video_pose_result(pred_data, "prediction")
 
-class TestPCKMetric:
+    pck_config = {
+        "threshold": threshold,
+        "normalize_by": normalize_by
+    }
+    pck_metric = PCKMetric(config=pck_config)
+    result = pck_metric.compute(
+        video_result=pred_video_result,
+        gt_video_result=gt_video_result,
+        model_name="example_model"
+    )
+    return result
+
+class TestPCKMetric(unittest.TestCase):
     """Test suite for the PCKMetric class."""
-    
+
     def test_basic_computation(self):
         """Test basic MPJPE computation with valid inputs."""
         gt_data = [
@@ -61,18 +77,60 @@ class TestPCKMetric:
             ],
         ]
 
-        gt_video_result = create_example_video_pose_result(gt_data, "ground_truth")
-        pred_video_result = create_example_video_pose_result(pred_data, "prediction")
-        
-        pck_config = {
-            "threshold": 0.1,
-            "normalize_by": "bbox"
-        }
-        pck_metric = PCKMetric(config=pck_config)
-        
-        result = pck_metric.compute(
-            video_result=pred_video_result,
-            gt_video_result=gt_video_result,
-            model_name="example_model"
-        )
+        result = compute_pck_metric(gt_data, pred_data)
+        self.assertEqual(result, 0.5)
 
+    def test_missing_person_in_prediction(self):
+        """
+        Test that the PCK metric handles missing persons in the prediction.
+        Every missing person in the prediction receives an infinite distance, 
+        thereby resulting in a distance greater than the threshold
+        """
+        gt_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (100, 100), (200, 200), (300, 300)
+                ],
+                [ # Person 1
+                    (400, 400), (500, 500), (600, 600)
+                ]
+            ], 
+        ]
+
+        pred_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (110, 110), (210, 210), (310, 310),
+                ],
+            ], 
+        ]
+
+        result = compute_pck_metric(gt_data, pred_data)
+        self.assertEqual(result, 0.5)
+
+    def test_additional_person_in_prediction(self):
+        """
+        Test that the PCK metric handles additional persons in the prediction.
+        Every additional person in the prediction is ignored.
+        """
+        gt_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (100, 100), (200, 200), (300, 300)
+                ],
+            ],
+        ]
+
+        pred_data = [
+            [  # Frame 0    
+                [ # Person 0
+                    (110, 110), (210, 210), (310, 310),
+                ],
+                [ # Person 1
+                    (420, 420), (520, 520), (620, 620)
+                ]
+            ],
+        ]
+
+        result = compute_pck_metric(gt_data, pred_data)
+        self.assertEqual(result, 1)
