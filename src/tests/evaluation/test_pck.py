@@ -110,6 +110,35 @@ class TestPCKMetric(unittest.TestCase):
         result = compute_pck_metric(gt_data, pred_data)
         np.testing.assert_array_equal(result.values, np.array([1.0, 1.0]))
 
+    def test_correct_detection_wrong_order(self):
+        """
+        Test that the PCK metric handles two correct person detections which are in the wrong order compared to the ground truth.
+        """
+        gt_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (100, 100), (200, 200), (300, 300)
+                ],
+                [ # Person 1
+                    (400, 400), (500, 500), (600, 600)
+                ]
+            ],
+        ]
+
+        # Create prediction data - with some offset from ground truth
+        pred_data = [
+            [  # Frame 0
+                [ # Person 0 (Person 1 in ground truth)
+                    (410, 410), (510, 510), (610, 610)
+                ],
+                [ # Person 1 (Person 0 in ground truth)
+                    (110, 110), (210, 210), (310, 310)
+                ],
+            ],
+        ]
+
+        result = compute_pck_metric(gt_data, pred_data)
+        np.testing.assert_array_equal(result.values, np.array([1.0]))
 
     def test_missing_person_in_prediction(self):
         """
@@ -166,3 +195,31 @@ class TestPCKMetric(unittest.TestCase):
         result = compute_pck_metric(gt_data, pred_data)
         np.testing.assert_array_equal(result.values, np.array([1.0]))
 
+
+    def test_missing_person_in_wrong_prediction_order(self):
+        """
+        In this test, one person is missing in the prediction. The remaining person is at index 0 in the
+        prediction, but at index 1 in the ground truth.
+        The metric must still match this correctly.
+        """
+        gt_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (100, 100), (200, 200), (300, 300)
+                ],
+                [ # Person 1
+                    (400, 400), (500, 500), (600, 600)
+                ],
+            ], 
+        ]
+
+        pred_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (410, 410), (510, 510), (610, 610)
+                ],
+            ], 
+        ]
+
+        result = compute_pck_metric(gt_data, pred_data)
+        np.testing.assert_array_equal(result.values, np.array([0.5]))

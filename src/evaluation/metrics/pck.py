@@ -34,19 +34,29 @@ class PCKMetric(Metric):
         gt_video_result: Optional[VideoPoseResult] = None,
         model_name: Optional[str] = None
     ) -> MetricResult:
+        """
+        Compute the PCK metric for a video result.
+        Args:
+            video_result: VideoPoseResult object containing the predicted poses.
+            gt_video_result: VideoPoseResult object containing the ground truth poses.
+            model_name: Name of the model being evaluated.
+        Returns:
+            MetricResult object containing the PCK metric values for each frame for the video.
+        """
         if gt_video_result is None:
             raise ValueError("Ground truth video result is required for PCK computation")
             
-        # TODO: add to method that undetected keypoints or keypoints with low confidenceshould be masked
+        # TODO: add to method that undetected keypoints or keypoints with low confidence should be masked
         pred_poses = video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
         gt_poses = gt_video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
 
         values = []
         for frame_idx in range(pred_poses.shape[0]):
-            pred_poses_frame = pred_poses[frame_idx]
-            gt_poses_frame = gt_poses[frame_idx]
+            pred_poses_frame = pred_poses[frame_idx] # shape: (M, K, 2)
+            gt_poses_frame = gt_poses[frame_idx] # shape: (N, K, 2)
+
+            pred_poses_frame = self._sort_predictions_by_ground_truth(pred_poses_frame, gt_poses_frame)
             
-            # TODO: shuffle the persons to make sure the order is the same
 
             norm_factors = None # shape: (N,)
             if self.normalize_by == "bbox":
