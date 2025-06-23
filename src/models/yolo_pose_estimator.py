@@ -77,7 +77,7 @@ class YoloPoseEstimator(PoseEstimator):
         frame_results = []
         for frame_idx, result in enumerate(results):
             if not result.keypoints:  # if no keypoints detected
-                continue
+                frame_results.append(FramePoseResult(persons=[], frame_idx=frame_idx))
 
             persons = []
             num_persons = result.keypoints.shape[0]
