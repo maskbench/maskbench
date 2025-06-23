@@ -53,7 +53,7 @@ class TestPCKMetric(unittest.TestCase):
     """Test suite for the PCKMetric class."""
 
     def test_basic_computation(self):
-        """Test basic MPJPE computation with valid inputs."""
+        """Test basic PCK computation, where one person is detected correctly and one is not."""
         gt_data = [
             [  # Frame 0
                 [ # Person 0
@@ -78,7 +78,38 @@ class TestPCKMetric(unittest.TestCase):
         ]
 
         result = compute_pck_metric(gt_data, pred_data)
-        self.assertEqual(result, 0.5)
+        np.testing.assert_array_equal(result.values, np.array([0.5]))
+
+    def test_basic_computation_with_multiple_frames(self):
+        """Test basic PCK computation, where a single person is detected correctly in each frame."""
+        gt_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (100, 100), (200, 200), (300, 300)
+                ],
+            ],
+            [  # Frame 1
+                [ # Person 1
+                    (400, 400), (500, 500), (600, 600)
+                ],
+            ],
+        ]
+        pred_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (110, 110), (210, 210), (310, 310)
+                ],
+            ],
+            [  # Frame 1
+                [ # Person 1
+                    (410, 410), (510, 510), (610, 610)
+                ],
+            ],
+        ]
+
+        result = compute_pck_metric(gt_data, pred_data)
+        np.testing.assert_array_equal(result.values, np.array([1.0, 1.0]))
+
 
     def test_missing_person_in_prediction(self):
         """
@@ -106,7 +137,7 @@ class TestPCKMetric(unittest.TestCase):
         ]
 
         result = compute_pck_metric(gt_data, pred_data)
-        self.assertEqual(result, 0.5)
+        np.testing.assert_array_equal(result.values, np.array([0.5]))
 
     def test_additional_person_in_prediction(self):
         """
@@ -133,4 +164,5 @@ class TestPCKMetric(unittest.TestCase):
         ]
 
         result = compute_pck_metric(gt_data, pred_data)
-        self.assertEqual(result, 1)
+        np.testing.assert_array_equal(result.values, np.array([1.0]))
+
