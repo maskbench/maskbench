@@ -46,8 +46,11 @@ class EuclideanDistanceMetric(Metric):
         Returns:
             MetricResult object containing the Euclidean distance metric values for each frame, person and keypoint.
             All distances are normalized by the person's bounding box, head or torso size.
-            If a person is not detected in the prediction, the distance is set to a predetermined fill value instead of infinity
-            to not affect the aggregation calculation too much.
+            For missing keypoints:
+                1) If the ground truth is (0,0), the distance is set to np.nan
+
+                2) If the ground truth is not (0,0) and the prediction is (0,0) or if a person is entirely undetected, 
+                the distance is set to a predetermined fill value in order to not affect the aggregation calculation too much.
         """
         if gt_video_result is None:
             raise ValueError("Ground truth video result is required for Euclidean distance computation")
@@ -72,15 +75,24 @@ class EuclideanDistanceMetric(Metric):
             distances = self._calculate_euclidean_distances_for_frame(pred_poses_frame, gt_poses_frame, norm_factors)
             frame_values.append(distances)
 
+        frame_values = np.array(frame_values)
+        
+        # Create mask for missing keypoints. Keypoints are excluded in these cases and values are set to np.nan
+        # 1. Keypoints missing in both GT and predictions (both are (0,0))
+        # 2. Keypoints missing in GT but present in predictions (GT is (0,0))
+        gt_zeros = np.all(gt_poses == 0, axis=-1)  # Shape: (N, K)
+        frame_values[gt_zeros] = np.nan
+        frame_values = ma.array(np.array(frame_values), mask=gt_zeros) # where a person is undetected
+
         return MetricResult(
-            values=np.array(frame_values),
+            values=frame_values,
             axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS],
             metric_name=self.name,
             video_name=video_result.video_name,
             model_name=model_name,
         )
 
-    def _calculate_euclidean_distances_for_frame(self, pred_poses: np.ndarray, gt_poses: np.ndarray, norm_factors: np.ndarray) -> np.ndarray:
+    def _calculate_euclidean_distances_for_frame(self, pred_poses: np.ndarray, gt_poses: np.ndarray, norm_factors: np.ndarray) -> ma.MaskedArray:
         """
         Calculate Euclidean distances for a single frame.
         Slightly modified version of the original function from mmpose.
@@ -92,6 +104,8 @@ class EuclideanDistanceMetric(Metric):
             gt_poses: Ground truth poses array of shape (N, K, 2) where N is number of persons
                         and each pose has K keypoints with x,y coordinates.
             norm_factors: Normalization factors for each person of shape (N, 2).
+        Returns:
+            Array of shape (N, K) where N is number of persons and K is number of keypoints.
         """
         N, K, _ = gt_poses.shape
         M, _, _ = pred_poses.shape
@@ -99,12 +113,15 @@ class EuclideanDistanceMetric(Metric):
             raise ValueError("Number of predicted persons must be greater than or equal to number of ground truth persons")
 
         norm_factors[np.where(norm_factors <= 0)] = 1e6
-        
         # Calculate diff only for persons that exist in predictions and ground truth
         diff = gt_poses[:N] - pred_poses[:N]
-
         diff_norm = diff / norm_factors[:, None, :]
         distances = np.linalg.norm(diff_norm, axis=-1)
-        # Replace infinity with fill value in order to not affect the aggregation calculation too much
-        distances[np.where(distances == np.inf)] = DISTANCE_FILL_VALUE
+        
+        # Cases where the prediction has missing data compared to the ground truth
+        is_no_person_detected = np.all(np.all(np.isinf(pred_poses[:N]), axis=-1), axis=-1)  # Shape: (N,)
+        has_prediction_zero_point = np.all(pred_poses[:N] == 0, axis=-1)  # Shape: (N, K)
+        distances[is_no_person_detected] = DISTANCE_FILL_VALUE # where an entire person is undetected
+        distances[has_prediction_zero_point] = DISTANCE_FILL_VALUE # where a person is detected but has a missing keypoint (like (0,0))
+
         return distances
