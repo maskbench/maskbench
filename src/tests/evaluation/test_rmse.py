@@ -24,11 +24,11 @@ def compute_euclidean_distance_metric(gt_data, pred_data, threshold=0.1, normali
     )
     return distances
 
-class TestRmseEuclidianDistance(unittest.TestCase):
-    """Test suite for the Euclidian distance and RMSE metric."""
+class TestRmseEuclideanDistance(unittest.TestCase):
+    """Test suite for the Euclidean distance and RMSE metric."""
 
     def test_basic_computation(self):
-        """Test basic RMSE computation, where one person is detected correctly and one is not."""
+        """Test basic Euclidean distance computation, where one person is detected correctly and one is not."""
         gt_data = [
             [  # Frame 0
                 [ # Person 0
@@ -272,4 +272,107 @@ class TestRmseEuclidianDistance(unittest.TestCase):
             np.array([1.4151]),
             decimal=4
         )
-        
+
+    def test_missing_keypoint_in_gt_and_prediction(self):
+        """
+        Test that the Euclidean distance metric handles missing keypoints in the ground truth and prediction.
+        Missing keypoints are ignored if they are not present in both the ground truth and prediction.
+        """
+        gt_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (100, 100), (0, 0), (300, 300)
+                ],
+            ],
+        ]
+
+        pred_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (110, 110), (0, 0), (310, 310)
+                ],
+            ],
+        ]
+
+        result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
+        np.testing.assert_array_almost_equal(
+            result_distances.values,
+            np.array([[[0.0707, np.nan, 0.0707]]]),
+            decimal=4
+        )
+        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        np.testing.assert_array_almost_equal(
+            result_rmse.values,
+            np.array([0.0707]),
+            decimal=4
+        )
+
+    def test_missing_keypoint_in_prediction(self):
+        """
+        Test that the Euclidean distance metric handles missing keypoints in the prediction.
+        Missing keypoints are ignored if they are not present in both the ground truth and prediction.
+        """
+        gt_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (100, 100), (200, 200), (300, 300)
+                ],
+            ],
+        ]
+
+        pred_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (110, 110), (0, 0), (310, 310)
+                ],
+            ],
+        ]
+
+        result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
+        np.testing.assert_array_almost_equal(
+            result_distances.values,
+            np.array([[[0.0707, DISTANCE_FILL_VALUE, 0.0707]]]),
+            decimal=4
+        )
+        print("Result distances mask:\n", result_distances.values.mask)
+
+        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        np.testing.assert_array_almost_equal(
+            result_rmse.values,
+            np.array([1.1561]),
+            decimal=4
+        )
+
+    def test_missing_keypoint_in_gt(self):
+        """
+        Test that the Euclidean distance metric handles missing keypoints in the ground truth and not in the prediction.
+        Missing keypoints are ignored if they are not present in both the ground truth and prediction.
+        """
+        gt_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (100, 100), (0, 0), (300, 300)
+                ],
+            ],
+        ]
+
+        pred_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (110, 110), (210, 210), (310, 310)
+                ],
+            ],
+        ]
+
+        result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
+        np.testing.assert_array_almost_equal(
+            result_distances.values,
+            np.array([[[0.0707, np.nan, 0.0707]]]),
+            decimal=4
+        )
+        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        np.testing.assert_array_almost_equal(
+            result_rmse.values,
+            np.array([0.0707]),
+            decimal=4
+        )
