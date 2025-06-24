@@ -15,8 +15,13 @@ def calculate_bbox_sizes_for_persons_in_frame(gt_poses: np.ndarray) -> np.ndarra
         np.ndarray: Array of shape (M,) containing the bounding box size for each person,
                     calculated as the maximum of width and height of the bounding box.
     """
-    min_coords = gt_poses.min(axis=1)  # Shape: (M, 2)
-    max_coords = gt_poses.max(axis=1)  # Shape: (M, 2)
+    # Create mask for keypoints that are (0,0) to ignore them in the bounding box calculation
+    zero_mask = np.all(gt_poses == 0, axis=-1)  # Shape: (M, K)
+    
+    # Get min/max coords ignoring (0,0) keypoints
+    masked_gt_poses = ma.array(gt_poses, mask=np.dstack([zero_mask, zero_mask]))  # Shape: (M, K, 2)
+    min_coords = masked_gt_poses.min(axis=1)  # Shape: (M, 2) 
+    max_coords = masked_gt_poses.max(axis=1)  # Shape: (M, 2)
     
     widths = max_coords[..., 0] - min_coords[..., 0]  # Shape: (M,)
     heights = max_coords[..., 1] - min_coords[..., 1]  # Shape: (M,)

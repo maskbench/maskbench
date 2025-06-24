@@ -60,8 +60,8 @@ class EuclideanDistanceMetric(Metric):
 
         frame_values = []
         for frame_idx in range(pred_poses.shape[0]):
-            gt_poses_frame = gt_poses[frame_idx] # shape: (N, K, 2)
-            pred_poses_frame = pred_poses[frame_idx] # shape: (M, K, 2)
+            gt_poses_frame = gt_poses[frame_idx].data # shape: (N, K, 2), work on ndarrays without mask
+            pred_poses_frame = pred_poses[frame_idx].data # shape: (M, K, 2), work on ndarrays without mask
             pred_poses_frame = self._sort_predictions_by_ground_truth(pred_poses_frame, gt_poses_frame)
 
             person_norm_factors = None # shape: (N,)
