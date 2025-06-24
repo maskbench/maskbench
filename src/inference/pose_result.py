@@ -3,6 +3,8 @@ from typing import List, Optional
 import numpy as np
 import numpy.ma as ma
 
+np.set_printoptions(threshold=np.inf)
+
 
 @dataclass
 class PoseKeypoint:
@@ -78,3 +80,8 @@ class VideoPoseResult:
                     mask[frame_idx, person_idx, kpt_idx] = False  # Unmask only existing values
         
         return ma.array(values, mask=mask)
+
+
+    def __str__(self):
+        array = self.to_numpy_ma()
+        return f"VideoPoseResult(fps={self.fps}, frame_width={self.frame_width}, frame_height={self.frame_height}, video_name={self.video_name}), frame_values: \n{array}"
