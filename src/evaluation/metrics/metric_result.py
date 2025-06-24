@@ -63,7 +63,7 @@ class MetricResult:
         
         Args:
             dims: Dimension name(s) to aggregate over (e.g. 'frame' or ['frame', 'person'])
-            method: Aggregation method ('mean', 'median', 'sum', 'min', 'max')
+            method: Aggregation method ('mean', 'rmse','median', 'sum', 'min', 'max')
             
         Returns:
             New MetricResult with aggregated values.
@@ -82,6 +82,8 @@ class MetricResult:
         
         if method == 'mean':
             new_values = ma.mean(self.values, axis=tuple(axes))
+        elif method == 'rmse':
+            new_values = ma.sqrt(ma.mean(self.values**2, axis=tuple(axes)))
         elif method == 'median':
             new_values = ma.median(self.values, axis=tuple(axes))
         elif method == 'sum':
