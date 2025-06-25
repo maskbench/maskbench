@@ -31,5 +31,6 @@ WORKDIR /src
 COPY src/ /src/
 
 # Default command when the container starts
-CMD ["python3", "main.py"]
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 
