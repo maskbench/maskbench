@@ -87,7 +87,8 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
-            frames=frame_results
+            frames=frame_results,
+            video_name=video_metadata.get("name")
         )
     
     def _get_config(self):

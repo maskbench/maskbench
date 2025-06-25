@@ -67,7 +67,6 @@ class YoloPoseEstimator(PoseEstimator):
         """
 
         cap, video_metadata = utils.get_video_metadata(video_path)
-        video_name = os.path.splitext(os.path.basename(video_path))[0]
         cap.release()
 
         confidence = self.config.get("confidence_threshold", 0.85)
@@ -104,6 +103,6 @@ class YoloPoseEstimator(PoseEstimator):
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
             frames=frame_results,
-            video_name=video_name,
+            video_name=video_metadata.get("name"),
         )
         return video_result
