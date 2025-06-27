@@ -34,7 +34,7 @@ class AccelerationMetric(Metric):
             The acceleration is calculated as the difference between the current frame's velocity and the previous frame's velocity.
             The velocity is calculated as the difference between the current frame's position and the previous frame's position.
             For a given VideoPoseResult with T frames, the MetricResult will have T-2 frames.
-            If a keypoint or person is missing in a frame, the acceleration is set to np.nan.
+            Every time a keypoint is missing in one of three consecutive frames, the acceleration is NaN.
             If the number of frames is less than 3, the MetricResult will have 1 frame with NaN values.
         """
         pred_poses = video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
@@ -48,6 +48,10 @@ class AccelerationMetric(Metric):
                 video_name=video_result.video_name,
                 model_name=model_name,
             )
+
+        # Mask all (0, 0) keypoints in addition to the existing mask
+        zero_points_mask = np.repeat((pred_poses == 0).all(axis=-1)[..., np.newaxis], 2, axis=-1)
+        pred_poses.mask |= zero_points_mask
 
         fps = video_result.fps
         timedelta = 1 / fps

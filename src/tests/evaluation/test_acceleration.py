@@ -106,3 +106,73 @@ class TestAccelerationMetric(unittest.TestCase):
         self.assertEqual(result.values.shape, expected_shape)
         np.testing.assert_array_equal(result.values, np.nan * np.ones(expected_shape))
 
+    def test_acceleration_with_missing_keypoints(self):
+        """
+        Test acceleration computation with missing keypoints. 
+        Every time a keypoint is missing in one of three consecutive frames, the acceleration is NaN.
+        """
+        pred_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (0, 0),     (0, 0),     (300, 300), (400, 400), (500, 500),  (600, 600)
+                ],
+            ],
+            [  # Frame 1
+                [ # Person 0
+                    (110, 110), (0, 0),     (0, 0),     (0, 0),     (660, 660),  (610, 610)
+                ],
+            ],
+            [  # Frame 2
+                [ # Person 0
+                    (130, 130), (260, 260), (420, 420), (0, 0),     (980, 980),  (620, 620)
+                ],
+            ],
+            [  # Frame 3
+                [ # Person 0
+                    (170, 170), (340, 340), (580, 580), (960, 960), (1620, 1620), (0, 0)
+                ],
+            ],
+        ]
+
+        result = compute_acceleration_metric(pred_data, fps=1)
+        expected_shape = (2, 1, 6)  # (frames, persons, keypoints)
+        self.assertEqual(result.values.shape, expected_shape)
+        expected_result = np.array([
+            [[np.nan, np.nan, np.nan, np.nan, 226, 0]],
+            [[28, np.nan, np.nan, np.nan, 452, np.nan]]
+        ])
+        np.testing.assert_array_almost_equal(result.values, expected_result, decimal=0)
+
+    def test_acceleration_with_missing_persons(self):
+        """Test acceleration computation with missing persons."""
+        pred_data = [
+            [  # Frame 0
+                [ # Person 0
+                    (100, 100), (200, 200), (300, 300)
+                ],
+                [ # Person 1
+                    (100, 100), (200, 200), (300, 300)
+                ],
+            ],
+            [  # Frame 1
+                [ # Person 0
+                    (110, 110), (220, 220), (340, 340)
+                ],
+            ],
+            [  # Frame 2
+                [ # Person 0
+                    (130, 130), (260, 260), (380, 380)
+                ],
+                [ # Person 1
+                    (130, 130), (260, 260), (380, 380)
+                ],
+            ],
+            [  # Frame 3
+                [ # Person 0
+                    (170, 170), (340, 340), (580, 580)
+                ],
+            ],
+        ]
+
+        result = compute_acceleration_metric(pred_data, fps=1)
+    
