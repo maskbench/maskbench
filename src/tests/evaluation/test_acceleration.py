@@ -24,24 +24,16 @@ class TestAccelerationMetric(unittest.TestCase):
         """Test zero acceleration for a single person moving with constant velocity."""
         pred_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
+                [(100, 100), (200, 200), (300, 300)],
             ],
             [  # Frame 1
-                [ # Person 0
-                    (110, 110), (210, 210), (310, 310)
-                ],
+                [(110, 110), (210, 210), (310, 310)],
             ],
             [  # Frame 2
-                [ # Person 0
-                    (120, 120), (220, 220), (320, 320)
-                ],
+                [(120, 120), (220, 220), (320, 320)],
             ],
             [  # Frame 3
-                [ # Person 0
-                    (130, 130), (230, 230), (330, 330)
-                ],
+                [(130, 130), (230, 230), (330, 330)],
             ],
         ]
 
@@ -56,24 +48,16 @@ class TestAccelerationMetric(unittest.TestCase):
         """Test specific non-zero accelerations for each keypoint."""
         pred_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
+                [(100, 100), (200, 200), (300, 300)],
             ],
             [  # Frame 1
-                [ # Person 0
-                    (110, 110), (220, 220), (340, 340)
-                ],
+                [(110, 110), (220, 220), (340, 340)],
             ],
             [  # Frame 2
-                [ # Person 0
-                    (130, 130), (260, 260), (420, 420)
-                ],
+                [(130, 130), (260, 260), (420, 420)],
             ],
             [  # Frame 3
-                [ # Person 0
-                    (170, 170), (340, 340), (580, 580)
-                ],
+                [(170, 170), (340, 340), (580, 580)],
             ],
         ]
 
@@ -88,16 +72,14 @@ class TestAccelerationMetric(unittest.TestCase):
         ])
         np.testing.assert_array_almost_equal(result.values, expected_accelerations, decimal=0)
 
-    def test_acceleration_with_missing_frames(self):
+    def test_not_enough_frames(self):
         """
         Test acceleration computation with missing frames.
         In case the number of frames is less than 3, the acceleration should be NaN.
         """
         pred_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
+                [(100, 100), (200, 200), (300, 300)],
             ],
         ]
 
@@ -106,31 +88,23 @@ class TestAccelerationMetric(unittest.TestCase):
         self.assertEqual(result.values.shape, expected_shape)
         np.testing.assert_array_equal(result.values, np.nan * np.ones(expected_shape))
 
-    def test_acceleration_with_missing_keypoints(self):
+    def test_missing_keypoints(self):
         """
         Test acceleration computation with missing keypoints. 
         Every time a keypoint is missing in one of three consecutive frames, the acceleration is NaN.
         """
         pred_data = [
             [  # Frame 0
-                [ # Person 0
-                    (0, 0),     (0, 0),     (300, 300), (400, 400), (500, 500),  (600, 600)
-                ],
+                [(0, 0),     (0, 0),     (300, 300), (400, 400), (500, 500),   (600, 600)],
             ],
             [  # Frame 1
-                [ # Person 0
-                    (110, 110), (0, 0),     (0, 0),     (0, 0),     (660, 660),  (610, 610)
-                ],
+                [(110, 110), (0, 0),     (0, 0),     (0, 0),     (660, 660),   (610, 610)],
             ],
             [  # Frame 2
-                [ # Person 0
-                    (130, 130), (260, 260), (420, 420), (0, 0),     (980, 980),  (620, 620)
-                ],
+                [(130, 130), (260, 260), (420, 420), (0, 0),     (980, 980),   (620, 620)],
             ],
             [  # Frame 3
-                [ # Person 0
-                    (170, 170), (340, 340), (580, 580), (960, 960), (1620, 1620), (0, 0)
-                ],
+                [(170, 170), (340, 340), (580, 580), (960, 960), (1620, 1620), (0, 0)],
             ],
         ]
 
