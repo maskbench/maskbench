@@ -11,13 +11,17 @@ from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
 class TragicTalkersDataset(Dataset):
     def __init__(self, dataset_folder: str):
         super().__init__(dataset_folder)
+    
+    def _load_samples(self) -> List[VideoSample]:
         self.video_folder = os.path.join(self.dataset_folder, "videos") # adjust according to folder structure
         self.gt_folder = os.path.join(self.dataset_folder, "labels", "pose_keypoints") # adjust according to folder structure
-        self.samples = self._load_samples()
+        self.combine_json = True
 
-    def _load_samples(self) -> List[VideoSample]:
-        list_of_json_folders = glob.glob(os.path.join(self.gt_folder, "*", "*")) # for every video & camera angle
-        self.return_combined_json(list_of_json_folders)
+        if self.combine_json:
+            list_of_json_folders = glob.glob(os.path.join(self.gt_folder, "*", "*")) # for every video & camera angle
+            self.return_combined_json(list_of_json_folders)
+        else:
+            print("Json Combination is set to False.")
         
         samples = []
         video_extensions = (".avi", ".mp4")
@@ -35,17 +39,24 @@ class TragicTalkersDataset(Dataset):
         print(f"Tragic Talkers Dataset is Loaded")
         return samples
     
+    
     def return_combined_json(self, list_of_json_folders: list):
         for json_folder in list_of_json_folders:
             all_json_files = glob.glob(os.path.join(json_folder, "*"))
             all_json_files = sorted(all_json_files, key=lambda x: int(os.path.basename(x).split('-')[1].split('_')[0])) # we need to sort them by frame number
             
             all_frames_keypoints = self.combine_json_files(all_json_files)
-            serialized_all_frames_keypoints = [asdict(frame) for frame in all_frames_keypoints]
+            serialized_video_pose_result = {
+                        "fps": None,
+                        "frame_width": None,
+                        "frame_height": None,
+                        "frames": [asdict(frame) for frame in all_frames_keypoints]
+                    }
             
             json_filepath = self.get_file_name(json_folder)
+            print(json_filepath)
             with open(json_filepath, "w+") as f:
-                json.dump(serialized_all_frames_keypoints, f, indent=2)
+                json.dump(serialized_video_pose_result, f, indent=2)
     
     def combine_json_files(self, all_json_files: list) -> str:
         all_frames_keypoints = []

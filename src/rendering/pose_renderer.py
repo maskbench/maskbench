@@ -114,6 +114,70 @@ class PoseRenderer:
         for i in video_writers:
             i.release()
 
+    def render_ground_truth_video(self, video_path: str, ground_truth_path:str):
+        video_name = os.path.basename(video_path).split('.')[0]  # get video name without extension
+        output_path = os.path.join(self.base_output_path, video_name)
+        os.makedirs(output_path, exist_ok=True)  # create folder if doesnt exist
+
+        cap = cv2.VideoCapture(video_path)  # load the video
+        if not cap.isOpened():
+            raise IOError(f"Cannot open video file {video_path}")
+
+        fps = int(cap.get(cv2.CAP_PROP_FPS))  # get video specs
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
+        out = cv2.VideoWriter(
+                f"{output_path}/ground_truth.mp4", fourcc, fps, (width, height)
+            )
+        
+        with open(ground_truth_path) as f:
+            keypoints = json.load(f)
+
+        frame_number = 0
+        while cap.isOpened():  # for every frame
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            try:
+                frame_keypoints = keypoints[frame_number]
+                frame = self.draw_keypoints(
+                    frame,
+                    frame_keypoints, [],
+                    COLORS[0],
+                )  # draw keypoints on frame
+            except Exception as e:
+                print(f"{frame_number} is not in list: {e}")
+            out.write(frame)  # write rendered frame
+
+            frame_number += 1
+
+        cap.release()
+        out.release()
+
+    
+    def draw_keypoints_ground(
+        self, frame, frame_pose_result, color
+    ):
+        """Draw keypoints and join keypoint pairs on 1 frame"""
+        if not frame_pose_result["persons"]:  # if this frame has no keypoints
+            return frame
+
+        for person in frame_pose_result["persons"]:  # every person
+            if not person or not person["keypoints"]:
+                continue
+
+            for keypoint in person["keypoints"]:  # every keypoint
+                if keypoint:
+                    center = (int(keypoint["x"]), int(keypoint["y"]))
+                    cv2.circle(frame, center, 4, color, -1)  # draw the keypoint
+
+        return frame
+
+
     def draw_keypoints(
         self, frame, frame_pose_result: FramePoseResult, point_pairs, color
     ):
