@@ -117,36 +117,40 @@ class TestAccelerationMetric(unittest.TestCase):
         ])
         np.testing.assert_array_almost_equal(result.values, expected_result, decimal=0)
 
-    def test_acceleration_with_missing_persons(self):
-        """Test acceleration computation with missing persons."""
+    def test_mismatched_person_indices_over_frames(self):
+        """
+        Test acceleration computation with multiple persons that are out of order over different frames.
+        """
         pred_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
-                [ # Person 1
-                    (100, 100), (200, 200), (300, 300)
-                ],
+                [(100, 100), (100, 200), (150, 150)], # Person 0
+                [(300, 300), (300, 400), (350, 350)], # Person 1
             ],
             [  # Frame 1
-                [ # Person 0
-                    (110, 110), (220, 220), (340, 340)
-                ],
+                [(290, 290), (290, 390), (340, 340)], # Person 1
+                [(110, 110), (110, 210), (160, 160)], # Person 0
             ],
             [  # Frame 2
-                [ # Person 0
-                    (130, 130), (260, 260), (380, 380)
-                ],
-                [ # Person 1
-                    (130, 130), (260, 260), (380, 380)
-                ],
+                [(270, 270), (270, 370), (320, 320)], # Person 1
+                [(120, 120), (120, 220), (170, 170)], # Person 0
             ],
             [  # Frame 3
-                [ # Person 0
-                    (170, 170), (340, 340), (580, 580)
-                ],
-            ],
+                [(130, 130), (130, 230), (180, 180)], # Person 0
+                [(230, 230), (230, 330), (280, 280)], # Person 1
+            ]
         ]
 
         result = compute_acceleration_metric(pred_data, fps=1)
+        self.assertEqual(result.values.shape, (2, 2, 3))
+        expected_accelerations = np.array([
+            [ # Pseudo-Frame 0
+                [0, 0, 0],      # Person 0
+                [14, 14, 14]    # Person 1
+            ],
+            [ # Pseudo-Frame 1
+                [0, 0, 0],      # Person 0
+                [28, 28, 28]    # Person 1
+            ]
+        ])
+        np.testing.assert_array_almost_equal(result.values, expected_accelerations, decimal=0)
     

@@ -49,6 +49,14 @@ class AccelerationMetric(Metric):
                 model_name=model_name,
             )
 
+        for frame_idx in range(pred_poses.shape[0] - 1):
+            current_frame_poses = pred_poses[frame_idx]
+            next_frame_poses = pred_poses[frame_idx + 1]
+
+            sorted_next_frame_poses = self._match_person_indices(next_frame_poses, current_frame_poses)
+            pred_poses[frame_idx + 1] = sorted_next_frame_poses
+
+
         # Mask all (0, 0) keypoints in addition to the existing mask
         zero_points_mask = np.repeat((pred_poses == 0).all(axis=-1)[..., np.newaxis], 2, axis=-1)
         pred_poses.mask |= zero_points_mask
