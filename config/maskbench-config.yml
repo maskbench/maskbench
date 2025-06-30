@@ -1,3 +1,9 @@
+dataset:
+  name: TedTalks
+  module: datasets.ted_dataset
+  class: TedDataset
+  dataset_folder: /datasets/ted-talks
+
 pose_estimators:
   - name: MediaPipePose
     enabled: false
@@ -13,7 +19,15 @@ pose_estimators:
     config:
       weights: yolo11n-pose.pt
       confidence_threshold: 0.85
-
+  
+  - name: MaskAnyone_Api
+    enabled: true
+    module: models.maskanyone_api_pose_estimator
+    class: MaskAnyoneApiPoseEstimator
+    config:
+      hiding_strategy: pixelation
+      overlay_strategy: mp_pose
+      
   - name: MaskAnyoneUi
     enabled: false
     module: models.maskanyone_ui_pose_estimator
@@ -37,3 +51,8 @@ dataset:
 #   module: datasets.ted_dataset
 #   class: TedDataset
 #   dataset_folder: /datasets/ted-talks
+
+metrics:
+  - name: DummyMetric
+    module: evaluation.metrics.metric
+    class: DummyMetric

@@ -1,7 +1,2 @@
-from .inference_engine import InferenceEngine
-from .pose_result import (
-    VideoPoseResult,
-    FramePoseResult,
-    PersonPoseResult,
-    PoseKeypoint,
-)
+from .inference_engine import *
+from .pose_result import *
