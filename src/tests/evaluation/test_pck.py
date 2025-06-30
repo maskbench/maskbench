@@ -30,24 +30,16 @@ class TestPCKMetric(unittest.TestCase):
         """Test basic PCK computation, where one person is detected correctly and one is not."""
         gt_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
-                [ # Person 1
-                    (400, 400), (500, 500), (600, 600)
-                ]
+                [(100, 100), (200, 200), (300, 300)],
+                [(400, 400), (500, 500), (600, 600)],
             ],
         ]
 
         # Create prediction data - with some offset from ground truth
         pred_data = [
             [  # Frame 0
-                [ # Person 0
-                    (110, 110), (210, 210), (310, 310),
-                ],
-                [ # Person 1
-                    (420, 420), (520, 520), (620, 620)
-                ]
+                [(110, 110), (210, 210), (310, 310)],
+                [(420, 420), (520, 520), (620, 620)],
             ],
         ]
 
@@ -58,26 +50,18 @@ class TestPCKMetric(unittest.TestCase):
         """Test basic PCK computation, where a single person is detected correctly in each frame."""
         gt_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
+                [(100, 100), (200, 200), (300, 300)],
             ],
             [  # Frame 1
-                [ # Person 1
-                    (400, 400), (500, 500), (600, 600)
-                ],
+                [(400, 400), (500, 500), (600, 600)],
             ],
         ]
         pred_data = [
             [  # Frame 0
-                [ # Person 0
-                    (110, 110), (210, 210), (310, 310)
-                ],
+                [(110, 110), (210, 210), (310, 310)],
             ],
             [  # Frame 1
-                [ # Person 1
-                    (410, 410), (510, 510), (610, 610)
-                ],
+                [(410, 410), (510, 510), (610, 610)],
             ],
         ]
 
@@ -90,24 +74,16 @@ class TestPCKMetric(unittest.TestCase):
         """
         gt_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
-                [ # Person 1
-                    (400, 400), (500, 500), (600, 600)
-                ]
+                [(100, 100), (200, 200), (300, 300)], # Person 0
+                [(400, 400), (500, 500), (600, 600)], # Person 1
             ],
         ]
 
         # Create prediction data - with some offset from ground truth
         pred_data = [
             [  # Frame 0
-                [ # Person 0 (Person 1 in ground truth)
-                    (410, 410), (510, 510), (610, 610)
-                ],
-                [ # Person 1 (Person 0 in ground truth)
-                    (110, 110), (210, 210), (310, 310)
-                ],
+                [(410, 410), (510, 510), (610, 610)], # Person 0 (Person 1 in ground truth)
+                [(110, 110), (210, 210), (310, 310)], # Person 1 (Person 0 in ground truth)
             ],
         ]
 
@@ -122,20 +98,14 @@ class TestPCKMetric(unittest.TestCase):
         """
         gt_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
-                [ # Person 1
-                    (400, 400), (500, 500), (600, 600)
-                ]
+                [(100, 100), (200, 200), (300, 300)], # Person 0
+                [(400, 400), (500, 500), (600, 600)], # Person 1
             ], 
         ]
 
         pred_data = [
             [  # Frame 0
-                [ # Person 0
-                    (110, 110), (210, 210), (310, 310),
-                ],
+                [(110, 110), (210, 210), (310, 310)], # Person 0
             ], 
         ]
 
@@ -149,20 +119,14 @@ class TestPCKMetric(unittest.TestCase):
         """
         gt_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
+                [(100, 100), (200, 200), (300, 300)], # Person 0
             ],
         ]
 
         pred_data = [
             [  # Frame 0    
-                [ # Person 0
-                    (110, 110), (210, 210), (310, 310),
-                ],
-                [ # Person 1
-                    (420, 420), (520, 520), (620, 620)
-                ]
+                [(110, 110), (210, 210), (310, 310)], # Person 0
+                [(420, 420), (520, 520), (620, 620)], # Person 1
             ],
         ]
 
@@ -178,20 +142,14 @@ class TestPCKMetric(unittest.TestCase):
         """
         gt_data = [
             [  # Frame 0
-                [ # Person 0
-                    (100, 100), (200, 200), (300, 300)
-                ],
-                [ # Person 1
-                    (400, 400), (500, 500), (600, 600)
-                ],
+                [(100, 100), (200, 200), (300, 300)], # Person 0
+                [(400, 400), (500, 500), (600, 600)], # Person 1
             ], 
         ]
 
         pred_data = [
             [  # Frame 0
-                [ # Person 0
-                    (410, 410), (510, 510), (610, 610)
-                ],
+                [(410, 410), (510, 510), (610, 610)], # Person 0
             ], 
         ]
 
