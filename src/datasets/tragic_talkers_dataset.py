@@ -15,7 +15,7 @@ class TragicTalkersDataset(Dataset):
     def _load_samples(self) -> List[VideoSample]:
         self.video_folder = os.path.join(self.dataset_folder, "videos") # adjust according to folder structure
         self.gt_folder = os.path.join(self.dataset_folder, "labels", "pose_keypoints") # adjust according to folder structure
-        self.combine_json = True
+        self.combine_json = False
 
         if self.combine_json:
             list_of_json_folders = glob.glob(os.path.join(self.gt_folder, "*", "*")) # for every video & camera angle
@@ -29,16 +29,10 @@ class TragicTalkersDataset(Dataset):
 
         for video in list_of_videos:
             if video.endswith(video_extensions):
-                video_without_extension, _ = os.path.splitext(video)
-                ground_truth = f"{video_without_extension}.json"
-                if not os.path.exists(ground_truth):
-                    print(f"ground truth: {ground_truth} not found for video: {video}")
-                else:
-                    samples.append(VideoSample(video, ground_truth))
+                samples.append(VideoSample(video))
       
         print(f"Tragic Talkers Dataset is Loaded")
         return samples
-    
     
     def return_combined_json(self, list_of_json_folders: list):
         for json_folder in list_of_json_folders:

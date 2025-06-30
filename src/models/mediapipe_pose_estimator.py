@@ -113,24 +113,25 @@ class MediaPipePoseEstimator(PoseEstimator):
             result = self._execute_on_frame(frame, frame_number, fps)
 
             if not result.pose_landmarks:
-                continue
+                frame_results.append(FramePoseResult(persons=None, frame_idx=frame_number))
+            else:
+                persons = []
+                for person_landmarks in result.pose_landmarks:
+                    keypoints = []
 
-            persons = []
-            for person_landmarks in result.pose_landmarks:
-                keypoints = []
+                    # we only extract x, y and ignore z, visibility and presence
+                    # we also convert normalized landmarks to image coordinates
+                    for lm in person_landmarks:  # for every keypoint
+                        x = int(lm.x * width)
+                        y = int(lm.y * height)
+                        keypoints.append(PoseKeypoint(x=x, y=y))
 
-                # we only extract x, y and ignore z, visibility and presence
-                # we also convert normalized landmarks to image coordinates
-                for lm in person_landmarks:  # for every keypoint
-                    x = int(lm.x * width)
-                    y = int(lm.y * height)
-                    keypoints.append(PoseKeypoint(x=x, y=y))
+                    persons.append(PersonPoseResult(keypoints=keypoints))
 
-                persons.append(PersonPoseResult(keypoints=keypoints))
-
-            frame_results.append(
-                FramePoseResult(persons=persons, frame_idx=frame_number)
-            )
+                frame_results.append(
+                    FramePoseResult(persons=persons, frame_idx=frame_number)
+                )
+            
             frame_number += 1
 
         cap.release()

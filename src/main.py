@@ -23,26 +23,24 @@ def main():
 
     metrics = load_metrics(metric_specifications)
     print("Avaliable metrics:", [metric.name for metric in metrics])
-    # run(dataset, pose_estimators, metrics)
+    run(dataset, pose_estimators, metrics)
 
     print("Done")
 
 
 def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric]):
-    # inference_engine = InferenceEngine(dataset, pose_estimators)
-    # pose_results = inference_engine.estimate_pose_keypoints()
-    # gt_pose_results = dataset.get_gt_pose_results()
+    inference_engine = InferenceEngine(dataset, pose_estimators)
+    pose_results = inference_engine.estimate_pose_keypoints()
+    gt_pose_results = dataset.get_gt_pose_results()
 
-    evaluator = Evaluator(metrics=metrics)
-    results = evaluator.evaluate(pose_results, gt_pose_results)
+    # evaluator = Evaluator(metrics=metrics)
+    # results = evaluator.evaluate(pose_results, gt_pose_results)
 
-    # estimators_point_pairs = {
-    #     est.name: est.get_keypoint_pairs() for est in pose_estimators
-    # }
-    pose_renderer = PoseRenderer(dataset, {})
-    # pose_renderer.render_all_videos(gt_pose_results)
-    pose_renderer.render_ground_truth_video("/datasets/tragic_talkers/videos/femalemonologue2_t3/femalemonologue2_t3-cam08.mp4", "/datasets/tragic_talkers/videos/femalemonologue2_t3/femalemonologue2_t3-cam08.json")
-
+    estimators_point_pairs = {
+        est.name: est.get_keypoint_pairs() for est in pose_estimators
+    }
+    pose_renderer = PoseRenderer(dataset, estimators_point_pairs)
+    pose_renderer.render_all_videos(pose_results)
 
 def load_config() -> dict:
     config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")

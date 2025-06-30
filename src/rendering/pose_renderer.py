@@ -24,26 +24,23 @@ class PoseRenderer:
         self.base_output_path = "/output"
         self.estimators_point_pairs = estimators_point_pairs
 
-    def get_keypoints(self, output_path: str, estimator_name: str):
-        """Fetch keypoints from json for specific video and model"""
-        file_path = os.path.join(output_path, estimator_name + ".json")
-        with open(file_path) as f:
-            keypoints = json.load(f)
-        return keypoints
-
-    def render_all_videos(self, pose_results: Dict[str, List[VideoPoseResult]]):
+    def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]]):
         """
         Render all videos in the dataset with the provided pose results.
         Args:
-            pose_results (Dict[str, List[VideoPoseResult]]): Dictionary where keys are estimator names and values are lists of VideoPoseResult objects.
+            pose_results (Dict[str, Dict[str, List[VideoPoseResult]]]): Dictionary where keys are estimator names and values are dictionaries mapping video names to lists of VideoPoseResult objects.
         """
-        for idx, video in enumerate(self.dataset):
+        for video in self.dataset:
             start_time = time.time()
-            output_path = os.path.join(self.base_output_path, video.get_filename())
+            video_name = video.get_filename()
+            output_path = os.path.join(self.base_output_path, video_name)
             os.makedirs(output_path, exist_ok=True)  # create folder if doesnt exist
 
+            for estimator in pose_results.keys():
+                print(estimator, pose_results[estimator])
+
             video_pose_results = {
-                estimator: pose_results[estimator][idx] for estimator in pose_results
+                estimator: pose_results[estimator][video_name] for estimator in pose_results.keys()
             }
             self.render_video(video, video_pose_results, output_path)
 
@@ -74,9 +71,7 @@ class PoseRenderer:
 
         video_writers = []  # initialize video writers
 
-        for (
-            estimator_name
-        ) in self.estimators_point_pairs.keys():  # video writer for every model
+        for estimator_name in self.estimators_point_pairs.keys():  # video writer for every model
             out = cv2.VideoWriter(
                 f"{output_path}/{estimator_name}.mp4", fourcc, fps, (width, height)
             )
@@ -92,9 +87,7 @@ class PoseRenderer:
             ]  # deep copy of frames to avoid overwriting
             model_idx = 0
 
-            for idx, (estimator_name, model_points_pair) in enumerate(
-                self.estimators_point_pairs.items()
-            ):  # for every model
+            for idx, (estimator_name, model_points_pair) in enumerate(self.estimators_point_pairs.items()):  # for every model
                 try:
                     frame_keypoints = video_pose_results[estimator_name].frames[frame_number]
                     frame_copies[idx] = self.draw_keypoints(
