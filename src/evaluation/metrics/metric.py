@@ -78,6 +78,10 @@ class Metric(ABC):
         for i in range(M):
             for j in range(N):
                 cost_matrix[i, j] = np.linalg.norm(mean_pred_poses[i] - mean_ref_poses[j])
+        # Remove rows where all entries are nan, which might happen if the shape N or M is 
+        # greater than the maximum number of persons in the reference or predictions.
+        valid_rows = ~np.all(np.isnan(cost_matrix), axis=1)
+        cost_matrix = cost_matrix[valid_rows]
                 
         # Apply Hungarian algorithm
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
@@ -86,7 +90,7 @@ class Metric(ABC):
         max_persons = max(M, N)
         sorted_preds = np.full((max_persons, K, 2), np.inf)
         
-        # First, fill the matched predictions in ground truth order
+        # First, fill the matched predictions in reference order
         used_pred_indices = set()
         for pred_idx, gt_idx in zip(row_ind, col_ind):
             if pred_idx < M and gt_idx < N:  # Only use valid matches
@@ -94,8 +98,8 @@ class Metric(ABC):
                 used_pred_indices.add(pred_idx)
         
         # Then append any unused predictions at the end
-        extra_idx = N  # Start after ground truth positions
-        for pred_idx in range(M):
+        extra_idx = len(used_pred_indices)  # Start after used predictions
+        for pred_idx in range(0, M):
             if pred_idx not in used_pred_indices:
                 sorted_preds[extra_idx] = pred_poses[pred_idx]
                 extra_idx += 1

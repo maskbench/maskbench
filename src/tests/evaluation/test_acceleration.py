@@ -153,4 +153,43 @@ class TestAccelerationMetric(unittest.TestCase):
             ]
         ])
         np.testing.assert_array_almost_equal(result.values, expected_accelerations, decimal=0)
-    
+
+    def test_additional_person_within_next_frames(self):
+        """
+        Test acceleration computation with an additional person in the next frame and also different person indices.
+        """
+        pred_data = [
+            [  # Frame 0
+                [(100, 100), (100, 200), (150, 150)], # Person 0
+            ],
+            [  # Frame 1
+                [(110, 110), (110, 210), (160, 160)], # Person 0
+                [(290, 290), (290, 390), (340, 340)], # Person 1
+            ],
+            [  # Frame 2
+                [(270, 270), (270, 370), (320, 320)], # Person 1
+                [(120, 120), (120, 220), (170, 170)], # Person 0
+            ],
+            [  # Frame 3
+                [(300, 300), (300, 400), (350, 350)], # Person 2
+                [(130, 130), (130, 230), (180, 180)], # Person 0
+                [(230, 230), (230, 330), (280, 280)], # Person 1
+            ],
+        ] 
+
+        result = compute_acceleration_metric(pred_data, fps=1)
+        self.assertEqual(result.values.shape, (2, 3, 3))
+        expected_accelerations = np.array([
+            [ # Pseudo-Frame 0
+                [0, 0, 0],                  # Person 0
+                [np.nan, np.nan, np.nan],   # Person 1
+                [np.nan, np.nan, np.nan]    # Person 2
+            ],
+            [ # Pseudo-Frame 1
+                [0, 0, 0],                  # Person 0
+                [14, 14, 14],               # Person 1
+                [np.nan, np.nan, np.nan]    # Person 2
+            ],
+        ])
+        np.testing.assert_array_almost_equal(result.values, expected_accelerations, decimal=0)
+
