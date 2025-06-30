@@ -67,9 +67,6 @@ class AccelerationMetric(Metric):
         velocity = ma.diff(pred_poses, axis=0) / timedelta  # shape: (frames-1, persons, keypoints, 2)
         velocity_magnitude = ma.sqrt(ma.sum(velocity * velocity, axis=-1))  # shape: (frames-1, persons, keypoints)
         acceleration = ma.diff(velocity_magnitude, axis=0) / timedelta  # shape: (frames-2, persons, keypoints)
-        print("Velocity: ", velocity)
-        print("Velocity magnitude: ", velocity_magnitude)
-        print("Acceleration: ", acceleration)
 
         return MetricResult(
             values=acceleration,
