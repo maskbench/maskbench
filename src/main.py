@@ -18,21 +18,22 @@ def main():
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
     print("Avaliable pose estimators:", [est.name for est in pose_estimators])
 
-    run(dataset, pose_estimators)
+    # run(dataset, pose_estimators)
 
     print("Done")
 
 
 def run(dataset: Dataset, pose_estimators: List[PoseEstimator]):
-    inference_engine = InferenceEngine(dataset, pose_estimators)
-    pose_results = inference_engine.estimate_pose_keypoints()
-    gt_pose_results = dataset.get_gt_pose_results()
+    # inference_engine = InferenceEngine(dataset, pose_estimators)
+    # pose_results = inference_engine.estimate_pose_keypoints()
+    # gt_pose_results = dataset.get_gt_pose_results()
 
-    estimators_point_pairs = {
-        est.name: est.get_keypoint_pairs() for est in pose_estimators
-    }
-    pose_renderer = PoseRenderer(dataset, estimators_point_pairs)
-    pose_renderer.render_all_videos(pose_results)
+    # estimators_point_pairs = {
+    #     est.name: est.get_keypoint_pairs() for est in pose_estimators
+    # }
+    pose_renderer = PoseRenderer(dataset, {})
+    # pose_renderer.render_all_videos(gt_pose_results)
+    pose_renderer.render_ground_truth_video("/datasets/tragic_talkers/videos/femalemonologue2_t3/femalemonologue2_t3-cam08.mp4", "/datasets/tragic_talkers/videos/femalemonologue2_t3/femalemonologue2_t3-cam08.json")
 
 
 def load_config() -> dict:

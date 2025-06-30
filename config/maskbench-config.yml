@@ -1,13 +1,13 @@
 pose_estimators:
   - name: MediaPipePose
-    enabled: true
+    enabled: false
     module: models.mediapipe_pose_estimator
     class: MediaPipePoseEstimator
     config:
       weights: pose_landmarker_lite.task
 
   - name: YoloPose
-    enabled: true
+    enabled: false
     module: models.yolo_pose_estimator
     class: YoloPoseEstimator
     config:
@@ -15,14 +15,14 @@ pose_estimators:
       confidence_threshold: 0.85
 
   - name: MaskAnyoneUi
-    enabled: true
+    enabled: false
     module: models.maskanyone_ui_pose_estimator
     class: MaskAnyoneUiPoseEstimator  
     config:
       dataset_folder_path: /maskanyone_ui/dataset    
 
   - name: OpenPose
-    enabled: true
+    enabled: false
     module: models.open_pose_estimator
     class: OpenPoseEstimator      
 
