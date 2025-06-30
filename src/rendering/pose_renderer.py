@@ -36,9 +36,6 @@ class PoseRenderer:
             output_path = os.path.join(self.base_output_path, video_name)
             os.makedirs(output_path, exist_ok=True)  # create folder if doesnt exist
 
-            for estimator in pose_results.keys():
-                print(estimator, pose_results[estimator])
-
             video_pose_results = {
                 estimator: pose_results[estimator][video_name] for estimator in pose_results.keys()
             }
