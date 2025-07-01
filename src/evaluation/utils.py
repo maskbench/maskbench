@@ -2,7 +2,9 @@
 import numpy as np
 import numpy.ma as ma
 
-DISTANCE_FILL_VALUE = 2.0
+# This is the value that will be used to fill the distance matrix for keypoints
+# that are not visible in the prediction, but are visible in the ground truth.
+DISTANCE_FILL_VALUE = 1.0
 
 def calculate_bbox_sizes_for_persons_in_frame(gt_poses: np.ndarray) -> np.ndarray:
     """Calculate bounding box sizes for each person in a frame.
