@@ -67,6 +67,7 @@ class YoloPoseEstimator(PoseEstimator):
         """
 
         cap, video_metadata = utils.get_video_metadata(video_path)
+        video_name = os.path.splitext(os.path.basename(video_path))[0]
         cap.release()
 
         confidence = self.config.get("confidence_threshold", 0.85)
@@ -77,7 +78,7 @@ class YoloPoseEstimator(PoseEstimator):
         frame_results = []
         for frame_idx, result in enumerate(results):
             if not result.keypoints:  # if no keypoints detected
-                continue
+                frame_results.append(FramePoseResult(persons=[], frame_idx=frame_idx))
 
             persons = []
             num_persons = result.keypoints.shape[0]
@@ -103,5 +104,6 @@ class YoloPoseEstimator(PoseEstimator):
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
             frames=frame_results,
+            video_name=video_name,
         )
         return video_result

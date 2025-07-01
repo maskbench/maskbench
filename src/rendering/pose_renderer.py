@@ -121,24 +121,24 @@ class PoseRenderer:
         if not frame_pose_result.persons:  # if this frame has no keypoints
             return frame
 
-        for person in frame_pose_result.persons:  # every person
+        for person in frame_pose_result.persons:
             if not person or not person.keypoints:
                 continue
 
-            for keypoint in person.keypoints:  # every keypoint
-                if keypoint:
+            for keypoint in person.keypoints: # draw a circle for each keypoint if it exists
+                if keypoint: 
                     center = (int(keypoint.x), int(keypoint.y))
-                    cv2.circle(frame, center, 4, color, -1)  # draw the keypoint
-
-            for pair in point_pairs:  # add lines between keypoints
-                try:
+                    cv2.circle(frame, center, 4, color, -1)
+                
+            for pair in point_pairs:  # iterate over point pairs to add lines between keypoints
+                try: # some keypoints might be missing, which would lead to an IndexError
                     point1 = person.keypoints[pair[0]]
                     point2 = person.keypoints[pair[1]]
-                except:
+                except IndexError as e:
                     continue
-
+                
                 if (point1 is None) or (point2 is None) or \
-                    (point1.x < 1) and (point1.y < 1) or (point2.x < 1) and (point2.y < 1):
+                    ((point1.x <= 0) and (point1.y <= 0)) or ((point2.x <= 0) and (point2.y <= 0)):
                     continue
 
                 point1 = (int(point1.x), int(point1.y))
