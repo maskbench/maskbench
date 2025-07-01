@@ -33,7 +33,7 @@ def maskanyone_get_person_keypoints(chunk_file: str) -> list:
                     for frame_keypoints in person_keypoints: # for every frame
                         frame_keypoints_structured = None
                         if frame_keypoints: # convert coordinates to int
-                            frame_keypoints_structured = [PoseKeypoint(x=keypoint[0], y=keypoint[1]) if keypoint else None for keypoint in frame_keypoints]
+                            frame_keypoints_structured = [PoseKeypoint(x=keypoint[0], y=keypoint[1]) if keypoint else PoseKeypoint(x=0, y=0) for keypoint in frame_keypoints]
                         frame_keypoints_combined.append(frame_keypoints_structured) 
                 person_keypoints_combined.append(frame_keypoints_combined) # all frames for that person
             return person_keypoints_combined
