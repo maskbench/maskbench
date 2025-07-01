@@ -19,7 +19,7 @@ pose_estimators:
     module: models.maskanyone_ui_pose_estimator
     class: MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /maskanyone_ui/dataset    
+      dataset_folder_path: /dataset/maskanyone_ui    
 
   - name: OpenPose
     enabled: true
