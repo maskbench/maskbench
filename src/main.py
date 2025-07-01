@@ -7,7 +7,7 @@ from datasets import Dataset
 from inference import InferenceEngine
 from models import PoseEstimator
 from rendering import PoseRenderer
-from evaluation import Evaluator
+from evaluation import Evaluator, Visualizer
 from evaluation.metrics import Metric
 
 
@@ -36,6 +36,9 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
 
     evaluator = Evaluator(metrics=metrics)
     results = evaluator.evaluate(pose_results, gt_pose_results)
+
+    visualizer = Visualizer()
+    visualizer.save_plots(results)
 
     estimators_point_pairs = {
         est.name: est.get_keypoint_pairs() for est in pose_estimators
