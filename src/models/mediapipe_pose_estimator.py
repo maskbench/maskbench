@@ -99,7 +99,6 @@ class MediaPipePoseEstimator(PoseEstimator):
         self.detector = PoseLandmarker.create_from_options(self.options)
 
         cap, video_metadata = utils.get_video_metadata(video_path)
-        video_name = os.path.splitext(os.path.basename(video_path))[0]
         width = video_metadata.get("width")
         height = video_metadata.get("height")
         fps = video_metadata.get("fps")
@@ -141,7 +140,7 @@ class MediaPipePoseEstimator(PoseEstimator):
             frame_width=width,
             frame_height=height,
             frames=frame_results,
-            video_name=video_name,
+            video_name=video_metadata.get("name"),
         )
 
     def _execute_on_frame(self, frame, frame_number: int, fps: int):
