@@ -16,6 +16,7 @@ def main():
     dataset_specification = config.get("dataset", {})
     pose_estimator_specifications = config.get("pose_estimators", [])
     metric_specifications = config.get("metrics", [])
+    execute_inference = config.get("execute_inference", False)
 
     dataset = load_dataset(dataset_specification)
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
@@ -23,25 +24,31 @@ def main():
 
     metrics = load_metrics(metric_specifications)
     print("Avaliable metrics:", [metric.name for metric in metrics])
-    run(dataset, pose_estimators, metrics)
+    run(dataset, pose_estimators, metrics, execute_inference)
 
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric]):
-    inference_engine = InferenceEngine(dataset, pose_estimators)
-    pose_results = inference_engine.estimate_pose_keypoints()
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], execute_inference: bool = False):
     gt_pose_results = dataset.get_gt_pose_results()
-
-    evaluator = Evaluator(metrics=metrics)
-    results = evaluator.evaluate(pose_results, gt_pose_results)
-
     estimators_point_pairs = {
         est.name: est.get_keypoint_pairs() for est in pose_estimators
     }
+    inference_engine = InferenceEngine(dataset, pose_estimators)
+    
+    if execute_inference: # if user wants to run inference
+        pose_results = inference_engine.estimate_pose_keypoints()
+    elif not os.path.exists("/output"): # else if output folder does not exist
+        raise FileNotFoundError("Output folder does not exist. Please run inference first.")
+    else:
+        pose_results = inference_engine.load_pose_results_from_json()
+        
+
     pose_renderer = PoseRenderer(dataset, estimators_point_pairs)
     pose_renderer.render_all_videos(pose_results)
 
+    evaluator = Evaluator(metrics=metrics)
+    results = evaluator.evaluate(pose_results, gt_pose_results)
 
 def load_config() -> dict:
     config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")

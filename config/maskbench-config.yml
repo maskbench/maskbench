@@ -1,3 +1,5 @@
+execute_inference: true
+
 dataset:
   name: TedTalks
   module: datasets.ted_dataset
