@@ -14,9 +14,9 @@ class TragicTalkersDataset(Dataset):
     def _load_samples(self) -> List[VideoSample]:
         self.video_folder = os.path.join(self.dataset_folder, self.config.get("video_folder")) # adjust according to folder structure
         self.gt_folder = os.path.join(self.dataset_folder, self.config.get("ground_truth_folder")) # adjust according to folder structure
-        self.combine_json = self.config.get("combine_ground_truth_files", False)
+        self.combine_ground_truth_files = self.config.get("combine_ground_truth_files", False)
 
-        if self.combine_json:
+        if self.combine_ground_truth_files:
             list_of_json_folders = glob.glob(os.path.join(self.gt_folder, "*", "*")) # for every video & camera angle
             self.return_combined_json(list_of_json_folders)
         else:
@@ -53,9 +53,9 @@ class TragicTalkersDataset(Dataset):
                     frame_pose_results.append(FramePoseResult(persons=person_pose_results, frame_idx=frame.get("frame_idx", 0)))
                 
                 video_pose_result = VideoPoseResult(
-                    fps=data.get("fps", 30),
-                    frame_width=data.get("frame_width", 640),
-                    frame_height=data.get("frame_height", 480),
+                    fps=data.get("fps", None),
+                    frame_width=data.get("frame_width", None),
+                    frame_height=data.get("frame_height", None),
                     video_name=os.path.splitext(os.path.basename(gt_file))[0],
                     frames=frame_pose_results
                 )
