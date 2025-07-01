@@ -48,7 +48,6 @@ class TragicTalkersDataset(Dataset):
                     }
             
             json_filepath = self.get_file_name(json_folder)
-            print(json_filepath)
             with open(json_filepath, "w+") as f:
                 json.dump(serialized_video_pose_result, f, indent=2)
     
