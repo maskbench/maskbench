@@ -3,10 +3,9 @@ import json
 import glob
 from typing import List
 from dataclasses import asdict
-
 from .dataset import Dataset
 from .video_sample import VideoSample
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
+from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 
 class TragicTalkersDataset(Dataset):
     def __init__(self, dataset_folder: str, config: dict = None):
@@ -34,6 +33,36 @@ class TragicTalkersDataset(Dataset):
         print(f"Tragic Talkers Dataset is Loaded")
         return samples
     
+    def get_gt_pose_results(self) -> List[VideoPoseResult]:
+        ground_truth_pose_result = []
+        ground_truth_json_files = glob.glob(os.path.join(self.video_folder, "*", "*.json"))
+        
+        for gt_file in ground_truth_json_files:
+            with open(gt_file, 'r') as f:
+                data = json.load(f)
+                frames = data.get("frames", [])
+                frame_pose_results = []
+
+                for frame in frames:
+                    persons = frame.get("persons", [])
+                    person_pose_results = []
+                    for person in persons:
+                        keypoints = person.get("keypoints", [])
+                        pose_keypoints = [PoseKeypoint(x=k["x"], y=k["y"], confidence=k["confidence"]) for k in keypoints]
+                        person_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
+                    frame_pose_results.append(FramePoseResult(persons=person_pose_results, frame_idx=frame.get("frame_idx", 0)))
+                
+                video_pose_result = VideoPoseResult(
+                    fps=data.get("fps", 30),
+                    frame_width=data.get("frame_width", 640),
+                    frame_height=data.get("frame_height", 480),
+                    video_name=os.path.splitext(os.path.basename(gt_file))[0],
+                    frames=frame_pose_results
+                )
+                ground_truth_pose_result.append(video_pose_result)
+        
+        return ground_truth_pose_result
+
     def return_combined_json(self, list_of_json_folders: list):
         for json_folder in list_of_json_folders:
             all_json_files = glob.glob(os.path.join(json_folder, "*"))

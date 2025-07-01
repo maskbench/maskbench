@@ -29,11 +29,10 @@ def main():
 
 
 def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric]):
+    gt_pose_results = dataset.get_gt_pose_results()
+    
     inference_engine = InferenceEngine(dataset, pose_estimators)
     pose_results = inference_engine.estimate_pose_keypoints()
-    gt_pose_results = dataset.get_gt_pose_results()
-
-
     estimators_point_pairs = {
         est.name: est.get_keypoint_pairs() for est in pose_estimators
     }
