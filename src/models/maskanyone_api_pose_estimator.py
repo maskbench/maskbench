@@ -10,6 +10,7 @@ import shutil
 from models import PoseEstimator
 from video_chunker import VideoChunker
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from keypoint_pairs import mediapipe_keypoint_pairs, openpose_keypoint_pairs
 
 class MaskAnyoneApiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -22,44 +23,13 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         self.processed_output_dir = "/tmp/processed_chunks" # Temporary directory for processed chunks
 
     def get_keypoint_pairs(self):
-        return [
-        (0, 1), 
-        (1, 2), 
-        (2, 3), 
-        (3, 7), 
-        (0, 4), 
-        (4, 5), 
-        (5, 6), 
-        (6, 8),
-        (9, 10), 
-        (11, 12), 
-        (11, 13), 
-        (13, 15), 
-        (15, 19), 
-        (15, 17), 
-        (17, 19), 
-        (15, 21),
-        (12, 14), 
-        (14, 16), 
-        (16, 20), 
-        (16, 18), 
-        (18, 20), 
-        (11, 23), 
-        (12, 24), 
-        (16, 22),
-        (23, 25), 
-        (24, 26), 
-        (25, 27), 
-        (26, 28), 
-        (23, 24),
-        (28, 30), 
-        (28, 32), 
-        (30, 32), 
-        (27, 29), 
-        (27, 31), 
-        (29, 31)
-        ]
-        
+        # find a better way
+        options = self._get_config()
+        if options.get("overlay_strategy") == "openpose_body25b":
+            return openpose_keypoint_pairs
+        else:
+            return mediapipe_keypoint_pairs
+
     def estimate_pose(self, video_path: str) -> list:
         """
         Estimate the pose of a video using Mask Anyone Api estimation.

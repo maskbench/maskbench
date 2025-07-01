@@ -5,7 +5,7 @@ from ultralytics import YOLO
 
 from models import PoseEstimator
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
-
+from keypoint_pairs import yolo_keypoint_pairs
 
 class YoloPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -37,24 +37,7 @@ class YoloPoseEstimator(PoseEstimator):
         self.model.to(device)
 
     def get_keypoint_pairs(self):
-        return [
-            (15, 13),
-            (16, 14),
-            (13, 11),
-            (12, 14),
-            (11, 12),
-            (11, 5),
-            (12, 6),
-            (5, 6),
-            (5, 7),
-            (6, 8),
-            (7, 9),
-            (8, 10),
-            (0, 1),
-            (0, 2),
-            (1, 3),
-            (2, 4),
-        ]
+        return yolo_keypoint_pairs
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
