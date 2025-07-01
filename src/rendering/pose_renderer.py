@@ -36,9 +36,6 @@ class PoseRenderer:
             output_path = os.path.join(self.base_output_path, video_name)
             os.makedirs(output_path, exist_ok=True)  # create folder if doesnt exist
 
-            for estimator in pose_results.keys():
-                print(estimator, pose_results[estimator])
-
             video_pose_results = {
                 estimator: pose_results[estimator][video_name] for estimator in pose_results.keys()
             }
@@ -96,7 +93,7 @@ class PoseRenderer:
                         model_points_pair,
                         COLORS[model_idx],
                     )  # draw keypoints on frame
-                except:
+                except IndexError as e:
                     print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
                 video_writers[idx].write(frame_copies[idx])  # write rendered frame
                 model_idx += 1
@@ -142,7 +139,7 @@ class PoseRenderer:
                     frame_keypoints, [],
                     COLORS[0],
                 )  # draw keypoints on frame
-            except Exception as e:
+            except IndexError as e:
                 print(f"{frame_number} is not in list: {e}")
             out.write(frame)  # write rendered frame
 
@@ -152,7 +149,7 @@ class PoseRenderer:
         out.release()
 
     
-    def draw_keypoints_ground(
+    def draw_keypoints_ground_truth(
         self, frame, frame_pose_result, color
     ):
         """Draw keypoints and join keypoint pairs on 1 frame"""

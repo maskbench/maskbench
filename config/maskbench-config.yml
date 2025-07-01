@@ -1,13 +1,13 @@
 pose_estimators:
   - name: MediaPipePose
-    enabled: false
+    enabled: true
     module: models.mediapipe_pose_estimator
     class: MediaPipePoseEstimator
     config:
       weights: pose_landmarker_lite.task
 
   - name: YoloPose
-    enabled: false
+    enabled: true
     module: models.yolo_pose_estimator
     class: YoloPoseEstimator
     config:
@@ -23,29 +23,33 @@ pose_estimators:
       overlay_strategy: mp_pose
       
   - name: MaskAnyoneUi
-    enabled: false
+    enabled: true
     module: models.maskanyone_ui_pose_estimator
     class: MaskAnyoneUiPoseEstimator  
     config:
       dataset_folder_path: /maskanyone_ui/dataset    
 
   - name: OpenPose
-    enabled: false
+    enabled: true
     module: models.open_pose_estimator
     class: OpenPoseEstimator      
 
-# dataset:
-#   name: TragicTalkers
-#   module: datasets.tragic_talkers_dataset
-#   class: TragicTalkersDataset
-#   dataset_folder: /datasets/tragic_talkers
-
 dataset:
-  name: TedTalks
-  module: datasets.ted_dataset
-  class: TedDataset
-  dataset_folder: /datasets/ted-talks
+  name: TragicTalkers
+  module: datasets.tragic_talkers_dataset
+  class: TragicTalkersDataset
+  dataset_folder: /datasets/tragic_talkers
+  config:
+    video_folder: videos
+    ground_truth_folder: labels/pose_keypoints
+    combine_ground_truth_files: true
 
+# dataset:
+#   name: TedTalks
+#   module: datasets.ted_dataset
+#   class: TedDataset
+#   dataset_folder: /datasets/ted-talks
+  
 metrics:
   - name: DummyMetric
     module: evaluation.metrics.metric

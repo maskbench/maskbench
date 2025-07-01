@@ -9,13 +9,13 @@ from .video_sample import VideoSample
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
 
 class TragicTalkersDataset(Dataset):
-    def __init__(self, dataset_folder: str):
-        super().__init__(dataset_folder)
+    def __init__(self, dataset_folder: str, config: dict = None):
+        super().__init__(dataset_folder, config)
     
     def _load_samples(self) -> List[VideoSample]:
-        self.video_folder = os.path.join(self.dataset_folder, "videos") # adjust according to folder structure
-        self.gt_folder = os.path.join(self.dataset_folder, "labels", "pose_keypoints") # adjust according to folder structure
-        self.combine_json = False
+        self.video_folder = os.path.join(self.dataset_folder, self.config.get("video_folder")) # adjust according to folder structure
+        self.gt_folder = os.path.join(self.dataset_folder, self.config.get("ground_truth_folder")) # adjust according to folder structure
+        self.combine_json = self.config.get("combine_ground_truth_files", False)
 
         if self.combine_json:
             list_of_json_folders = glob.glob(os.path.join(self.gt_folder, "*", "*")) # for every video & camera angle
