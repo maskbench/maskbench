@@ -51,6 +51,6 @@ dataset:
 #   dataset_folder: /datasets/ted-talks
   
 metrics:
-  - name: DummyMetric
-    module: evaluation.metrics.metric
-    class: DummyMetric
+  - name: AccelerationMetric
+    module: evaluation.metrics.acceleration
+    class: AccelerationMetric
