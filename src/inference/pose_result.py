@@ -38,6 +38,16 @@ class VideoPoseResult:
         self.frames = frames
         self.video_name = video_name
 
+    def __info__(self):
+        return {
+            "video_name": self.video_name,
+            "fps": self.fps,
+            "frame_width": self.frame_width,
+            "frame_height": self.frame_height,
+            "num_frames": len(self.frames),
+            "sample_frames": self.frames[:3] if len(self.frames) > 3 else self.frames,
+        }
+    
     def to_numpy_ma(self) -> np.ndarray:
         """
         Convert the video pose results to a masked array.
