@@ -18,7 +18,9 @@ class Plot(ABC):
             name: Unique name of the plot
             config: Optional configuration dictionary for the plot
                    Common config options:
-                   - style: str for matplotlib style
+                   - style: str for seaborn style (default: white)
+                   - figsize: tuple for figure size (default: (10, 5))
+                   - dpi: int for figure resolution (default: 300)
                    - title: str for plot title
                    - xlabel: str for x-axis label
                    - ylabel: str for y-axis label
@@ -30,14 +32,14 @@ class Plot(ABC):
         
         self.config = config or {}
         if 'figsize' not in self.config:
-            self.config['figsize'] = (12, 8)
+            self.config['figsize'] = (10, 5)
         if 'dpi' not in self.config:
-            self.config['dpi'] = 100
-
+            self.config['dpi'] = 300
+        if 'style' not in self.config:
+            self.config['style'] = 'white'
         
-        # Set the seaborn style
         sns.set_style(self.config['style'])
-        sns.color_palette("colorblind")
+        sns.color_palette("rocket")
         sns.set_context("paper")
         
     @abstractmethod
@@ -60,13 +62,20 @@ class Plot(ABC):
         """Set up the figure with standard configuration."""
         plt.figure(figsize=self.config['figsize'], dpi=self.config['dpi'])
         plt.tight_layout()
+
+        # Remove plot edges
+        plt.gca().spines['top'].set_visible(False)
+        plt.gca().spines['right'].set_visible(False)
+        plt.gca().spines['left'].set_visible(False)
+        plt.gca().spines['bottom'].set_visible(False)
+
         
         if 'title' in self.config:
             plt.title(self.config['title'])
         if 'xlabel' in self.config:
-            plt.xlabel(self.config['xlabel'])
+            plt.xlabel(self.config['xlabel'], labelpad=10)
         if 'ylabel' in self.config:
-            plt.ylabel(self.config['ylabel'])
+            plt.ylabel(self.config['ylabel'], labelpad=10)
     
     def _save_plot(self, filename: str) -> None:
         """Save the plot to the output directory with the given filename."""
