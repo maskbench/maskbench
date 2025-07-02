@@ -16,8 +16,7 @@ services:
           - ${MASKBENCH_WEIGHTS_DIR}:/weights/user_weights
           - ${MASKBENCH_DATASET_DIR}:/datasets  
           - ${MASKBENCH_OUTPUT_DIR}:/output
-          - ${MASK_ANYONE_UI_DATASET}:/maskanyone_ui/dataset
-        tty: true              # Keep the container running interactively
+        tty: true               # Keep the container running interactively
         stdin_open: true
         deploy:
           resources:

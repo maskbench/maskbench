@@ -4,6 +4,17 @@ import os
 import json
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
 
+def maskanyone_get_config(options: dict):
+        """"Ensures Options are valid"""
+        valid_hiding_strategies = ['solid_fill', 'transparent_fill', 'blurring', 'pixelation', 'contours', 'none']
+        valid_overlay_strategies = ['mp_pose', 'openpose_body25b']
+        
+        if options.get("hiding_strategy") not in valid_hiding_strategies:
+            raise ValueError(f"Invalid hiding strategy. Valid options are: {valid_hiding_strategies}")
+        if options.get("overlay_strategy") not in valid_overlay_strategies:
+            raise ValueError(f"Invalid overlay strategy. Valid options are: {valid_overlay_strategies}")
+        
+        return options
 
 def maskanyone_combine_json_files(json_dir: str) -> list:
         """
