@@ -11,7 +11,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         """
         super().__init__(name, config)
         self.maskanyone_ui_dataset = self.config.get("dataset_folder_path")
-        self.options = self._get_config()
+        self.options = utils.maskanyone_get_config()
 
     def get_keypoint_pairs(self):
         overlay_strategy = self.options.get("overlay_strategy")
@@ -20,7 +20,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         elif overlay_strategy == "mp_pose":
             return MEDIAPIPE_KEYPOINT_PAIRS
         else:
-            raise ValueError(f"Overlay strategy {overlay_strategy} is not supported by MaskBench.")
+            raise ValueError(f"Overlay strategy {overlay_strategy} is not supported by MaskAnyone UI Pose Estimator.")
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """

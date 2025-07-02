@@ -19,7 +19,6 @@ pose_estimators:
     module: models.maskanyone_api_pose_estimator
     class: MaskAnyoneApiPoseEstimator
     config:
-      hiding_strategy: pixelation
       overlay_strategy: mp_pose
       
   - name: MaskAnyoneUi
