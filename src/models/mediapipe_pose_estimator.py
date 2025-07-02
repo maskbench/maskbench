@@ -13,7 +13,7 @@ from mediapipe.tasks.python.vision import (
 
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-
+from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS
 
 class MediaPipePoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -49,43 +49,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         )
 
     def get_keypoint_pairs(self):
-        return [
-            (0, 1),
-            (1, 2),
-            (2, 3),
-            (3, 7),
-            (0, 4),
-            (4, 5),
-            (5, 6),
-            (6, 8),
-            (9, 10),
-            (11, 12),
-            (11, 13),
-            (13, 15),
-            (15, 19),
-            (15, 17),
-            (17, 19),
-            (15, 21),
-            (12, 14),
-            (14, 16),
-            (16, 20),
-            (16, 18),
-            (18, 20),
-            (11, 23),
-            (12, 24),
-            (16, 22),
-            (23, 25),
-            (24, 26),
-            (25, 27),
-            (26, 28),
-            (23, 24),
-            (28, 30),
-            (28, 32),
-            (30, 32),
-            (27, 29),
-            (27, 31),
-            (29, 31),
-        ]
+        return MEDIAPIPE_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -113,14 +77,14 @@ class MediaPipePoseEstimator(PoseEstimator):
             result = self._execute_on_frame(frame, frame_number, fps)
 
             if not result.pose_landmarks:
-                continue
+                frame_results.append(FramePoseResult(persons=None, frame_idx=frame_number))
+            else:
+                persons = []
+                for person_landmarks in result.pose_landmarks:
+                    keypoints = []
 
-            persons = []
-            for person_landmarks in result.pose_landmarks:
-                keypoints = []
-
-                for lm in person_landmarks:
-                    if not (0 <= lm.x <= 1 and 0 <= lm.y <= 1) or lm.visibility < 0.5: # for undetected keypoints, x and y can be outside the range [0, 1]
+                    for lm in person_landmarks:
+                        if not (0 <= lm.x <= 1 and 0 <= lm.y <= 1) or lm.visibility < 0.5: # for undetected keypoints, x and y can be outside the range [0, 1]
                         keypoints.append(PoseKeypoint(x=0, y=0)) # standardized handling of missing keypoints by setting x and y to 0
                         continue
 
@@ -128,11 +92,11 @@ class MediaPipePoseEstimator(PoseEstimator):
                     y = int(lm.y * height)
                     keypoints.append(PoseKeypoint(x=x, y=y))
 
-                persons.append(PersonPoseResult(keypoints=keypoints))
+                    persons.append(PersonPoseResult(keypoints=keypoints))
 
-            frame_results.append(
-                FramePoseResult(persons=persons, frame_idx=frame_number)
-            )
+                frame_results.append(
+                    FramePoseResult(persons=persons, frame_idx=frame_number)
+                )
             frame_number += 1
 
         cap.release()

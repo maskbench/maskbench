@@ -24,26 +24,20 @@ class PoseRenderer:
         self.base_output_path = "/output"
         self.estimators_point_pairs = estimators_point_pairs
 
-    def get_keypoints(self, output_path: str, estimator_name: str):
-        """Fetch keypoints from json for specific video and model"""
-        file_path = os.path.join(output_path, estimator_name + ".json")
-        with open(file_path) as f:
-            keypoints = json.load(f)
-        return keypoints
-
-    def render_all_videos(self, pose_results: Dict[str, List[VideoPoseResult]]):
+    def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]]):
         """
         Render all videos in the dataset with the provided pose results.
         Args:
-            pose_results (Dict[str, List[VideoPoseResult]]): Dictionary where keys are estimator names and values are lists of VideoPoseResult objects.
+            pose_results (Dict[str, Dict[str, List[VideoPoseResult]]]): Dictionary where keys are estimator names and values are dictionaries mapping video names to lists of VideoPoseResult objects.
         """
-        for idx, video in enumerate(self.dataset):
+        for video in self.dataset:
             start_time = time.time()
-            output_path = os.path.join(self.base_output_path, video.get_filename())
+            video_name = video.get_filename()
+            output_path = os.path.join(self.base_output_path, video_name)
             os.makedirs(output_path, exist_ok=True)  # create folder if doesnt exist
 
             video_pose_results = {
-                estimator: pose_results[estimator][idx] for estimator in pose_results
+                estimator: pose_results[estimator][video_name] for estimator in pose_results.keys()
             }
             self.render_video(video, video_pose_results, output_path)
 
@@ -74,9 +68,7 @@ class PoseRenderer:
 
         video_writers = []  # initialize video writers
 
-        for (
-            estimator_name
-        ) in self.estimators_point_pairs.keys():  # video writer for every model
+        for estimator_name in self.estimators_point_pairs.keys():  # video writer for every model
             out = cv2.VideoWriter(
                 f"{output_path}/{estimator_name}.mp4", fourcc, fps, (width, height)
             )
@@ -92,16 +84,17 @@ class PoseRenderer:
             ]  # deep copy of frames to avoid overwriting
             model_idx = 0
 
-            for idx, (estimator_name, model_points_pair) in enumerate(
-                self.estimators_point_pairs.items()
-            ):  # for every model
-                frame_keypoints = video_pose_results[estimator_name].frames[frame_number]
-                frame_copies[idx] = self.draw_keypoints(
-                    frame_copies[idx],
-                    frame_keypoints,
-                    model_points_pair,
-                    COLORS[model_idx],
-                    )
+            for idx, (estimator_name, model_points_pair) in enumerate(self.estimators_point_pairs.items()):  # for every model
+                try:
+                    frame_keypoints = video_pose_results[estimator_name].frames[frame_number]
+                    frame_copies[idx] = self.draw_keypoints(
+                        frame_copies[idx],
+                        frame_keypoints,
+                        model_points_pair,
+                        COLORS[model_idx],
+                    )  # draw keypoints on frame
+                except IndexError as e:
+                    print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
                 video_writers[idx].write(frame_copies[idx])  # write rendered frame
                 model_idx += 1
 
@@ -110,6 +103,70 @@ class PoseRenderer:
         cap.release()
         for i in video_writers:
             i.release()
+
+    def render_ground_truth_video(self, video_path: str, ground_truth_path:str):
+        video_name = os.path.basename(video_path).split('.')[0]  # get video name without extension
+        output_path = os.path.join(self.base_output_path, video_name)
+        os.makedirs(output_path, exist_ok=True)  # create folder if doesnt exist
+
+        cap = cv2.VideoCapture(video_path)  # load the video
+        if not cap.isOpened():
+            raise IOError(f"Cannot open video file {video_path}")
+
+        fps = int(cap.get(cv2.CAP_PROP_FPS))  # get video specs
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
+        out = cv2.VideoWriter(
+                f"{output_path}/ground_truth.mp4", fourcc, fps, (width, height)
+            )
+        
+        with open(ground_truth_path) as f:
+            keypoints = json.load(f)
+
+        frame_number = 0
+        while cap.isOpened():  # for every frame
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            try:
+                frame_keypoints = keypoints[frame_number]
+                frame = self.draw_keypoints(
+                    frame,
+                    frame_keypoints, [],
+                    COLORS[0],
+                )  # draw keypoints on frame
+            except IndexError as e:
+                print(f"{frame_number} is not in list: {e}")
+            out.write(frame)  # write rendered frame
+
+            frame_number += 1
+
+        cap.release()
+        out.release()
+
+    
+    def draw_keypoints_ground_truth(
+        self, frame, frame_pose_result, color
+    ):
+        """Draw keypoints and join keypoint pairs on 1 frame"""
+        if not frame_pose_result["persons"]:  # if this frame has no keypoints
+            return frame
+
+        for person in frame_pose_result["persons"]:  # every person
+            if not person or not person["keypoints"]:
+                continue
+
+            for keypoint in person["keypoints"]:  # every keypoint
+                if keypoint:
+                    center = (int(keypoint["x"]), int(keypoint["y"]))
+                    cv2.circle(frame, center, 4, color, -1)  # draw the keypoint
+
+        return frame
+
 
     def draw_keypoints(
         self, frame, frame_pose_result: FramePoseResult, point_pairs, color
