@@ -22,6 +22,7 @@ def maskanyone_combine_json_files(json_dir: str) -> list:
             Json_dir: Directory containing Json file for video chunks
         """
         json_files = glob.glob(os.path.join(json_dir, "*.json"))
+        # Expected Chunk file path X/Y/chunk_x.json where x is chunk number
         json_files = sorted(json_files, key=lambda x: int(os.path.basename(x).split('_')[1].split('.')[0])) # sort them by chunk number
         pose_result = []  # combined keypoints for all frames all persons
 

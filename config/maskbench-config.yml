@@ -27,8 +27,9 @@ pose_estimators:
     module: models.maskanyone_ui_pose_estimator
     class: MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /dataset/maskanyone_ui    
+      dataset_folder_path: /datasets/maskanyone_ui    
       overlay_strategy: mp_pose
+      hiding_strategy: pixelation
 
   - name: OpenPose
     enabled: true

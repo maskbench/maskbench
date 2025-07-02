@@ -11,7 +11,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         """
         super().__init__(name, config)
         self.maskanyone_ui_dataset = self.config.get("dataset_folder_path")
-        self.options = utils.maskanyone_get_config()
+        self.options = utils.maskanyone_get_config(self.config)
 
     def get_keypoint_pairs(self):
         overlay_strategy = self.options.get("overlay_strategy")
@@ -36,8 +36,8 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         video_name = os.path.splitext(os.path.basename(video_path))[0] # get video name
         results_path = os.path.join(self.maskanyone_ui_dataset, video_name) # path of jsons
         if not os.path.exists(results_path):
-            raise f"{video_name} was not found in Mask Anyone Ui Dataset Folder Path"
-            
+            raise FileNotFoundError(f"{results_path} was not found in Mask Anyone Ui Dataset Folder Path")
+
         frame_results = utils.maskanyone_combine_json_files(results_path)  # Combine the JSON files from processed chunks
         return VideoPoseResult(
             fps=video_metadata.get("fps"),
