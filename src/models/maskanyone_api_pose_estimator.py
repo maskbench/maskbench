@@ -10,6 +10,7 @@ import shutil
 from models import PoseEstimator
 from video_chunker import VideoChunker
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS
 
 class MaskAnyoneApiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -20,46 +21,17 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         self.docker_url = "http://maskanyone_api:8000/mask-video"
         self.chunk_output_dir = "/tmp/chunks" # Temporary directory for video chunks
         self.processed_output_dir = "/tmp/processed_chunks" # Temporary directory for processed chunks
+        self.options = self._get_config()
 
     def get_keypoint_pairs(self):
-        return [
-        (0, 1), 
-        (1, 2), 
-        (2, 3), 
-        (3, 7), 
-        (0, 4), 
-        (4, 5), 
-        (5, 6), 
-        (6, 8),
-        (9, 10), 
-        (11, 12), 
-        (11, 13), 
-        (13, 15), 
-        (15, 19), 
-        (15, 17), 
-        (17, 19), 
-        (15, 21),
-        (12, 14), 
-        (14, 16), 
-        (16, 20), 
-        (16, 18), 
-        (18, 20), 
-        (11, 23), 
-        (12, 24), 
-        (16, 22),
-        (23, 25), 
-        (24, 26), 
-        (25, 27), 
-        (26, 28), 
-        (23, 24),
-        (28, 30), 
-        (28, 32), 
-        (30, 32), 
-        (27, 29), 
-        (27, 31), 
-        (29, 31)
-        ]
-        
+        overlay_strategy = self.options.get("overlay_strategy")
+        if overlay_strategy == "openpose_body25b":
+            return OPENPOSE_KEYPOINT_PAIRS
+        elif overlay_strategy == "mp_pose":
+            return MEDIAPIPE_KEYPOINT_PAIRS
+        else:
+            raise ValueError(f"Overlay strategy {overlay_strategy} is not supported by MaskBench.")
+
     def estimate_pose(self, video_path: str) -> list:
         """
         Estimate the pose of a video using Mask Anyone Api estimation.
@@ -105,7 +77,6 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
 
     def _process_chunks(self, video_chunks: list, output_dir: str):
         os.makedirs(output_dir, exist_ok=True)  # we will store the chunk json files here
-        options = self._get_config()  # Get the configuration options
 
         video_extension = os.path.splitext(video_chunks[0])[1]          
         if video_extension == ".mp4":
@@ -118,7 +89,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         for _, chunk_path in enumerate(video_chunks):
             with open(chunk_path, "rb") as f:
                 files = {'video': (os.path.basename(chunk_path), f, mime_type)}
-                data ={ "options": json.dumps(options) }
+                data ={ "options": json.dumps(self.options) }
 
                 try:
                     response = requests.post(self.docker_url, files=files, data=data)
