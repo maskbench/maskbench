@@ -1,9 +1,3 @@
-dataset:
-  name: TedTalks
-  module: datasets.ted_dataset
-  class: TedDataset
-  dataset_folder: /datasets/ted-talks
-
 pose_estimators:
   - name: MediaPipePose
     enabled: true
@@ -28,12 +22,34 @@ pose_estimators:
       hiding_strategy: pixelation
       overlay_strategy: mp_pose
       
+  - name: MaskAnyoneUi
+    enabled: true
+    module: models.maskanyone_ui_pose_estimator
+    class: MaskAnyoneUiPoseEstimator  
+    config:
+      dataset_folder_path: /maskanyone_ui/dataset    
+
   - name: OpenPose
     enabled: true
     module: models.open_pose_estimator
     class: OpenPoseEstimator      
 
+dataset:
+  name: TragicTalkers
+  module: datasets.tragic_talkers_dataset
+  class: TragicTalkersDataset
+  dataset_folder: /datasets/tragic_talkers
+  config:
+    video_folder: videos
+    ground_truth_folder: labels/pose_keypoints
+    combine_ground_truth_files: true
 
+# dataset:
+#   name: TedTalks
+#   module: datasets.ted_dataset
+#   class: TedDataset
+#   dataset_folder: /datasets/ted-talks
+  
 metrics:
   - name: DummyMetric
     module: evaluation.metrics.metric

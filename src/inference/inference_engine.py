@@ -12,17 +12,21 @@ class InferenceEngine:
         self.base_output_path = "/output"
         self.estimator_point_pairs = dict()
 
-    def estimate_pose_keypoints(self) -> Dict[str, List[VideoPoseResult]]:
+    def estimate_pose_keypoints(self) -> Dict[str, Dict[str, List[VideoPoseResult]]]:
         results = {}
         for estimator in self.pose_estimators:
-            results[estimator.name] = []
+            results[estimator.name] = {}
 
             for video in self.dataset:
                 print(f"Running estimator '{estimator.name}' on video {video.path}")
 
                 start_time = time.time()
-                video_pose_result = estimator.estimate_pose(video.path)
-                results[estimator.name].append(video_pose_result)
+                try: # {model_name: {video_name: VideoPoseResult}}
+                    video_pose_result = estimator.estimate_pose(video.path)
+                    results[estimator.name][video.get_filename()] = video_pose_result
+                except Exception as e:
+                    raise Exception(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
+
                 end_time = time.time()
 
                 print(f"Inference time: '{estimator.name}': {end_time - start_time}")
