@@ -7,7 +7,7 @@ import requests
 import utils
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import openpose_keypoint_pairs
+from keypoint_pairs import OPENPOSE_KEYPOINT_PAIRS
 
 
 class OpenPoseEstimator(PoseEstimator):
@@ -18,7 +18,7 @@ class OpenPoseEstimator(PoseEstimator):
         super().__init__(name, config)
 
     def get_keypoint_pairs(self):
-        return openpose_keypoint_pairs
+        return OPENPOSE_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """

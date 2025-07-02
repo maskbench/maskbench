@@ -13,7 +13,7 @@ from mediapipe.tasks.python.vision import (
 
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import mediapipe_keypoint_pairs
+from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS
 
 class MediaPipePoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -49,7 +49,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         )
 
     def get_keypoint_pairs(self):
-        return mediapipe_keypoint_pairs
+        return MEDIAPIPE_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """

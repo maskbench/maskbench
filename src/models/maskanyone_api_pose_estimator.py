@@ -10,7 +10,7 @@ import shutil
 from models import PoseEstimator
 from video_chunker import VideoChunker
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
-from keypoint_pairs import mediapipe_keypoint_pairs, openpose_keypoint_pairs
+from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS
 
 class MaskAnyoneApiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -24,10 +24,13 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         self.options = self._get_config()
 
     def get_keypoint_pairs(self):
-        if self.options.get("overlay_strategy") == "openpose_body25b":
-            return openpose_keypoint_pairs
+        overlay_strategy = self.options.get("overlay_strategy")
+        if overlay_strategy == "openpose_body25b":
+            return OPENPOSE_KEYPOINT_PAIRS
+        elif overlay_strategy == "mp_pose":
+            return MEDIAPIPE_KEYPOINT_PAIRS
         else:
-            return mediapipe_keypoint_pairs
+            raise ValueError(f"Overlay strategy {overlay_strategy} is not supported by MaskBench.")
 
     def estimate_pose(self, video_path: str) -> list:
         """

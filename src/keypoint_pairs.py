@@ -1,4 +1,4 @@
-mediapipe_keypoint_pairs = [
+MEDIAPIPE_KEYPOINT_PAIRS = [
             (0, 1),
             (1, 2),
             (2, 3),
@@ -35,7 +35,7 @@ mediapipe_keypoint_pairs = [
             (27, 31),
             (29, 31),
         ]
-openpose_keypoint_pairs = [
+OPENPOSE_KEYPOINT_PAIRS = [
             (0, 1),
             (0, 2),
             (1, 3),
@@ -62,7 +62,7 @@ openpose_keypoint_pairs = [
             (17, 18),
             (5, 6),
         ]
-yolo_keypoint_pairs = [
+YOLO_KEYPOINT_PAIRS = [
             (15, 13),
             (16, 14),
             (13, 11),
