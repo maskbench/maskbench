@@ -21,11 +21,10 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         self.docker_url = "http://maskanyone_api:8000/mask-video"
         self.chunk_output_dir = "/tmp/chunks" # Temporary directory for video chunks
         self.processed_output_dir = "/tmp/processed_chunks" # Temporary directory for processed chunks
+        self.options = self._get_config()
 
     def get_keypoint_pairs(self):
-        # find a better way
-        options = self._get_config()
-        if options.get("overlay_strategy") == "openpose_body25b":
+        if self.options.get("overlay_strategy") == "openpose_body25b":
             return openpose_keypoint_pairs
         else:
             return mediapipe_keypoint_pairs
@@ -74,7 +73,6 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
 
     def _process_chunks(self, video_chunks: list, output_dir: str):
         os.makedirs(output_dir, exist_ok=True)  # we will store the chunk json files here
-        options = self._get_config()  # Get the configuration options
 
         video_extension = os.path.splitext(video_chunks[0])[1]          
         if video_extension == ".mp4":
@@ -87,7 +85,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         for _, chunk_path in enumerate(video_chunks):
             with open(chunk_path, "rb") as f:
                 files = {'video': (os.path.basename(chunk_path), f, mime_type)}
-                data ={ "options": json.dumps(options) }
+                data ={ "options": json.dumps(self.options) }
 
                 try:
                     response = requests.post(self.docker_url, files=files, data=data)
