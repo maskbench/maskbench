@@ -1,6 +1,5 @@
-import os
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -27,8 +26,6 @@ class Plot(ABC):
                    - legend: bool for showing legend
         """
         self.name = name
-        self.output_path = "/output/plots"
-        os.makedirs(self.output_path, exist_ok=True)
         
         self.config = config or {}
         if 'figsize' not in self.config:
@@ -46,7 +43,7 @@ class Plot(ABC):
     def draw(
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
-    ) -> None:
+    ) -> Tuple[plt.Figure, str]:
         """
         Draw the plot using the provided results.
         
@@ -54,13 +51,16 @@ class Plot(ABC):
             results: Dictionary mapping:
                     metric_name -> model_name -> video_name -> MetricResult
             
-        The plot is saved to the output directory.
+        Returns:
+            Tuple containing:
+                - plt.Figure: The generated matplotlib figure
+                - str: The suggested filename for saving the plot
         """
         pass
     
-    def _setup_figure(self) -> None:
+    def _setup_figure(self) -> plt.Figure:
         """Set up the figure with standard configuration."""
-        plt.figure(figsize=self.config['figsize'], dpi=self.config['dpi'])
+        fig = plt.figure(figsize=self.config['figsize'], dpi=self.config['dpi'])
         plt.tight_layout()
 
         # Remove plot edges
@@ -76,12 +76,8 @@ class Plot(ABC):
             plt.xlabel(self.config['xlabel'], labelpad=10)
         if 'ylabel' in self.config:
             plt.ylabel(self.config['ylabel'], labelpad=10)
-    
-    def _save_plot(self, filename: str) -> None:
-        """Save the plot to the output directory with the given filename."""
-        output_file = os.path.join(self.output_path, filename)
-        plt.savefig(output_file, bbox_inches='tight', dpi=self.config['dpi'])
-        plt.close() 
+            
+        return fig
 
     def _group_by_video(self, results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, Dict[str, MetricResult]]]:
         """Group the results by video."""

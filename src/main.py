@@ -41,7 +41,7 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
     evaluator = Evaluator(metrics=metrics)
     results = evaluator.evaluate(pose_results, gt_pose_results)
 
-    visualizer = Visualizer()
+    visualizer = Visualizer(checkpointer)
     visualizer.save_plots(results)
 
     estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}

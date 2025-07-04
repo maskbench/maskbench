@@ -1,5 +1,4 @@
-from typing import Dict
-import os
+from typing import Dict, List, Tuple
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,13 +25,16 @@ class AccelerationOverTimePlot(Plot):
     def draw(
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
-    ) -> None:
+    ) -> List[Tuple[plt.Figure, str]]:
         """
         Draw acceleration over time plot for each model.
         
         Args:
             results: Dictionary mapping:
                     metric_name -> model_name -> video_name -> MetricResult
+                    
+        Returns:
+            List[Tuple[plt.Figure, str]]: List of tuples containing the figure and suggested filename
         """
         if 'Acceleration' not in results:
             raise ValueError("No acceleration metric found in results")
@@ -40,8 +42,9 @@ class AccelerationOverTimePlot(Plot):
         acceleration_results = results['Acceleration']
         video_groupings = self._group_by_video(acceleration_results)
         
+        figures_and_names = []
         for video_name, model_results in video_groupings.items():
-            self._setup_figure()
+            fig = self._setup_figure()
             
             plt.title(f"{self.config['title']} - {video_name}", pad=20)
             
@@ -54,4 +57,6 @@ class AccelerationOverTimePlot(Plot):
                 plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', frameon=True)
             
             filename = f"acceleration_seaborn2_{video_name}.png"
-            self._save_plot(filename) 
+            figures_and_names.append((fig, filename))
+            
+        return figures_and_names 

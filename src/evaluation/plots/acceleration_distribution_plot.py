@@ -64,12 +64,12 @@ class AccelerationDistributionPlot(Plot):
     def draw(
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
-    ) -> None:
+    ) -> Tuple[plt.Figure, str]:
         if 'Acceleration' not in results:
             raise ValueError("No acceleration metric found in results")
             
         acceleration_results = results['Acceleration']
-        self._setup_figure()
+        fig = self._setup_figure()
         
         # First pass: collect all acceleration values
         all_accelerations = []
@@ -117,7 +117,7 @@ class AccelerationDistributionPlot(Plot):
             labels.append(model_name)
         
         self._finish_label_grid_axes_styling(x_positions, bin_labels, lines, labels)
-        self._save_plot("acceleration_distribution.png") 
+        return fig, "acceleration_distribution"
 
 
     def _finish_label_grid_axes_styling(self, x_positions: np.ndarray, bin_labels: List[str], lines: List[plt.Line2D], labels: List[str]):
