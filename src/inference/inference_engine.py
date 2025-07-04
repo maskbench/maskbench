@@ -2,9 +2,20 @@ import time
 import json
 import os
 import glob
+import numpy as np
 from .pose_result import VideoPoseResult, PoseKeypoint, PersonPoseResult, FramePoseResult
 from typing import Dict, List
 from dataclasses import asdict
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
 class InferenceEngine:
     def __init__(self, dataset: dict, pose_estimators: list):
@@ -49,7 +60,7 @@ class InferenceEngine:
         }
         
         with open(json_filepath, "w+") as f:
-            json.dump(serialized_video_pose_result, f, indent=2)
+            json.dump(serialized_video_pose_result, f, indent=2, cls=NumpyEncoder)
                     
     
     def load_pose_results_from_json(self) -> Dict[str, Dict[str, List[VideoPoseResult]]]:

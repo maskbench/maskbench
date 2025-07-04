@@ -70,7 +70,7 @@ class YoloPoseEstimator(PoseEstimator):
             for i in range(num_persons):
                 keypoints = []
                 for j in range(num_keypoints):
-                    xy = result.keypoints.xy.numpy()
+                    xy = result.keypoints.xy.cpu().numpy()
                     conf = result.keypoints.conf
                     kp = PoseKeypoint(
                         x=float(xy[i, j, 0]),
