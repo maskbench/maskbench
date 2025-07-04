@@ -3,6 +3,9 @@ import json
 import datetime
 import numpy as np
 from typing import Dict, Optional
+
+import cv2 as cv
+
 from inference.pose_result import VideoPoseResult, FramePoseResult, PersonPoseResult, PoseKeypoint
 
 class NumpyEncoder(json.JSONEncoder):
@@ -42,6 +45,27 @@ class Checkpointer:
         self.poses_dir = os.path.join(self.checkpoint_dir, "poses")
         self.plots_dir = os.path.join(self.checkpoint_dir, "plots")
         self.renderings_dir = os.path.join(self.checkpoint_dir, "renderings")
+        
+    def save_rendered_video(self, video_name: str, estimator_name: str, video_writer: cv.VideoWriter) -> str:
+        """
+        Save a rendered video for a specific estimator.
+        
+        Args:
+            video_name (str): Name of the video being rendered
+            estimator_name (str): Name of the pose estimator (e.g., 'Yolo', 'Mediapipe')
+            video_writer: OpenCV VideoWriter object with the rendered video
+            
+        Returns:
+            str: Path where the video was saved
+        """
+        video_dir = os.path.join(self.renderings_dir, video_name)
+        os.makedirs(video_dir, exist_ok=True)
+        
+        output_path = os.path.join(video_dir, f"{video_name}_{estimator_name}.mp4")
+
+        video_writer.release()
+        
+        return output_path
         
     def save_video_pose_result(self, video_pose_result: VideoPoseResult, estimator_name: str) -> str:
         """
