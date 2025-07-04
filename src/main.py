@@ -27,6 +27,7 @@ def main():
     print("Avaliable metrics:", [metric.name for metric in metrics])
 
     checkpoint_name = config.get("checkpoint_name", None)
+    checkpoint_name = checkpoint_name if checkpoint_name != "None" else None
     checkpointer = Checkpointer(dataset.name, checkpoint_name)
     
     run(dataset, pose_estimators, metrics, checkpointer)
