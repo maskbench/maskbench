@@ -85,18 +85,16 @@ class MediaPipePoseEstimator(PoseEstimator):
 
                     for lm in person_landmarks:
                         if not (0 <= lm.x <= 1 and 0 <= lm.y <= 1) or lm.visibility < 0.5: # for undetected keypoints, x and y can be outside the range [0, 1]
-                        keypoints.append(PoseKeypoint(x=0, y=0)) # standardized handling of missing keypoints by setting x and y to 0
-                        continue
+                            keypoints.append(PoseKeypoint(x=0, y=0)) # standardized handling of missing keypoints by setting x and y to 0
+                            continue
 
-                    x = int(lm.x * width) # convert normalized landmarks to image coordinates
-                    y = int(lm.y * height)
-                    keypoints.append(PoseKeypoint(x=x, y=y))
+                        x = int(lm.x * width) # convert normalized landmarks to image coordinates
+                        y = int(lm.y * height)
+                        keypoints.append(PoseKeypoint(x=x, y=y))
 
                     persons.append(PersonPoseResult(keypoints=keypoints))
 
-                frame_results.append(
-                    FramePoseResult(persons=persons, frame_idx=frame_number)
-                )
+                frame_results.append(FramePoseResult(persons=persons, frame_idx=frame_number))
             frame_number += 1
 
         cap.release()
