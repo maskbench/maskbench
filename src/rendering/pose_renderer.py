@@ -6,6 +6,7 @@ import json
 
 from inference import FramePoseResult, VideoPoseResult
 from datasets import Dataset, VideoSample
+from checkpointer import Checkpointer
 
 COLORS = [  # these are colors that even color-blind people can see
     (0, 115, 178),  # blue
@@ -19,10 +20,10 @@ COLORS = [  # these are colors that even color-blind people can see
 
 
 class PoseRenderer:
-    def __init__(self, dataset: Dataset, estimators_point_pairs: dict):
+    def __init__(self, dataset: Dataset, estimators_point_pairs: dict, checkpointer: Checkpointer):
         self.dataset = dataset
-        self.base_output_path = "/output"
         self.estimators_point_pairs = estimators_point_pairs
+        self.checkpointer = checkpointer
 
     def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]]):
         """
@@ -33,13 +34,11 @@ class PoseRenderer:
         for video in self.dataset:
             start_time = time.time()
             video_name = video.get_filename()
-            output_path = os.path.join(self.base_output_path, video_name)
-            os.makedirs(output_path, exist_ok=True)  # create folder if doesnt exist
 
             video_pose_results = {
                 estimator: pose_results[estimator][video_name] for estimator in pose_results.keys()
             }
-            self.render_video(video, video_pose_results, output_path)
+            self.render_video(video, video_pose_results)
 
             print(f"Rendering {video.path} - {time.time() - start_time}")
 
@@ -47,14 +46,12 @@ class PoseRenderer:
         self,
         video: VideoSample,
         video_pose_results: Dict[str, VideoPoseResult],
-        output_path: str,
     ):
         """
         Render video with keypoints and save it to output path.
         Args:
             video (VideoSample): The video sample to render.
             video_pose_results (Dict[str, VideoPoseResult]): Dictionary of pose results for each estimator.
-            output_path (str): The path where the rendered video will be saved.
         """
         cap = cv2.VideoCapture(video.path)  # load the video
         if not cap.isOpened():
@@ -67,12 +64,13 @@ class PoseRenderer:
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
         video_writers = []  # initialize video writers
+        video_name = video.get_filename()
 
         for estimator_name in self.estimators_point_pairs.keys():  # video writer for every model
-            out = cv2.VideoWriter(
-                f"{output_path}/{estimator_name}.mp4", fourcc, fps, (width, height)
-            )
-            video_writers.append(out)
+            output_path = os.path.join(self.checkpointer.renderings_dir, video_name, f"{video_name}_{estimator_name}.mp4")
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+            video_writers.append((estimator_name, out))
 
         frame_number = 0
         while cap.isOpened():  # for every frame
@@ -84,31 +82,29 @@ class PoseRenderer:
             ]  # deep copy of frames to avoid overwriting
             model_idx = 0
 
-            for idx, (estimator_name, model_points_pair) in enumerate(self.estimators_point_pairs.items()):  # for every model
+            for idx, (estimator_name, writer) in enumerate(video_writers):  # for every model
                 try:
                     frame_keypoints = video_pose_results[estimator_name].frames[frame_number]
                     frame_copies[idx] = self.draw_keypoints(
                         frame_copies[idx],
                         frame_keypoints,
-                        model_points_pair,
+                        self.estimators_point_pairs[estimator_name],
                         COLORS[model_idx],
                     )  # draw keypoints on frame
                 except IndexError as e:
                     print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
-                video_writers[idx].write(frame_copies[idx])  # write rendered frame
+                writer.write(frame_copies[idx])  # write rendered frame
                 model_idx += 1
 
             frame_number += 1
 
         cap.release()
-        for i in video_writers:
-            i.release()
+        for estimator_name, writer in video_writers:
+            self.checkpointer.save_rendered_video(video_name, estimator_name, writer)
 
     def render_ground_truth_video(self, video_path: str, ground_truth_path:str):
         video_name = os.path.basename(video_path).split('.')[0]  # get video name without extension
-        output_path = os.path.join(self.base_output_path, video_name)
-        os.makedirs(output_path, exist_ok=True)  # create folder if doesnt exist
-
+        
         cap = cv2.VideoCapture(video_path)  # load the video
         if not cap.isOpened():
             raise IOError(f"Cannot open video file {video_path}")
@@ -119,9 +115,9 @@ class PoseRenderer:
 
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
-        out = cv2.VideoWriter(
-                f"{output_path}/ground_truth.mp4", fourcc, fps, (width, height)
-            )
+        output_path = os.path.join(self.checkpointer.renderings_dir, video_name, f"{video_name}_ground_truth.mp4")
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
         
         with open(ground_truth_path) as f:
             keypoints = json.load(f)
@@ -134,7 +130,7 @@ class PoseRenderer:
 
             try:
                 frame_keypoints = keypoints[frame_number]
-                frame = self.draw_keypoints(
+                frame = self.draw_keypoints_ground_truth(
                     frame,
                     frame_keypoints, [],
                     COLORS[0],
@@ -146,7 +142,7 @@ class PoseRenderer:
             frame_number += 1
 
         cap.release()
-        out.release()
+        self.checkpointer.save_rendered_video(video_name, "ground_truth", out)
 
     
     def draw_keypoints_ground_truth(

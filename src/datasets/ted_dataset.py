@@ -6,8 +6,8 @@ from .video_sample import VideoSample
 
 
 class TedDataset(Dataset):
-    def __init__(self, dataset_folder: str, config: dict = None):
-        super().__init__(dataset_folder)
+    def __init__(self, name: str, dataset_folder: str, config: dict = None):
+        super().__init__(name, dataset_folder, config)
         self.samples = self._load_samples()
 
     def _load_samples(self) -> List[VideoSample]:

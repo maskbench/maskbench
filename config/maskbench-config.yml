@@ -1,4 +1,4 @@
-execute_inference: true
+checkpoint_name: None # comment out or set to "None"to run inference from scratch
 
 dataset:
   name: TedTalks

@@ -8,8 +8,8 @@ from .video_sample import VideoSample
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 
 class TragicTalkersDataset(Dataset):
-    def __init__(self, dataset_folder: str, config: dict = None):
-        super().__init__(dataset_folder, config)
+    def __init__(self, name: str, dataset_folder: str, config: dict = None):
+        super().__init__(name, dataset_folder, config)
     
     def _load_samples(self) -> List[VideoSample]:
         self.video_folder = os.path.join(self.dataset_folder, self.config.get("video_folder")) # adjust according to folder structure

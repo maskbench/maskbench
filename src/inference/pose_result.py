@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import List, Optional
 import numpy as np
 import numpy.ma as ma
@@ -90,6 +90,13 @@ class VideoPoseResult:
         
         return ma.array(values, mask=mask)
 
+    def to_json(self) -> dict:
+        return {
+            "fps": self.fps,
+            "frame_width": self.frame_width,
+            "frame_height": self.frame_height,
+            "frames": [asdict(frame) for frame in self.frames],
+        }
 
     def __str__(self):
         array = self.to_numpy_ma()
