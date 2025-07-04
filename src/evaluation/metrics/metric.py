@@ -42,42 +42,46 @@ class Metric(ABC):
         """
         pass
 
-    def _sort_predictions_by_ground_truth(self, pred_poses: np.ndarray, gt_poses: np.ndarray) -> np.ndarray:
+    def _match_person_indices(self, pred_poses: np.ndarray, reference: np.ndarray) -> np.ndarray:
         """
-        Sort the predictions by the ground truth for a single frame.
-        This is useful for metrics that are order-dependent, such as PCK.
-        It uses the Hungarian algorithm to find the best match between the predictions and the ground truth.
+        Match the predictions to the reference (e.g. ground truth or previous frame) for a single frame.
+        This is useful for metrics that are order-dependent, such as PCK, acceleration or RMSE.
+        It uses the Hungarian algorithm to find the best match between the predictions and the reference.
 
         Args:
             pred_poses: Predicted poses array of shape (M, K, 2) where M is number of persons
-            gt_poses: Ground truth poses array of shape (N, K, 2) where N is number of persons
+            reference: Reference poses array of shape (N, K, 2) where N is number of persons
             
         Returns:
             Sorted predictions array of shape (max(M,N), K, 2) where:
-            - First N positions contain predictions matched to ground truth (or infinity if no match)
+            - First N positions contain predictions matched to reference (or infinity if no match)
             - Remaining M-N positions (if M>N) contain unmatched predictions
         """
         M, K, _ = pred_poses.shape
-        N, _, _ = gt_poses.shape
+        N, _, _ = reference.shape
         
-        # If no predictions, return array of infinities of ground truth shape
+        # If no predictions, return array of infinities of reference shape
         if M == 0:
-            return np.full_like(gt_poses, np.inf)
+            return np.full_like(reference, np.inf)
             
-        # If no ground truth, return predictions as is
+        # If no reference, return predictions as is
         if N == 0:
             return pred_poses
             
-        # Calculate cost matrix based on Euclidian distance between each prediction and ground truth
+        # Calculate cost matrix based on Euclidian distance between each prediction and reference
         cost_matrix = np.zeros((M, N))
 
         mean_pred_poses = np.nanmean(pred_poses, axis=1)
-        mean_gt_poses = np.nanmean(gt_poses, axis=1)
+        mean_ref_poses = np.nanmean(reference, axis=1)
         
         # Fill the valid part of cost matrix
         for i in range(M):
             for j in range(N):
-                cost_matrix[i, j] = np.linalg.norm(mean_pred_poses[i] - mean_gt_poses[j])
+                cost_matrix[i, j] = np.linalg.norm(mean_pred_poses[i] - mean_ref_poses[j])
+        # Remove rows where all entries are nan, which might happen if the shape N or M is 
+        # greater than the maximum number of persons in the reference or predictions.
+        valid_rows = ~np.all(np.isnan(cost_matrix), axis=1)
+        cost_matrix = cost_matrix[valid_rows]
                 
         # Apply Hungarian algorithm
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
@@ -86,7 +90,7 @@ class Metric(ABC):
         max_persons = max(M, N)
         sorted_preds = np.full((max_persons, K, 2), np.inf)
         
-        # First, fill the matched predictions in ground truth order
+        # First, fill the matched predictions in reference order
         used_pred_indices = set()
         for pred_idx, gt_idx in zip(row_ind, col_ind):
             if pred_idx < M and gt_idx < N:  # Only use valid matches
@@ -94,8 +98,8 @@ class Metric(ABC):
                 used_pred_indices.add(pred_idx)
         
         # Then append any unused predictions at the end
-        extra_idx = N  # Start after ground truth positions
-        for pred_idx in range(M):
+        extra_idx = len(used_pred_indices)  # Start after used predictions
+        for pred_idx in range(0, M):
             if pred_idx not in used_pred_indices:
                 sorted_preds[extra_idx] = pred_poses[pred_idx]
                 extra_idx += 1

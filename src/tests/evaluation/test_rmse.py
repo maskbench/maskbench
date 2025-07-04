@@ -284,7 +284,6 @@ class TestRmseEuclideanDistance(unittest.TestCase):
             np.array([[[0.0707, DISTANCE_FILL_VALUE, 0.0707]]]),
             decimal=4
         )
-        print("Result distances mask:\n", result_distances.values.mask)
 
         result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
         np.testing.assert_array_almost_equal(

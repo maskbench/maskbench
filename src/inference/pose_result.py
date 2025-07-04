@@ -58,7 +58,6 @@ class VideoPoseResult:
             Masked array with shape (num_frames, max_persons, num_keypoints, 2)
             where 2 represents x and y coordinates. Values are masked for:
             - Frames with fewer persons than max_persons
-            - Missing keypoints
         """
         if not self.frames:
             print("Warning: No frames in video pose result.")

@@ -4,7 +4,7 @@ from typing import List
 from inference.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 
 
-def create_example_video_pose_result(keypoints_data, video_name="example_video"):
+def create_example_video_pose_result(keypoints_data, video_name="example_video", fps: int = 30):
     """Helper function to create a VideoPoseResult from keypoints data.
     
     Args:
@@ -23,7 +23,7 @@ def create_example_video_pose_result(keypoints_data, video_name="example_video")
         frames.append(FramePoseResult(persons=persons, frame_idx=frame_idx))
     
     return VideoPoseResult(
-        fps=30,
+        fps=fps,
         frame_width=1920,
         frame_height=1080,
         frames=frames,
