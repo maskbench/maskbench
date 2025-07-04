@@ -26,7 +26,7 @@ class Dataset(ABC):
         This method should be overridden by subclasses if ground truth data is available.
         The order of the results should match the order of the samples returned by _load_samples.
         """
-        return NotImplementedError()
+        return []
 
     def __iter__(self):
         return iter(self.samples)

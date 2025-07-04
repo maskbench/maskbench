@@ -50,7 +50,9 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
 
         shutil.rmtree(self.chunk_output_dir)  # Clean up temporary output directory
         shutil.rmtree(self.processed_output_dir)  # Clean up temporary output directory
-        
+
+        self.assert_frame_count_is_correct(frame_results, video_metadata)
+
         return VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),

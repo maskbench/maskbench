@@ -93,6 +93,6 @@ def get_video_metadata(video: str | cv2.VideoCapture) -> dict:
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     duration = frame_count / fps if fps > 0 else 0
 
-    metadata = {"width": width, "height": height, "fps": fps, "duration": duration}
+    metadata = {"width": width, "height": height, "fps": fps, "duration": duration, "frame_count": frame_count}
 
     return cap, metadata
