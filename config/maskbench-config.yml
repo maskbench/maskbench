@@ -58,4 +58,3 @@ metrics:
   - name: AccelerationMetric
     module: evaluation.metrics.acceleration
     class: AccelerationMetric
-

@@ -13,6 +13,7 @@ lap = "^0.5.12"
 opencv-python = "^4.11.0.86"
 mediapipe = "^0.10.21"
 pyyaml = "^6.0.2"
+seaborn = "^0.13.2"
 
 [build-system]
 requires = ["poetry-core"]
