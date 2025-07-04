@@ -5,6 +5,7 @@ from typing import List
 
 from datasets import Dataset
 from inference import InferenceEngine
+from checkpointer import Checkpointer
 from models import PoseEstimator
 from rendering import PoseRenderer
 from evaluation import Evaluator, Visualizer
@@ -13,33 +14,30 @@ from evaluation.metrics import Metric
 
 def main():
     config = load_config()
-    dataset_specification = config.get("dataset", {})
-    pose_estimator_specifications = config.get("pose_estimators", [])
-    metric_specifications = config.get("metrics", [])
-    execute_inference = config.get("execute_inference", False)
 
+    dataset_specification = config.get("dataset", {})
     dataset = load_dataset(dataset_specification)
+
+    pose_estimator_specifications = config.get("pose_estimators", [])
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
     print("Avaliable pose estimators:", [est.name for est in pose_estimators])
 
+    metric_specifications = config.get("metrics", [])
     metrics = load_metrics(metric_specifications)
     print("Avaliable metrics:", [metric.name for metric in metrics])
+
+    checkpoint_name = config.get("checkpoint_name", None)
+    checkpointer = Checkpointer(dataset.name, checkpoint_name)
     
-    run(dataset, pose_estimators, metrics, execute_inference)
+    run(dataset, pose_estimators, metrics, checkpointer)
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], execute_inference: bool = False):
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer):
+    inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer)
     gt_pose_results = dataset.get_gt_pose_results()
-    inference_engine = InferenceEngine(dataset, pose_estimators)
+    pose_results = inference_engine.estimate_pose_keypoints()
     
-    if execute_inference:
-        pose_results = inference_engine.estimate_pose_keypoints()
-    elif not os.path.exists("/output"):
-        raise FileNotFoundError("Output folder does not exist. Please run inference first.")
-    else:
-        pose_results = inference_engine.load_pose_results_from_json()
-
     evaluator = Evaluator(metrics=metrics)
     results = evaluator.evaluate(pose_results, gt_pose_results)
 
@@ -69,9 +67,10 @@ def load_dataset(dataset_specification: dict) -> Dataset:
     config = dataset_specification.get("config", {})
 
     try:
+        dataset_name = dataset_specification.get("name")
         dataset_module = importlib.import_module(dataset_specification.get("module"))
         dataset_class = getattr(dataset_module, dataset_specification.get("class"))
-        dataset = dataset_class(dataset_folder, config)  # initialize dataset
+        dataset = dataset_class(dataset_name, dataset_folder, config)  # initialize dataset
     except (ImportError, AttributeError, TypeError) as e:
         print(f"Error instantiating dataset {dataset_specification.get('name')}: {e}")
         raise e

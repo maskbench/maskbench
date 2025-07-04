@@ -30,7 +30,7 @@ class AccelerationDistributionPlot(Plot):
         # o: circle, s: square, ^: triangle up, v: triangle down, 
         # D: diamond, p: pentagon, h: hexagon, 8: octagon,
         # *: star, P: plus filled
-        self.markers = ['^', '*', 'h', 's' 'D', 'o', 'p', 'h', '8', 'P']
+        self.markers = ['^', '*', 'h', 's', 'D', 'o', 'p', 'h', '8', 'P']
 
     def _clip_accelerations(self, accelerations: np.ndarray) -> np.ndarray:
         return np.clip(accelerations, -self.accel_limit, self.accel_limit)
