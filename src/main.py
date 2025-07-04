@@ -33,14 +33,16 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
     
     inference_engine = InferenceEngine(dataset, pose_estimators)
     pose_results = inference_engine.estimate_pose_keypoints()
+
+    evaluator = Evaluator(metrics=metrics)
+    results = evaluator.evaluate(pose_results, gt_pose_results)
+
     estimators_point_pairs = {
         est.name: est.get_keypoint_pairs() for est in pose_estimators
     }
     pose_renderer = PoseRenderer(dataset, estimators_point_pairs)
     pose_renderer.render_all_videos(pose_results)
     
-    evaluator = Evaluator(metrics=metrics)
-    results = evaluator.evaluate(pose_results, gt_pose_results)
 
 def load_config() -> dict:
     config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")

@@ -100,6 +100,8 @@ class MediaPipePoseEstimator(PoseEstimator):
         cap.release()
         self.detector.close()
 
+        self.assert_frame_count_is_correct(frame_results, video_metadata)
+
         return VideoPoseResult(
             fps=fps,
             frame_width=width,

@@ -31,3 +31,7 @@ class PoseEstimator(ABC):
     @abstractmethod
     def get_keypoint_pairs(self) -> list:
         pass
+
+    def assert_frame_count_is_correct(self, frame_results: list, video_metadata: dict):
+        if len(frame_results) != video_metadata.get("frame_count"):
+            raise Exception(f"Number of frames in the video ({video_metadata.get('frame_count')}) does not match the number of frames in the frame results ({len(frame_results)})")

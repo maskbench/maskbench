@@ -70,6 +70,9 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
             raise f"{video_name} was not found in Mask Anyone Ui Dataset Folder Path"
             
         frame_results = self.combine_json_files(results_path)  # Combine the JSON files from processed chunks
+
+        self.assert_frame_count_is_correct(frame_results, video_metadata)
+
         return VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
