@@ -7,6 +7,7 @@ import requests
 import utils
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
+from keypoint_pairs import OPENPOSE_KEYPOINT_PAIRS
 
 
 class OpenPoseEstimator(PoseEstimator):
@@ -17,33 +18,7 @@ class OpenPoseEstimator(PoseEstimator):
         super().__init__(name, config)
 
     def get_keypoint_pairs(self):
-        return [
-            (0, 1),
-            (0, 2),
-            (1, 3),
-            (2, 4),
-            (5, 7),
-            (6, 8),
-            (7, 9),
-            (8, 10),
-            (5, 11),
-            (6, 12),
-            (11, 13),
-            (12, 14),
-            (13, 15),
-            (14, 16),
-            (15, 19),
-            (19, 20),
-            (15, 21),
-            (16, 22),
-            (22, 23),
-            (16, 24),
-            (5, 17),
-            (6, 17),
-            (11, 12),
-            (17, 18),
-            (5, 6),
-        ]
+        return OPENPOSE_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -105,6 +80,8 @@ class OpenPoseEstimator(PoseEstimator):
                 )  # the MaskAnyone Openpose container only returns one person per frame
             else:
                 frame_results.append(FramePoseResult(persons=[], frame_idx=idx))
+
+        self.assert_frame_count_is_correct(frame_results, video_metadata)
 
         return VideoPoseResult(
             frames=frame_results,

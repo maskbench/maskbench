@@ -13,7 +13,30 @@ class InferenceEngine:
         self.base_output_path = "/output"
         self.estimator_point_pairs = dict()
 
-    def save_as_json(self, video_pose_result: VideoPoseResult, estimator_name: str, video_name: str):
+
+    def estimate_pose_keypoints(self) -> Dict[str, Dict[str, List[VideoPoseResult]]]:
+        results = {}
+        for estimator in self.pose_estimators:
+            results[estimator.name] = {}
+
+            for video in self.dataset:
+                print(f"Running estimator '{estimator.name}' on video {video.path}")
+
+                start_time = time.time()
+                try: # {model_name: {video_name: VideoPoseResult}}
+                    video_pose_result = estimator.estimate_pose(video.path)
+                    results[estimator.name][video.get_filename()] = video_pose_result
+                    self.save_as_json(video_pose_result, video.get_filename(), estimator.name)
+                except Exception as e:
+                    raise Exception(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
+
+                end_time = time.time()
+
+                print(f"Inference time: '{estimator.name}': {end_time - start_time}")
+
+        return results
+
+    def save_as_json(self, video_pose_result: VideoPoseResult, video_name: str, estimator_name: str):
         json_folderpath = os.path.join(self.base_output_path, video_name)
         json_filepath = os.path.join(json_folderpath, f"{estimator_name}.json")
         os.makedirs(json_folderpath, exist_ok=True)
@@ -58,28 +81,5 @@ class InferenceEngine:
                     frames=frame_pose_results
                 )
                 results[estimator_name][video_name] = video_pose_result
-
-        return results
-
-    def estimate_pose_keypoints(self) -> Dict[str, List[VideoPoseResult]]:
-        results = {}
-        for estimator in self.pose_estimators:
-            results[estimator.name] = []
-
-            for video in self.dataset:
-                print(f"Running estimator '{estimator.name}' on video {video.path}")
-
-                start_time = time.time()
-                try:
-                    video_pose_result = estimator.estimate_pose(video.path)
-                    results[estimator.name].append(video_pose_result)
-                    video_name, _ = os.path.splitext(video.path) # remove extension
-                    self.save_as_json(video_pose_result, video_name, estimator.name)
-                except Exception as e:
-                    print(f"Faced Exception: {e} on Video: {video}")
-                    
-                end_time = time.time()
-
-                print(f"Inference time: '{estimator.name}': {end_time - start_time}")
 
         return results

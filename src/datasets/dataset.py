@@ -7,8 +7,10 @@ from inference import VideoPoseResult
 
 
 class Dataset(ABC):
-    def __init__(self, dataset_folder: str):
+    def __init__(self, dataset_folder: str, config: dict = None):
         self.dataset_folder = dataset_folder
+        self.config = config
+        self.samples = self._load_samples()
 
     @abstractmethod
     def _load_samples(self) -> List[VideoSample]:

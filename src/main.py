@@ -24,31 +24,29 @@ def main():
 
     metrics = load_metrics(metric_specifications)
     print("Avaliable metrics:", [metric.name for metric in metrics])
+    
     run(dataset, pose_estimators, metrics, execute_inference)
-
     print("Done")
 
 
 def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], execute_inference: bool = False):
     gt_pose_results = dataset.get_gt_pose_results()
-    estimators_point_pairs = {
-        est.name: est.get_keypoint_pairs() for est in pose_estimators
-    }
     inference_engine = InferenceEngine(dataset, pose_estimators)
     
-    if execute_inference: # if user wants to run inference
+    if execute_inference:
         pose_results = inference_engine.estimate_pose_keypoints()
-    elif not os.path.exists("/output"): # else if output folder does not exist
+    elif not os.path.exists("/output"):
         raise FileNotFoundError("Output folder does not exist. Please run inference first.")
     else:
         pose_results = inference_engine.load_pose_results_from_json()
-        
-
-    pose_renderer = PoseRenderer(dataset, estimators_point_pairs)
-    pose_renderer.render_all_videos(pose_results)
 
     evaluator = Evaluator(metrics=metrics)
     results = evaluator.evaluate(pose_results, gt_pose_results)
+        
+    estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
+    pose_renderer = PoseRenderer(dataset, estimators_point_pairs)
+    pose_renderer.render_all_videos(pose_results)
+
 
 def load_config() -> dict:
     config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")
@@ -65,11 +63,12 @@ def load_config() -> dict:
 
 def load_dataset(dataset_specification: dict) -> Dataset:
     dataset_folder = dataset_specification.get("dataset_folder", "/datasets")
+    config = dataset_specification.get("config", {})
 
     try:
         dataset_module = importlib.import_module(dataset_specification.get("module"))
         dataset_class = getattr(dataset_module, dataset_specification.get("class"))
-        dataset = dataset_class(dataset_folder)  # initialize dataset
+        dataset = dataset_class(dataset_folder, config)  # initialize dataset
     except (ImportError, AttributeError, TypeError) as e:
         print(f"Error instantiating dataset {dataset_specification.get('name')}: {e}")
         raise e

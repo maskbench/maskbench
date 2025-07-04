@@ -17,7 +17,7 @@ class Evaluator:
     
     def evaluate(
         self,
-        models_video_pose_results: Dict[str, List[VideoPoseResult]],
+        models_video_pose_results: Dict[str, Dict[str, VideoPoseResult]],
         gt_video_pose_results: List[VideoPoseResult] = None
     ) -> Dict[str, Dict[str, MetricResult]]:
         """
@@ -39,11 +39,12 @@ class Evaluator:
             for model_name, video_pose_results in models_video_pose_results.items():
                 
                 if not gt_video_pose_results:
-                    gt_video_pose_results = [None] * len(video_pose_results)
+                    gt_video_pose_results = {video_name: None for video_name in video_pose_results.keys()}
                 
                 video_metric_results = {}
-                for video_result, gt_result in zip(video_pose_results, gt_video_pose_results):
-                    video_metric_results[video_result.video_name] = metric.compute(video_result, gt_result, model_name)
+                for video_name, video_result in video_pose_results.items():
+                    gt_result = gt_video_pose_results[video_name]
+                    video_metric_results[video_name] = metric.compute(video_result, gt_result, model_name)
 
                 model_results_dict[model_name] = video_metric_results
             
