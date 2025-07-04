@@ -1,10 +1,28 @@
+execute_inference: true
+
+dataset:
+  name: TedTalks
+  module: datasets.ted_dataset
+  class: TedDataset
+  dataset_folder: /datasets/ted-talks
+
+# dataset:
+#   name: TragicTalkers
+#   module: datasets.tragic_talkers_dataset
+#   class: TragicTalkersDataset
+#   dataset_folder: /datasets/tragic_talkers
+#   config:
+#     video_folder: videos
+#     ground_truth_folder: labels/pose_keypoints
+#     combine_ground_truth_files: true
+
 pose_estimators:
   - name: MediaPipePose
     enabled: true
     module: models.mediapipe_pose_estimator
     class: MediaPipePoseEstimator
     config:
-      weights: pose_landmarker_lite.task
+      weights: pose_landmarker_heavy.task
 
   - name: YoloPose
     enabled: true
@@ -14,7 +32,7 @@ pose_estimators:
       weights: yolo11n-pose.pt
       confidence_threshold: 0.85
   
-  - name: MaskAnyone_Api
+  - name: MaskAnyoneApi
     enabled: true
     module: models.maskanyone_api_pose_estimator
     class: MaskAnyoneApiPoseEstimator
@@ -36,23 +54,8 @@ pose_estimators:
     module: models.open_pose_estimator
     class: OpenPoseEstimator      
 
-dataset:
-  name: TragicTalkers
-  module: datasets.tragic_talkers_dataset
-  class: TragicTalkersDataset
-  dataset_folder: /datasets/tragic_talkers
-  config:
-    video_folder: videos
-    ground_truth_folder: labels/pose_keypoints
-    combine_ground_truth_files: true
-
-# dataset:
-#   name: TedTalks
-#   module: datasets.ted_dataset
-#   class: TedDataset
-#   dataset_folder: /datasets/ted-talks
-  
 metrics:
-  - name: DummyMetric
-    module: evaluation.metrics.metric
-    class: DummyMetric
+  - name: AccelerationMetric
+    module: evaluation.metrics.acceleration
+    class: AccelerationMetric
+
