@@ -9,6 +9,7 @@ from models import PoseEstimator
 from video_chunker import VideoChunker
 from inference import VideoPoseResult
 from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS
+
 class MaskAnyoneApiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
         """
@@ -39,17 +40,18 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
             VideoPoseResult: A standardized result object containing the pose estimation results for the video.
 
         """
-        _, video_metadata = utils.get_video_metadata(video_path) # get video 
+        _, video_metadata = utils.get_video_metadata(video_path)
 
-        print("Creating Chunks")
-        video_chunks = VideoChunker(chunk_length=60).chunk_video(video_path, self.chunk_output_dir) # chunk videos
-        print("Processing Chunks")
-        self._process_chunks(video_chunks, self.processed_output_dir)  # Process each chunk with MaskAnyone API
-        print("Combining Chunks Json Files")
-        frame_results = utils.maskanyone_combine_json_files(self.processed_output_dir)  # Combine the JSON files from processed chunks
+        print("MaskAnyoneAPI: Splitting video into chunks.")
+        video_chunk_paths = VideoChunker(chunk_length=60).chunk_video_using_opencv(video_path, self.chunk_output_dir)
+        print("MaskAnyoneAPI: Processing chunks.")
+        self._process_chunks(video_chunk_paths, self.processed_output_dir)
+        print("MaskAnyoneAPI: Combining chunk outputs into a single video result.")
+        frame_results = utils.maskanyone_combine_json_files(self.processed_output_dir)
 
-        shutil.rmtree(self.chunk_output_dir)  # Clean up temporary output directory
-        shutil.rmtree(self.processed_output_dir)  # Clean up temporary output directory
+        # Clean up temporary output directory
+        shutil.rmtree(self.chunk_output_dir)
+        shutil.rmtree(self.processed_output_dir)
 
         self.assert_frame_count_is_correct(frame_results, video_metadata)
 
