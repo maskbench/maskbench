@@ -27,10 +27,9 @@ class InferenceEngine:
                     video_pose_result = estimator.estimate_pose(video.path)
                     results[estimator.name][video.get_filename()] = video_pose_result
                     self.checkpointer.save_video_pose_result(video_pose_result, estimator.name)
+                    self.checkpointer.save_inference_time(estimator.name, video.get_filename(), time.time() - start_time)
                 except Exception as e:
                     raise Exception(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
 
-                end_time = time.time()
-                print(f"Inference time: '{estimator.name}': {end_time - start_time}")
 
         return results 
