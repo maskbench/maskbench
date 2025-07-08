@@ -1,3 +1,4 @@
+import subprocess
 import cv2
 import glob
 import os
@@ -102,9 +103,38 @@ def get_video_metadata(video: str | cv2.VideoCapture) -> dict:
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    frame_count = get_frame_count_ffprobe(video)
     duration = frame_count / fps if fps > 0 else 0
 
     metadata = {"width": width, "height": height, "fps": fps, "duration": duration, "frame_count": frame_count}
 
     return cap, metadata
+
+def get_frame_count_ffprobe(video_path: str) -> int:
+    """
+    Returns the accurate number of video frames using ffprobe.
+    We cannot use cv2.CAP_PROP_FRAME_COUNT because it is not accurate for some videos.
+
+    Args:
+        video_path (str): Path to the video file.
+
+    Returns:
+        int: Number of frames in the video.
+    """
+    try:
+        cmd = [
+            "ffprobe",
+            "-v", "error",
+            "-select_streams", "v:0",
+            "-count_frames",
+            "-show_entries", "stream=nb_read_frames",
+            "-of", "default=nokey=1:noprint_wrappers=1",
+            video_path
+        ]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+        frame_count = int(result.stdout.strip())
+        return frame_count
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"ffprobe failed: {e.stderr.strip()}")
+    except ValueError:
+        raise RuntimeError("Could not parse frame count from ffprobe output.")

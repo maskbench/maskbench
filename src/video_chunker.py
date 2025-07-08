@@ -1,10 +1,9 @@
 import os
-
-from moviepy import VideoFileClip
+import cv2
 
 
 class VideoChunker:
-    def __init__(self, chunk_length: int, slide: int = 0):
+    def __init__(self, chunk_length: int):
         """
         Initialize the VideoChunker with a specified chunk length.
 
@@ -13,47 +12,61 @@ class VideoChunker:
             slide (int): The overlap duration of chunks in seconds. Default is 0.
         """
         self.chunk_length = chunk_length
-        self.slide = slide
 
-
-    def chunk_video(self, video_path: str, output_path:str) -> list:
+    def chunk_video_using_opencv(self, video_path: str, output_path: str) -> list:
         """
-        Chunk the video into smaller segments of specified length.
+        Chunk the video into smaller segments of specified length using OpenCV.
+        For videos shorter than chunk_length, the entire video will be kept as one chunk.
+        For videos longer than chunk_length, they will be split into chunks of chunk_length seconds.
 
         Args:
             video_path (str): The path to the video file relative to the datasets directory.
+            output_path (str): The directory to save the video chunks.
 
         Returns:
-            list: A list video file chunks.
+            list: A list of video file chunks.
         """
-        os.makedirs(output_path, exist_ok=True)  # Ensure output directory exists
-        chunks = []
+        os.makedirs(output_path, exist_ok=True)
+        chunk_paths = []
 
-        with VideoFileClip(video_path, audio=False) as video:
-            if not video:
-                raise ValueError(f"Could not open video file: {video_path}")
-            duration = video.duration
-            step = self.chunk_length - self.slide
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise ValueError(f"Could not open video file: {video_path}")
 
-            i = 0
-            chunk_num = 1
-            while i < duration:
-                start = i
-                end = min(start + self.chunk_length, duration)
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-                if end - start > 0:
-                    chunk = video.subclipped(start, end).without_audio()
-                    chunk.filename = f"chunk_{chunk_num}.mp4"
-                    chunk_path = os.path.join(output_path, chunk.filename)
-                    if not chunk.audio:
-                        chunk.write_videofile(chunk_path, codec="libx264", audio=False)
-                    else:
-                        chunk.write_videofile(chunk_path, codec="libx264", audio_codec="aac")  
-                    chunks.append(chunk_path)
-                else: 
-                    break
+        num_chunk_frames = int(self.chunk_length * fps)
 
-                i += step
+        frames_written_in_current_chunk = 0
+        chunk_num = 1
+        video_writer = None
+        frame_idx = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            if video_writer is None:
+                chunk_path = os.path.join(output_path, f"chunk_{chunk_num}.mp4")
+                fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                video_writer = cv2.VideoWriter(chunk_path, fourcc, fps, (width, height))
+                chunk_paths.append(chunk_path)
+
+            video_writer.write(frame)
+            frames_written_in_current_chunk += 1
+
+            if frames_written_in_current_chunk >= num_chunk_frames:
+                video_writer.release()
+                video_writer = None
+                frames_written_in_current_chunk = 0
                 chunk_num += 1
 
-        return chunks
+            frame_idx += 1
+
+        if video_writer is not None:
+            video_writer.release()
+
+        cap.release()
+        return chunk_paths
