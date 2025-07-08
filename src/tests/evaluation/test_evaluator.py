@@ -82,7 +82,10 @@ class TestEvaluator(unittest.TestCase):
         self.video2 = create_example_video_pose_result(video2_poses, video_name="video2")
         
         self.model_results = {
-            "model1": [self.video1, self.video2]
+            "model1": {
+                "video1": self.video1,
+                "video2": self.video2
+            }
         }
         
         self.evaluator = Evaluator(metrics=[XCoordinateMappingMetric()])

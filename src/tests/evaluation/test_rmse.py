@@ -3,17 +3,16 @@ import numpy as np
 import numpy.ma as ma
 import pytest
 
-from evaluation.metrics import EuclideanDistanceMetric
+from evaluation.metrics import EuclideanDistanceMetric, RMSEMetric
 from evaluation.utils import DISTANCE_FILL_VALUE
 from tests.utils import create_example_video_pose_result
 
-def compute_euclidean_distance_metric(gt_data, pred_data, threshold=0.1, normalize_by="bbox"):
+def compute_euclidean_distance_metric(gt_data, pred_data, normalize_by="bbox"):
     """Compute the Euclidean Distance metric."""
     gt_video_result = create_example_video_pose_result(gt_data, "ground_truth")
     pred_video_result = create_example_video_pose_result(pred_data, "prediction")
 
     euclidean_distance_config = {
-        "threshold": threshold,
         "normalize_by": normalize_by
     }
     euclidean_distance_metric = EuclideanDistanceMetric(config=euclidean_distance_config)
@@ -23,6 +22,22 @@ def compute_euclidean_distance_metric(gt_data, pred_data, threshold=0.1, normali
         model_name="example_model"
     )
     return distances
+
+def compute_rmse_metric(gt_data, pred_data, normalize_by="bbox"):
+    """Compute the RMSE metric."""
+    gt_video_result = create_example_video_pose_result(gt_data, "ground_truth")
+    pred_video_result = create_example_video_pose_result(pred_data, "prediction")
+
+    rmse_config = {
+        "normalize_by": normalize_by
+    }
+    rmse_metric = RMSEMetric(config=rmse_config)
+    rmse = rmse_metric.compute(
+        video_result=pred_video_result,
+        gt_video_result=gt_video_result,
+        model_name="example_model"
+    )
+    return rmse
 
 class TestRmseEuclideanDistance(unittest.TestCase):
     """Test suite for the Euclidean distance and RMSE metric."""
@@ -53,7 +68,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
             ]]),
             decimal=4
         )
-        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
             result_rmse.values,
             np.array([0.1118]),
@@ -88,7 +103,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
             ]),
             decimal=4
         )
-        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
             result_rmse.values,
             np.array([0.0707, 0.0707]),
@@ -123,7 +138,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
             ]]),
             decimal=4
         )
-        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
             result_rmse.values,
             np.array([0.0707]),
@@ -158,10 +173,10 @@ class TestRmseEuclideanDistance(unittest.TestCase):
             ]]),
             decimal=4
         )
-        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
             result_rmse.values,
-            np.array([1.41509]),
+            np.array([0.7089]),
             decimal=4
         )
 
@@ -189,7 +204,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
             np.array([[[0.0707, 0.0707, 0.0707]]]),
             decimal=4
         )
-        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
             result_rmse.values,
             np.array([0.0707]),
@@ -224,10 +239,10 @@ class TestRmseEuclideanDistance(unittest.TestCase):
             ]]),
             decimal=4
         )
-        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
             result_rmse.values,
-            np.array([1.4151]),
+            np.array([0.7089]),
             decimal=4
         )
 
@@ -254,7 +269,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
             np.array([[[0.0707, np.nan, 0.0707]]]),
             decimal=4
         )
-        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
             result_rmse.values,
             np.array([0.0707]),
@@ -285,10 +300,10 @@ class TestRmseEuclideanDistance(unittest.TestCase):
             decimal=4
         )
 
-        result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
+        result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
             result_rmse.values,
-            np.array([1.1561]),
+            np.array([0.5802]),
             decimal=4
         )
 

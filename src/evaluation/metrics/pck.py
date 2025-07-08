@@ -8,7 +8,7 @@ from .metric_result import FRAME_AXIS, MetricResult
 from .euclidean_distance import EuclideanDistanceMetric
 
 
-class PCKMetric(Metric):
+class PCKMetric(EuclideanDistanceMetric):
     """
     PCK (Percentage of Correct Keypoints) metric.
     Args:
@@ -20,16 +20,9 @@ class PCKMetric(Metric):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(name="PCK", config=config)
 
-        if config is None:
-            raise ValueError("Config is required for PCK computation")
-        if config["normalize_by"] not in ["bbox", "head", "torso"]:
-            raise ValueError("Invalid normalization strategy. Must be one of 'bbox', 'head' or 'torso'")
-        if config["normalize_by"] == "head" or config["normalize_by"] == "torso":
-            raise NotImplementedError("Head and torso normalization is not implemented yet.")
         if config["threshold"] is None:
-            raise ValueError("Threshold is required for PCK computation")
+            raise ValueError("Threshold is required for PCK computation.")
 
-        self.euclidian_distance_metric = EuclideanDistanceMetric(config)
         self.threshold = config["threshold"]
     
     def compute(
@@ -47,8 +40,8 @@ class PCKMetric(Metric):
         Returns:
             MetricResult object containing the PCK metric values for each frame for the video.
         """
-        euclidian_distance = self.euclidian_distance_metric.compute(video_result, gt_video_result, model_name)
-        values = (euclidian_distance.values < self.threshold).sum(axis=(1, 2)) / euclidian_distance.values[0].size
+        euclidean_distance = super().compute(video_result, gt_video_result, model_name)
+        values = (euclidean_distance.values < self.threshold).sum(axis=(1, 2)) / euclidean_distance.values[0].size
 
         return MetricResult(
             values=values,
