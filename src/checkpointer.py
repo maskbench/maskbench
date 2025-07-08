@@ -90,6 +90,29 @@ class Checkpointer:
             
         return output_path
 
+    def save_inference_time(self, estimator_name: str, video_name: str, inference_time: float) -> str:
+        """
+        Save the inference time for a specific estimator and video.
+        """
+        inference_file_path = os.path.join(self.checkpoint_dir, "inference_times.json")
+        
+        # Load existing inference times or create new dict if file doesn't exist
+        if os.path.exists(inference_file_path):
+            with open(inference_file_path, 'r') as f:
+                inference_times = json.load(f)
+        else:
+            inference_times = {}
+
+        if estimator_name not in inference_times:
+            inference_times[estimator_name] = {}
+            
+        inference_times[estimator_name][video_name] = inference_time # add new inference time
+        
+        with open(inference_file_path, 'w') as f:
+            json.dump(inference_times, f, indent=4)
+            
+        print(f"Inference time for {estimator_name} on {video_name}: {inference_time:.3f}s")
+
     def load_pose_results(self) -> Dict[str, Dict[str, VideoPoseResult]]:
         """
         Load all pose results from the checkpoint.
