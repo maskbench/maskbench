@@ -20,11 +20,11 @@ def main():
 
     pose_estimator_specifications = config.get("pose_estimators", [])
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
-    print("Avaliable pose estimators:", [est.name for est in pose_estimators])
+    print("Available pose estimators:", [est.name for est in pose_estimators])
 
     metric_specifications = config.get("metrics", [])
     metrics = load_metrics(metric_specifications)
-    print("Avaliable metrics:", [metric.name for metric in metrics])
+    print("Available metrics:", [metric.name for metric in metrics])
 
     checkpoint_name = config.get("checkpoint_name", None)
     checkpoint_name = checkpoint_name if checkpoint_name != "None" else None
