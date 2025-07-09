@@ -89,13 +89,14 @@ class YoloPoseEstimator(PoseEstimator):
                 persons.append(PersonPoseResult(keypoints=keypoints))
             frame_results.append(FramePoseResult(persons=persons, frame_idx=frame_idx))
 
-        self.assert_frame_count_is_correct(frame_results, video_metadata)
 
-        video_result = VideoPoseResult(
+        video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
             frames=frame_results,
             video_name=video_name,
         )
-        return video_result
+
+        self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        return video_pose_result

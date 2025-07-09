@@ -40,9 +40,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
 
         frame_results = utils.maskanyone_combine_json_files(results_path)  # Combine the JSON files from processed chunks
     
-        self.assert_frame_count_is_correct(frame_results, video_metadata)
-        
-        return VideoPoseResult(
+        video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
@@ -50,4 +48,6 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
             frames=frame_results
         )
 
+        self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        return video_pose_result
     

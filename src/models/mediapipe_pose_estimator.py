@@ -100,15 +100,16 @@ class MediaPipePoseEstimator(PoseEstimator):
         cap.release()
         self.detector.close()
 
-        self.assert_frame_count_is_correct(frame_results, video_metadata)
-
-        return VideoPoseResult(
+        video_pose_result = VideoPoseResult(
             fps=fps,
             frame_width=width,
             frame_height=height,
             frames=frame_results,
             video_name=video_name,
         )
+
+        self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        return video_pose_result
 
     def _execute_on_frame(self, frame, frame_number: int, fps: int):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

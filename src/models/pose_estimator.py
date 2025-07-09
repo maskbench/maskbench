@@ -35,7 +35,7 @@ class PoseEstimator(ABC):
     def get_keypoint_pairs(self) -> list:
         pass
 
-    def assert_frame_count_is_correct(self, frame_results: list, video_metadata: dict):
+    def assert_frame_count_is_correct(self, video_pose_result: VideoPoseResult, video_metadata: dict):
         """
         Assert that the number of frames in the frame results matches the number of frames in the video. Should be called at the end of the estimate_pose method.
         Args:
@@ -44,5 +44,5 @@ class PoseEstimator(ABC):
         Raises:
             Exception: If the number of frames in the frame results does not match the number of frames in the video.
         """
-        if len(frame_results) != video_metadata.get("frame_count"):
-            raise Exception(f"Number of frames in the video ({video_metadata.get('frame_count')}) does not match the number of frames in the frame results ({len(frame_results)})")
+        if len(video_pose_result.frames) != video_metadata.get("frame_count"):
+            raise Exception(f"Number of frames in the video ({video_metadata.get('frame_count')}) does not match the number of frames in the frame results ({len(video_pose_result.frames)})")

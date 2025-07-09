@@ -84,12 +84,13 @@ class OpenPoseEstimator(PoseEstimator):
             else:
                 frame_results.append(FramePoseResult(persons=[], frame_idx=idx))
 
-        self.assert_frame_count_is_correct(frame_results, video_metadata)
-
-        return VideoPoseResult(
+        video_pose_result = VideoPoseResult(
             frames=frame_results,
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
             fps=video_metadata.get("fps"),
             video_name=video_name
         )
+
+        self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        return video_pose_result
