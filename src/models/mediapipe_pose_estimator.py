@@ -13,7 +13,7 @@ from mediapipe.tasks.python.vision import (
 
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_KEYPOINT_PAIRS
 
 class MediaPipePoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -49,7 +49,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         )
 
     def get_keypoint_pairs(self):
-        return MEDIAPIPE_KEYPOINT_PAIRS
+        return COCO_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -83,13 +83,14 @@ class MediaPipePoseEstimator(PoseEstimator):
                 for person_landmarks in result.pose_landmarks:
                     keypoints = []
 
-                    for lm in person_landmarks:
+                    for idx in COCO_TO_MEDIAPIPE:
+                        lm = person_landmarks[idx]
                         if not (0 <= lm.x <= 1 and 0 <= lm.y <= 1) or lm.visibility < 0.5: # for undetected keypoints, x and y can be outside the range [0, 1]
                             keypoints.append(PoseKeypoint(x=0, y=0)) # standardized handling of missing keypoints by setting x and y to 0
                             continue
 
-                        x = int(lm.x * width) # convert normalized landmarks to image coordinates
-                        y = int(lm.y * height)
+                        x = lm.x * width # convert normalized landmarks to image coordinates
+                        y = lm.y * height
                         keypoints.append(PoseKeypoint(x=x, y=y))
 
                     persons.append(PersonPoseResult(keypoints=keypoints))

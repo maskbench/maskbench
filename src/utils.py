@@ -4,6 +4,7 @@ import glob
 import os
 import json
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
+from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_TO_OPENPOSE
 
 def maskanyone_get_config(options: dict):
         """"Ensures Options are valid"""
@@ -17,7 +18,7 @@ def maskanyone_get_config(options: dict):
         
         return options
 
-def maskanyone_combine_json_files(processed_chunks_dir: str) -> list:
+def maskanyone_combine_json_files(processed_chunks_dir: str, valid_overlay_strategy: str) -> list:
         """
             Combine JSON files from Mask Anyone Ui dataset into a standardized format.
             processed_chunks_dir: Directory containing Json file for video chunks
@@ -28,36 +29,45 @@ def maskanyone_combine_json_files(processed_chunks_dir: str) -> list:
         all_chunks_keypoints = []  # combined keypoints for all frames all persons
 
         for chunk_file in json_file_paths: # every chunk_file is a chunk
-            person_frame_keypoint_array = maskanyone_convert_json_to_nested_arrays(chunk_file)
+            person_frame_keypoint_array = maskanyone_convert_json_to_nested_arrays(chunk_file, valid_overlay_strategy)
             transposed_keypoints = maskanyone_transpose_keypoints(person_frame_keypoint_array)
             all_chunks_keypoints.extend(transposed_keypoints)  # combine frames keypoints in chunks
 
         video_results = maskanyone_standardize_keypoints(all_chunks_keypoints)
         return video_results
 
-def maskanyone_convert_json_to_nested_arrays(chunk_poses_file: str) -> list:
+def maskanyone_convert_json_to_nested_arrays(chunk_poses_file: str, valid_overlay_strategy: str) -> list:
         with open(chunk_poses_file, 'r') as f: 
             data = json.load(f)
             persons = []
             for person_idx, data_person_keypoints in data.items():
                 frames = []
+                for frame_idx, data_frame_keypoints in enumerate(data_person_keypoints):                    
+                    # The output of MaskAnyone API for a frame is different for MediaPipe and OpenPose:
+                    # For Openpose, the frame output is a dictionary with a key "pose_keypoints" (and other keys like "face_keypoints", "hand_keypoints")
+                    # For MediaPipe, the frame output is a list of keypoints
+                    if data_frame_keypoints is None:
+                         frames.append([])
+                         continue
 
-                for frame_idx, data_frame_keypoints in enumerate(data_person_keypoints):
-                    keypoints = []
-                    
-                    try: # The output of MaskAnyone API for a frame is different for MediaPipe and OpenPose:
-                        # For Openpose, the frame output is a dictionary with a key "pose_keypoints" (and other keys like "face_keypoints", "hand_keypoints")
-                        data_pose_keypoints = data_frame_keypoints.get("pose_keypoints")
-                    except AttributeError:
-                        # For MediaPipe, the frame output is a list of keypoints
+                    if valid_overlay_strategy == "openpose_body25b":
+                        data_pose_keypoints = data_frame_keypoints.get("pose_keypoints", None)
+                        coco_keypoints_in_order = COCO_TO_OPENPOSE
+                    elif valid_overlay_strategy == "mp_pose": 
                         data_pose_keypoints = data_frame_keypoints
+                        coco_keypoints_in_order = COCO_TO_MEDIAPIPE
+                    else:
+                         raise ValueError(f"Invalid overlay strategy provided to maskanyone_combine_json_files in utils.py") 
 
-                    for keypoint in data_pose_keypoints:
-                        if not keypoint:
-                            keypoints.append(PoseKeypoint(x=0, y=0))
-                            continue
-
-                        keypoints.append(PoseKeypoint(x=keypoint[0], y=keypoint[1]))
+                    keypoints = []
+                    if data_pose_keypoints is not None:
+                        for idx in coco_keypoints_in_order:
+                            kp = data_pose_keypoints[idx]
+                            if kp is None:
+                                keypoints.append(PoseKeypoint(x=0, y=0)) 
+                            else:
+                                keypoints.append(PoseKeypoint(x=kp[0], y=kp[1])) # confidence is not provided by maskanyone
+                    
                     frames.append(keypoints)
                 persons.append(frames)
             return persons

@@ -2,7 +2,7 @@ import os
 import utils
 from inference import VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS
 
 class MaskAnyoneUiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -14,13 +14,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         self.options = utils.maskanyone_get_config(self.config)
 
     def get_keypoint_pairs(self):
-        overlay_strategy = self.options.get("overlay_strategy")
-        if overlay_strategy == "openpose_body25b":
-            return OPENPOSE_KEYPOINT_PAIRS
-        elif overlay_strategy == "mp_pose":
-            return MEDIAPIPE_KEYPOINT_PAIRS
-        else:
-            raise ValueError(f"Overlay strategy {overlay_strategy} is not supported by MaskAnyone UI Pose Estimator.")
+        return COCO_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
