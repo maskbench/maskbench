@@ -27,21 +27,21 @@ def maskanyone_combine_json_files(processed_chunks_dir: str) -> list:
         json_file_paths = sorted(json_file_paths, key=lambda x: int(os.path.basename(x).split('_')[1].split('.')[0])) # sort them by chunk number
         all_chunks_keypoints = []  # combined keypoints for all frames all persons
 
-        for chunk_file in json_file_paths: # every chunk_file is a chunk
-            person_frame_keypoint_array = maskanyone_convert_json_to_nested_arrays(chunk_file)
-            transposed_keypoints = maskanyone_transpose_keypoints(person_frame_keypoint_array)
-            all_chunks_keypoints.extend(transposed_keypoints)  # combine frames keypoints in chunks
+        for chunk_file in json_file_paths:
+            frame_results = maskanyone_convert_json_to_nested_arrays(chunk_file)
+            all_chunks_keypoints.extend(frame_results)
 
-        video_results = maskanyone_standardize_keypoints(all_chunks_keypoints)
-        return video_results
+        return all_chunks_keypoints
 
 def maskanyone_convert_json_to_nested_arrays(chunk_poses_file: str) -> list:
         with open(chunk_poses_file, 'r') as f: 
             data = json.load(f)
-            persons = []
+            first_person_data = next(iter(data.values()))
+            number_of_frames = len(first_person_data)
+            
+            frame_results = [FramePoseResult(persons=[], frame_idx=i) for i in range(number_of_frames)]
+            
             for person_idx, data_person_keypoints in data.items():
-                frames = []
-
                 for frame_idx, data_frame_keypoints in enumerate(data_person_keypoints):
                     keypoints = []
                     
@@ -52,35 +52,20 @@ def maskanyone_convert_json_to_nested_arrays(chunk_poses_file: str) -> list:
                         # For MediaPipe, the frame output is a list of keypoints
                         data_pose_keypoints = data_frame_keypoints
 
+                    if data_pose_keypoints is None:
+                        continue
+
                     for keypoint in data_pose_keypoints:
                         if not keypoint:
                             keypoints.append(PoseKeypoint(x=0, y=0))
                             continue
 
                         keypoints.append(PoseKeypoint(x=keypoint[0], y=keypoint[1]))
-                    frames.append(keypoints)
-                persons.append(frames)
-            return persons
+                    
+                    frame_results[frame_idx].persons.append(PersonPoseResult(keypoints=keypoints))
+            
+            return frame_results
 
-
-def maskanyone_transpose_keypoints(person_frame_keypoints) -> list:
-        # file has person -> frame -> keypoints while we need frame -> person -> keypoints
-        number_of_frames = len(person_frame_keypoints[0])
-        transposed_keypoints = [
-                [person_frame_keypoints[person][frame] 
-                for person in range(len(person_frame_keypoints))] 
-                for frame in range(number_of_frames)]
-        return transposed_keypoints
-
-
-def maskanyone_standardize_keypoints(keypoints: list) -> list:
-        frame_results = []
-        for frame_idx, frame in enumerate(keypoints):
-            frame_persons = []
-            for person in frame:
-                frame_persons.append(PersonPoseResult(keypoints = person))
-            frame_results.append(FramePoseResult(persons=frame_persons, frame_idx=frame_idx))
-        return frame_results
 
 def get_video_metadata(video: str | cv2.VideoCapture) -> dict:
     """

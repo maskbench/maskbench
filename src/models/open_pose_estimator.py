@@ -73,7 +73,10 @@ class OpenPoseEstimator(PoseEstimator):
             ):  # if data from frame or no pose detected
                 keypoints = []
                 for kp in frame.get("pose_keypoints"):
-                    keypoints.append(PoseKeypoint(x=kp[0], y=kp[1], confidence=kp[2]))
+                    if kp[0] == 0 and kp[1] == 0:
+                        keypoints.append(PoseKeypoint(x=0, y=0, confidence=None))
+                    else:
+                        keypoints.append(PoseKeypoint(x=kp[0], y=kp[1], confidence=kp[2]))
                 person = PersonPoseResult(keypoints=keypoints)
                 frame_results.append(
                     FramePoseResult(persons=[person], frame_idx=idx)
@@ -81,12 +84,14 @@ class OpenPoseEstimator(PoseEstimator):
             else:
                 frame_results.append(FramePoseResult(persons=[], frame_idx=idx))
 
-        self.assert_frame_count_is_correct(frame_results, video_metadata)
-
-        return VideoPoseResult(
+        video_pose_result = VideoPoseResult(
             frames=frame_results,
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
             fps=video_metadata.get("fps"),
             video_name=video_name
         )
+
+        self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
+        return video_pose_result

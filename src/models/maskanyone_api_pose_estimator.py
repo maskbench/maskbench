@@ -53,9 +53,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         shutil.rmtree(self.chunk_output_dir)
         shutil.rmtree(self.processed_output_dir)
 
-        self.assert_frame_count_is_correct(frame_results, video_metadata)
-
-        return VideoPoseResult(
+        video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
@@ -63,6 +61,9 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
             frames=frame_results
         )
 
+        self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        video_pose_result = self.filter_low_confidence_keypoints(video_pose_result) # this call will have no effect, because MaskAnyone does not provide confidence scores
+        return video_pose_result
 
     def _process_chunks(self, video_chunks: list, output_dir: str):
         os.makedirs(output_dir, exist_ok=True)  # we will store the chunk json files here
