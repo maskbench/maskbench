@@ -59,23 +59,30 @@ class YoloPoseEstimator(PoseEstimator):
         )
 
         frame_results = []
-        for frame_idx, result in enumerate(results):
-            if not result.keypoints:  # if no keypoints detected
+        for frame_idx, frame_result in enumerate(results):
+            if not frame_result.keypoints:  # if no keypoints detected
                 frame_results.append(FramePoseResult(persons=[], frame_idx=frame_idx))
+                continue
+
+            xys = frame_result.keypoints.xy.cpu().numpy()
+            confidences = frame_result.keypoints.conf
+
+            if xys.size == 0: # if no persons detected
+                frame_results.append(FramePoseResult(persons=[], frame_idx=frame_idx))
+                continue
 
             persons = []
-            num_persons = result.keypoints.shape[0]
-            num_keypoints = result.keypoints.shape[1]
+            num_persons = frame_result.keypoints.shape[0]
+            num_keypoints = frame_result.keypoints.shape[1]
 
             for i in range(num_persons):
                 keypoints = []
                 for j in range(num_keypoints):
-                    xy = result.keypoints.xy.cpu().numpy()
-                    conf = result.keypoints.conf
+                    conf = float(confidences[i, j]) if (confidences is not None) and (xys[i, j, 0] != 0 and xys[i, j, 1] != 0) else None
                     kp = PoseKeypoint(
-                        x=float(xy[i, j, 0]),
-                        y=float(xy[i, j, 1]),
-                        confidence=float(conf[i, j]) if conf is not None else None,
+                        x=float(xys[i, j, 0]),
+                        y=float(xys[i, j, 1]),
+                        confidence=conf,
                     )
 
                     keypoints.append(kp)

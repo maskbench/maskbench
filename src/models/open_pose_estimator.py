@@ -73,7 +73,10 @@ class OpenPoseEstimator(PoseEstimator):
             ):  # if data from frame or no pose detected
                 keypoints = []
                 for kp in frame.get("pose_keypoints"):
-                    keypoints.append(PoseKeypoint(x=kp[0], y=kp[1], confidence=kp[2]))
+                    if kp[0] == 0 and kp[1] == 0:
+                        keypoints.append(PoseKeypoint(x=0, y=0, confidence=None))
+                    else:
+                        keypoints.append(PoseKeypoint(x=kp[0], y=kp[1], confidence=kp[2]))
                 person = PersonPoseResult(keypoints=keypoints)
                 frame_results.append(
                     FramePoseResult(persons=[person], frame_idx=idx)
