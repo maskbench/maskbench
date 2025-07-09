@@ -12,13 +12,14 @@ class YoloPoseEstimator(PoseEstimator):
         """
         Initialize the YoloPoseEstimator with a model name and configuration.
         Args:
-            name (str): The name of the model (e.g. "yolo-pose-v8", "yolo-pose-v11").
-            config (dict): Configuration dictionary for the model. It must contain the key "weights" with the path to the weights file relative to the weights folder. Note that MaskBench does not download the weights for you. Please visit https://docs.ultralytics.com/tasks/pose/ to download the weights.
+            name (str): The name of the model (e.g. "YoloPose").
+            config (dict): Configuration dictionary for the model. It must contain the key "weights" with the path to the weights file relative to the weights folder, otherwise it uses 'yolo11n-pose.pt'.
         """
 
         super().__init__(name, config)
 
-        weights_file = self.config.get("weights")
+        weights_file = self.config.get("weights", "yolo11n-pose.pt")
+        print("Using weights file: ", weights_file)
         pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
         user_weights_file_path = os.path.join("/weights/user_weights", weights_file)
 
@@ -53,9 +54,8 @@ class YoloPoseEstimator(PoseEstimator):
         video_name = os.path.splitext(os.path.basename(video_path))[0]
         cap.release()
 
-        confidence = self.config.get("confidence_threshold", 0.85)
         results = self.model.track(
-            video_path, conf=confidence, stream=True, verbose=False
+            video_path, conf=self.confidence_threshold, stream=True, verbose=False
         )
 
         frame_results = []
@@ -99,4 +99,5 @@ class YoloPoseEstimator(PoseEstimator):
         )
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
         return video_pose_result

@@ -21,12 +21,13 @@ class MediaPipePoseEstimator(PoseEstimator):
         Initialize the MediaPipePoseEstimator with a name and configuration.
         Args:
             estimator_name (str): The name of the estimator (e.g. "mediapipe_pose").
-            config (dict): Configuration dictionary for the estimator. It must contain the key "weights" with the path to the weights file relative to the weights folder.
+            config (dict): Configuration dictionary for the estimator. It must contain the key "weights" with the path to the weights file relative to the weights folder, otherwise it uses 'pose_landmarker_lite.task'.
         """
 
         super().__init__(name, config)
 
-        weights_file = self.config.get("weights")
+        weights_file = self.config.get("weights", "pose_landmarker_lite.task")
+        print("Using weights file: ", weights_file)
         pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
         user_weights_file_path = os.path.join("/weights/user_weights", weights_file)
 
@@ -109,6 +110,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         )
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
         return video_pose_result
 
     def _execute_on_frame(self, frame, frame_number: int, fps: int):

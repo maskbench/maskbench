@@ -62,6 +62,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         )
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        video_pose_result = self.filter_low_confidence_keypoints(video_pose_result) # this call will have no effect, because MaskAnyone does not provide confidence scores
         return video_pose_result
 
     def _process_chunks(self, video_chunks: list, output_dir: str):

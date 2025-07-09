@@ -5,16 +5,19 @@ from inference.pose_result import VideoPoseResult
 
 
 class PoseEstimator(ABC):
-    def __init__(self, name: str, config: dict = None):
+    def __init__(self, name: str, config: dict):
         """
         Initialize the PoseEstimator with a name and configuration.
         Args:
             name (str): The name of the estimator (e.g. "YoloPose", "MediaPipe", "OpenPose", ...).
-            config (dict): Configuration dictionary for the pose estimator. This can include arbitrary parameters for the model that are necessary for inference (e.g. "confidence_threshold", "weights_file_name", ...).
+            config (dict): Configuration dictionary for the pose estimator. This can include arbitrary parameters for the model that are necessary for inference (e.g. "confidence_threshold", "weights_file_name", ...). The config parameter "confidence_threshold" is required. This has no effect for MaskAnyonePoseEstimators, because they do not provide confidence scores. If you do not want to filter, set confidence_threshold to 0.
         """
+        if not config or "confidence_threshold" not in config:
+            raise ValueError(f"Config for {name} must include a 'confidence_threshold' key.")
 
         self.name = name
-        self.config = config if config else {}
+        self.config = config
+        self.confidence_threshold = config["confidence_threshold"]
 
     @abstractmethod
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
@@ -46,3 +49,13 @@ class PoseEstimator(ABC):
         """
         if len(video_pose_result.frames) != video_metadata.get("frame_count"):
             raise Exception(f"Number of frames in the video ({video_metadata.get('frame_count')}) does not match the number of frames in the frame results ({len(video_pose_result.frames)})")
+
+    def filter_low_confidence_keypoints(self, video_pose_result: VideoPoseResult):
+        for frame_result in video_pose_result.frames:
+            for person_result in frame_result.persons:
+                for keypoint in person_result.keypoints:
+                    if keypoint.confidence is not None and keypoint.confidence < self.confidence_threshold:
+                        keypoint.x = 0
+                        keypoint.y = 0
+                        keypoint.confidence = None
+        return video_pose_result

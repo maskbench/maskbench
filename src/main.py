@@ -51,7 +51,7 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
 
 
 def load_config() -> dict:
-    config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")
+    config_file_name = os.getenv("MASKBENCH_CONFIG_FILE")
     config_file_path = os.path.join("/config", config_file_name)
 
     with open(config_file_path, "r") as f:

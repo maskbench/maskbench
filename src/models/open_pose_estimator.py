@@ -93,4 +93,5 @@ class OpenPoseEstimator(PoseEstimator):
         )
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
         return video_pose_result

@@ -23,14 +23,22 @@ pose_estimators:
     class: MediaPipePoseEstimator
     config:
       weights: pose_landmarker_heavy.task
+      confidence_threshold: 0.4
 
   - name: YoloPose
     enabled: true
     module: models.yolo_pose_estimator
     class: YoloPoseEstimator
     config:
-      weights: yolo11n-pose.pt
-      confidence_threshold: 0.85
+      weights: yolo11l-pose.pt
+      confidence_threshold: 0.6
+
+  - name: OpenPose
+    enabled: true
+    module: models.open_pose_estimator
+    class: OpenPoseEstimator
+    config:
+      confidence_threshold: 0.15
   
   - name: MaskAnyoneApi
     enabled: true
@@ -48,11 +56,6 @@ pose_estimators:
       dataset_folder_path: /datasets/maskanyone_ui    
       overlay_strategy: mp_pose
       hiding_strategy: pixelation
-
-  - name: OpenPose
-    enabled: true
-    module: models.open_pose_estimator
-    class: OpenPoseEstimator      
 
 metrics:
   - name: AccelerationMetric
