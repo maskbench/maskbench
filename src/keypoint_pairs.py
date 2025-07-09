@@ -1,3 +1,26 @@
+from mediapipe.python.solutions.pose import PoseLandmark
+
+# stores the indices of keypoints required in coco format
+COCO_TO_MEDIAPIPE = [
+    PoseLandmark.NOSE,
+    PoseLandmark.LEFT_EYE,
+    PoseLandmark.RIGHT_EYE,
+    PoseLandmark.LEFT_EAR,
+    PoseLandmark.RIGHT_EAR,
+    PoseLandmark.LEFT_SHOULDER,
+    PoseLandmark.RIGHT_SHOULDER,
+    PoseLandmark.LEFT_ELBOW,
+    PoseLandmark.RIGHT_ELBOW,
+    PoseLandmark.LEFT_WRIST,
+    PoseLandmark.RIGHT_WRIST,
+    PoseLandmark.LEFT_HIP,
+    PoseLandmark.RIGHT_HIP,
+    PoseLandmark.LEFT_KNEE,
+    PoseLandmark.RIGHT_KNEE,
+    PoseLandmark.LEFT_ANKLE,
+    PoseLandmark.RIGHT_ANKLE
+]
+
 MEDIAPIPE_KEYPOINT_PAIRS = [
             (0, 1),
             (1, 2),
@@ -35,6 +58,27 @@ MEDIAPIPE_KEYPOINT_PAIRS = [
             (27, 31),
             (29, 31),
         ]
+
+COCO_TO_OPENPOSE = [
+    0,   # Nose
+    1,  # Left Eye
+    2,  # Right Eye
+    3,  # Left Ear
+    4,  # Right Ear
+    5,  # Left Shoulder
+    6,  # Right Shoulder
+    7,  # Left Elbow
+    8,  # Right Elbow
+    9,  # Left Wrist
+    10, # Right Wrist
+    11, # Left Hip
+    12, # Right Hip
+    13, # Left Knee
+    14, # Right Knee
+    15, # Left Ankle
+    16, # Right Ankle
+]
+
 OPENPOSE_KEYPOINT_PAIRS = [
             (0, 1),
             (0, 2),
@@ -62,7 +106,27 @@ OPENPOSE_KEYPOINT_PAIRS = [
             (17, 18),
             (5, 6),
         ]
+
 YOLO_KEYPOINT_PAIRS = [
+            (15, 13),
+            (16, 14),
+            (13, 11),
+            (12, 14),
+            (11, 12),
+            (11, 5),
+            (12, 6),
+            (5, 6),
+            (5, 7),
+            (6, 8),
+            (7, 9),
+            (8, 10),
+            (0, 1),
+            (0, 2),
+            (1, 3),
+            (2, 4),
+        ]
+
+COCO_KEYPOINT_PAIRS = [
             (15, 13),
             (16, 14),
             (13, 11),

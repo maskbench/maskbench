@@ -7,9 +7,7 @@ import requests
 import utils
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import OPENPOSE_KEYPOINT_PAIRS
-
-
+from keypoint_pairs import COCO_TO_OPENPOSE, COCO_KEYPOINT_PAIRS
 class OpenPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
         """
@@ -18,7 +16,7 @@ class OpenPoseEstimator(PoseEstimator):
         super().__init__(name, config)
 
     def get_keypoint_pairs(self):
-        return OPENPOSE_KEYPOINT_PAIRS
+        return COCO_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -72,7 +70,9 @@ class OpenPoseEstimator(PoseEstimator):
                 frame.get("pose_keypoints").size > 0
             ):  # if data from frame or no pose detected
                 keypoints = []
-                for kp in frame.get("pose_keypoints"):
+                pose_kps = frame.get("pose_keypoints")
+                for idx in COCO_TO_OPENPOSE:
+                    kp = pose_kps[idx]
                     keypoints.append(PoseKeypoint(x=kp[0], y=kp[1], confidence=kp[2]))
                 person = PersonPoseResult(keypoints=keypoints)
                 frame_results.append(
