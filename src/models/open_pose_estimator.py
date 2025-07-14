@@ -40,7 +40,7 @@ class OpenPoseEstimator(PoseEstimator):
         url = (
             "http://openpose:8000/openpose/estimate-pose-on-video"  # docker image link
         )
-        options = {"model_pose": "BODY_25B"}  # config
+        options = {"model_pose": "BODY_25B", "multi_person_detection": True}  # config
 
         extension = os.path.splitext(video_path)[1].lower()
         if extension == ".mp4":
@@ -71,15 +71,17 @@ class OpenPoseEstimator(PoseEstimator):
             if frame and (
                 frame.get("pose_keypoints").size > 0
             ):  # if data from frame or no pose detected
-                keypoints = []
-                for kp in frame.get("pose_keypoints"):
-                    if kp[0] == 0 and kp[1] == 0:
-                        keypoints.append(PoseKeypoint(x=0, y=0, confidence=None))
-                    else:
-                        keypoints.append(PoseKeypoint(x=kp[0], y=kp[1], confidence=kp[2]))
-                person = PersonPoseResult(keypoints=keypoints)
+                person_keypoints = []
+                for person in frame.get("pose_keypoints"):
+                    keypoints = []
+                    for kp in person:
+                        if kp[0] == 0 and kp[1] == 0:
+                            keypoints.append(PoseKeypoint(x=0, y=0, confidence=None))
+                        else:
+                            keypoints.append(PoseKeypoint(x=kp[0], y=kp[1], confidence=kp[2]))
+                    person_keypoints.append(PersonPoseResult(keypoints=keypoints))
                 frame_results.append(
-                    FramePoseResult(persons=[person], frame_idx=idx)
+                    FramePoseResult(persons=person_keypoints, frame_idx=idx)
                 )  # the MaskAnyone Openpose container only returns one person per frame
             else:
                 frame_results.append(FramePoseResult(persons=[], frame_idx=idx))

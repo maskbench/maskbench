@@ -47,6 +47,7 @@ pose_estimators:
     config:
       hiding_strategy: pixelation
       overlay_strategy: mp_pose
+      confidence_threshold: 0
       
   - name: MaskAnyoneUi
     enabled: true
@@ -56,6 +57,7 @@ pose_estimators:
       dataset_folder_path: /datasets/maskanyone_ui    
       overlay_strategy: mp_pose
       hiding_strategy: pixelation
+      confidence_threshold: 0
 
 metrics:
   - name: AccelerationMetric
