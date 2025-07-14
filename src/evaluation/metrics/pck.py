@@ -20,7 +20,7 @@ class PCKMetric(EuclideanDistanceMetric):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(name="PCK", config=config)
 
-        if config["threshold"] is None:
+        if config.get("threshold") is None:
             raise ValueError("Threshold is required for PCK computation.")
 
         self.threshold = config["threshold"]

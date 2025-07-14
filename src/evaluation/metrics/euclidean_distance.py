@@ -22,6 +22,8 @@ class EuclideanDistanceMetric(Metric):
 
         if config is None:
             raise ValueError("Config is required for Euclidean Distance computation. Please provide at least the normalize_by field.")
+        if config.get("normalize_by") is None:
+            raise ValueError("'normalize_by' field is required in the config. Must be one of 'bbox', 'head' or 'torso'")
         if config["normalize_by"] not in ["bbox", "head", "torso"]:
             raise ValueError("Invalid normalization strategy. Must be one of 'bbox', 'head' or 'torso'")
         if config["normalize_by"] == "head" or config["normalize_by"] == "torso":

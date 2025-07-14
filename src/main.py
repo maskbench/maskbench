@@ -17,6 +17,7 @@ def main():
 
     dataset_specification = config.get("dataset", {})
     dataset = load_dataset(dataset_specification)
+    print("Dataset:", dataset.name)
 
     pose_estimator_specifications = config.get("pose_estimators", [])
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
@@ -43,7 +44,7 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
     results = evaluator.evaluate(pose_results, gt_pose_results)
 
     visualizer = Visualizer(checkpointer)
-    visualizer.save_plots(results)
+    visualizer.generate_all_plots(results)
 
     estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
     pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer)
