@@ -8,7 +8,7 @@ from inference import InferenceEngine
 from checkpointer import Checkpointer
 from models import PoseEstimator
 from rendering import PoseRenderer
-from evaluation import Evaluator, Visualizer
+from evaluation import Evaluator, MaskBenchVisualizer
 from evaluation.metrics import Metric
 
 
@@ -43,7 +43,7 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
     evaluator = Evaluator(metrics=metrics)
     metric_results = evaluator.evaluate(pose_results, gt_pose_results)
 
-    visualizer = Visualizer(checkpointer)
+    visualizer = MaskBenchVisualizer(checkpointer)
     visualizer.generate_all_plots(metric_results)
 
     estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
