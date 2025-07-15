@@ -29,7 +29,7 @@ metrics:
     class: PCKMetric
     config:
       normalize_by: bbox
-      threshold: 0.5
+      threshold: 0.2
 
   - name: Acceleration
     module: evaluation.metrics.acceleration

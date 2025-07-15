@@ -3,9 +3,11 @@ import json
 import glob
 from typing import Dict, List
 from dataclasses import asdict
+
+from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from keypoint_pairs import OPENPOSE_KEYPOINT_PAIRS
 from .dataset import Dataset
 from .video_sample import VideoSample
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 
 class TragicTalkersDataset(Dataset):
     def __init__(self, name: str, dataset_folder: str, config: dict = None):
@@ -24,7 +26,9 @@ class TragicTalkersDataset(Dataset):
                 samples.append(VideoSample(video))
       
         return samples
-    
+
+    def get_gt_keypoint_pairs(self) -> List[tuple]:
+        return OPENPOSE_KEYPOINT_PAIRS
 
     def get_gt_pose_results(self) -> Dict[str, VideoPoseResult]:
         gt_pose_results = {}

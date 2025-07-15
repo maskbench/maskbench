@@ -41,12 +41,15 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
     pose_results = inference_engine.estimate_pose_keypoints()
     
     evaluator = Evaluator(metrics=metrics)
-    results = evaluator.evaluate(pose_results, gt_pose_results)
+    metric_results = evaluator.evaluate(pose_results, gt_pose_results)
 
     visualizer = Visualizer(checkpointer)
-    visualizer.generate_all_plots(results)
+    visualizer.generate_all_plots(metric_results)
 
     estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
+    estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
+    pose_results["GroundTruth"] = gt_pose_results
+
     pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer)
     pose_renderer.render_all_videos(pose_results)
 
