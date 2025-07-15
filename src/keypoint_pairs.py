@@ -80,3 +80,27 @@ YOLO_KEYPOINT_PAIRS = [
             (1, 3),
             (2, 4),
         ]
+
+# Depending on the source you look at, there are a different number of keypoints for COCO.
+# We aggreed to follow the YOLO standard and ordering: https://docs.ultralytics.com/tasks/pose/
+# This does not have a neck keypoint, which is the interpolation of the two shoulders and is mainly used for drawing.
+# The order is different from other COCO sources, see also issue: https://github.com/CMU-Perceptual-Computing-Lab/openpose/issues/1560
+COCO_KEYPOINT_NAMES = {
+    0: "Nose",
+    1: "L. Eye",
+    2: "R. Eye",
+    3: "L. Ear",
+    4: "R. Ear",
+    5: "L. Shoulder",
+    6: "R. Shoulder",
+    7: "L. Elbow",
+    8: "R. Elbow",
+    9: "L. Wrist",
+    10: "R. Wrist",
+    11: "L. Hip",
+    12: "R. Hip",
+    13: "L. Knee",
+    14: "R. Knee",
+    15: "L. Ankle",
+    16: "R. Ankle",
+}
