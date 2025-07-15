@@ -83,9 +83,6 @@ class OpenPoseEstimator(PoseEstimator):
             else:
                 frame_results.append(FramePoseResult(persons=[], frame_idx=idx))
 
-        if self.config.get("save_keypoints_in_coco_format", False):
-            frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.name)
-            
         video_pose_result = VideoPoseResult(
             frames=frame_results,
             frame_width=video_metadata.get("width"),
@@ -96,4 +93,6 @@ class OpenPoseEstimator(PoseEstimator):
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
+        if self.config.get("save_keypoints_in_coco_format", False):
+            video_pose_result = utils.convert_keypoints_to_coco_format(video_pose_result, self.name)
         return video_pose_result

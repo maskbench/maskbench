@@ -67,6 +67,8 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result) # this call will have no effect, because MaskAnyone does not provide confidence scores
+        if self.config.get("save_keypoints_in_coco_format", False):
+            video_pose_result = utils.convert_keypoints_to_coco_format(video_pose_result, self.config.get("overlay_strategy"))
         return video_pose_result
 
     def _process_chunks(self, video_chunks: list, output_dir: str):

@@ -3,10 +3,11 @@ import cv2
 import glob
 import os
 import json
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
+from inference import VideoPoseResult, FramePoseResult, PersonPoseResult, PoseKeypoint
 from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_TO_OPENPOSE
 
-def convert_keypoints_to_coco_format(frame_results: list, model_name: str) -> list:
+def convert_keypoints_to_coco_format(video_pose_result: VideoPoseResult, model_name: str) -> list:
+    frame_results = video_pose_result.frames
     if model_name == "YoloPose":
          return frame_results # Yolo keypoints are already stored in Coco format
     
@@ -21,7 +22,8 @@ def convert_keypoints_to_coco_format(frame_results: list, model_name: str) -> li
                     coco_keypoints = [person.keypoints[idx] for idx in model_to_coco_mapping[model_name]]
                     person.keypoints = coco_keypoints 
     
-    return frame_results
+    video_pose_result.frames = frame_results
+    return video_pose_result
 
 def maskanyone_get_config(options: dict):
         """"Ensures Options are valid"""
