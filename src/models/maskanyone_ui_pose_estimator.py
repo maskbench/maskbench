@@ -2,7 +2,7 @@ import os
 import utils
 from inference import VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import COCO_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS
 
 class MaskAnyoneUiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -14,7 +14,15 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         self.options = utils.maskanyone_get_config(self.config)
 
     def get_keypoint_pairs(self):
-        return COCO_KEYPOINT_PAIRS
+        if self.config.get("save_keypoints_in_coco_format", False):
+            return COCO_KEYPOINT_PAIRS
+        elif self.config.get("overlay_strategy") == "mp_pose":
+            return MEDIAPIPE_KEYPOINT_PAIRS 
+        elif self.config.get("overlay_strategy") == "openpose_body25b":
+            return OPENPOSE_KEYPOINT_PAIRS
+        else:
+            raise ValueError(f"Invalid overlay strategy. Valid options are: mp_pose and openpose_body25b ")
+        
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -35,6 +43,9 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         frame_results = utils.maskanyone_combine_json_files(results_path)  # Combine the JSON files from processed chunks
     
         self.assert_frame_count_is_correct(frame_results, video_metadata)
+        if self.config.get("save_keypoints_in_coco_format", False):
+            frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.config.get("overlay_strategy"))
+
         
         return VideoPoseResult(
             fps=video_metadata.get("fps"),

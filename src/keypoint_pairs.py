@@ -107,25 +107,7 @@ OPENPOSE_KEYPOINT_PAIRS = [
             (5, 6),
         ]
 
-YOLO_KEYPOINT_PAIRS = [
-            (15, 13),
-            (16, 14),
-            (13, 11),
-            (12, 14),
-            (11, 12),
-            (11, 5),
-            (12, 6),
-            (5, 6),
-            (5, 7),
-            (6, 8),
-            (7, 9),
-            (8, 10),
-            (0, 1),
-            (0, 2),
-            (1, 3),
-            (2, 4),
-        ]
-
+# Yolo and Coco have the same keypoint pairs since Yolo stores keypoints in Coco format
 COCO_KEYPOINT_PAIRS = [
             (15, 13),
             (16, 14),

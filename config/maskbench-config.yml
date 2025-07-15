@@ -23,6 +23,7 @@ pose_estimators:
     class: MediaPipePoseEstimator
     config:
       weights: pose_landmarker_heavy.task
+      save_keypoints_in_coco_format: true
 
   - name: YoloPose
     enabled: true
@@ -31,6 +32,7 @@ pose_estimators:
     config:
       weights: yolo11n-pose.pt
       confidence_threshold: 0.85
+      save_keypoints_in_coco_format: true
   
   - name: MaskAnyoneApi
     enabled: true
@@ -39,6 +41,7 @@ pose_estimators:
     config:
       hiding_strategy: pixelation
       overlay_strategy: mp_pose
+      save_keypoints_in_coco_format: true
       
   - name: MaskAnyoneUi
     enabled: true
@@ -48,11 +51,14 @@ pose_estimators:
       dataset_folder_path: /datasets/maskanyone_ui    
       overlay_strategy: mp_pose
       hiding_strategy: pixelation
+      save_keypoints_in_coco_format: true
 
   - name: OpenPose
     enabled: true
     module: models.open_pose_estimator
-    class: OpenPoseEstimator      
+    class: OpenPoseEstimator   
+    config:  
+      save_keypoints_in_coco_format: true
 
 metrics:
   - name: AccelerationMetric

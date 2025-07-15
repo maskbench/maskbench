@@ -13,7 +13,7 @@ from mediapipe.tasks.python.vision import (
 
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS
 
 class MediaPipePoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -49,7 +49,10 @@ class MediaPipePoseEstimator(PoseEstimator):
         )
 
     def get_keypoint_pairs(self):
-        return COCO_KEYPOINT_PAIRS
+        if self.config.get("save_keypoints_in_coco_format", False):
+            return COCO_KEYPOINT_PAIRS
+        else:
+            return MEDIAPIPE_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -77,21 +80,20 @@ class MediaPipePoseEstimator(PoseEstimator):
             result = self._execute_on_frame(frame, frame_number, fps)
 
             if not result.pose_landmarks:
-                frame_results.append(FramePoseResult(persons=None, frame_idx=frame_number))
+                frame_results.append(FramePoseResult(persons=[], frame_idx=frame_number))
             else:
                 persons = []
                 for person_landmarks in result.pose_landmarks:
                     keypoints = []
 
-                    for idx in COCO_TO_MEDIAPIPE:
-                        lm = person_landmarks[idx]
-                        if not (0 <= lm.x <= 1 and 0 <= lm.y <= 1) or lm.visibility < 0.5: # for undetected keypoints, x and y can be outside the range [0, 1]
-                            keypoints.append(PoseKeypoint(x=0, y=0)) # standardized handling of missing keypoints by setting x and y to 0
+                    for lm in person_landmarks:
+                        if not (0 <= lm.x <= 1 and 0 <= lm.y <= 1): # for undetected keypoints, x and y can be outside the range [0, 1]
+                            keypoints.append(PoseKeypoint(x=0, y=0, confidence=None)) # standardized handling of missing keypoints by setting x and y to 0
                             continue
 
                         x = lm.x * width # convert normalized landmarks to image coordinates
                         y = lm.y * height
-                        keypoints.append(PoseKeypoint(x=x, y=y))
+                        keypoints.append(PoseKeypoint(x=x, y=y, confidence=lm.visibility))
 
                     persons.append(PersonPoseResult(keypoints=keypoints))
 
@@ -102,6 +104,8 @@ class MediaPipePoseEstimator(PoseEstimator):
         self.detector.close()
 
         self.assert_frame_count_is_correct(frame_results, video_metadata)
+        if self.config.get("save_keypoints_in_coco_format", False):
+            frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.name)
 
         return VideoPoseResult(
             fps=fps,

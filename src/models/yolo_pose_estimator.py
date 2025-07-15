@@ -37,6 +37,7 @@ class YoloPoseEstimator(PoseEstimator):
         self.model.to(device)
 
     def get_keypoint_pairs(self):
+        # Yolo keypoints are stored in Coco format
         return COCO_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
@@ -83,6 +84,8 @@ class YoloPoseEstimator(PoseEstimator):
             frame_results.append(FramePoseResult(persons=persons, frame_idx=frame_idx))
 
         self.assert_frame_count_is_correct(frame_results, video_metadata)
+        if self.config.get("save_keypoints_in_coco_format", False):
+            frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.name)
 
         video_result = VideoPoseResult(
             fps=video_metadata.get("fps"),

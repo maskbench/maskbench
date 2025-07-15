@@ -6,6 +6,23 @@ import json
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
 from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_TO_OPENPOSE
 
+def convert_keypoints_to_coco_format(frame_results: list, model_name: str) -> list:
+    if model_name == "YoloPose":
+         return frame_results # Yolo keypoints are already stored in Coco format
+    
+    model_to_coco_mapping = {"MediaPipePose": COCO_TO_MEDIAPIPE, "OpenPose": COCO_TO_OPENPOSE, "mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_OPENPOSE}
+    if model_name not in model_to_coco_mapping:
+         raise ValueError(f"{model_name} is an invalid pose estimators. Acceptable pose estimators are {list(model_to_coco_mapping.keys())} and YoloPose")
+
+    for frame in frame_results: 
+        if frame and frame.persons: # ensuring they are not None
+            for person in frame.persons:
+                if len(person.keypoints): # person is either [] or contains all keypoints
+                    coco_keypoints = [person.keypoints[idx] for idx in model_to_coco_mapping[model_name]]
+                    person.keypoints = coco_keypoints 
+    
+    return frame_results
+
 def maskanyone_get_config(options: dict):
         """"Ensures Options are valid"""
         valid_hiding_strategies = ['solid_fill', 'transparent_fill', 'blurring', 'pixelation', 'contours', 'none']
@@ -46,27 +63,27 @@ def maskanyone_convert_json_to_nested_arrays(chunk_poses_file: str, valid_overla
                     # The output of MaskAnyone API for a frame is different for MediaPipe and OpenPose:
                     # For Openpose, the frame output is a dictionary with a key "pose_keypoints" (and other keys like "face_keypoints", "hand_keypoints")
                     # For MediaPipe, the frame output is a list of keypoints
+                    keypoints = []
                     if data_frame_keypoints is None:
-                         frames.append([])
+                         frames.append(keypoints)
                          continue
 
                     if valid_overlay_strategy == "openpose_body25b":
                         data_pose_keypoints = data_frame_keypoints.get("pose_keypoints", None)
-                        coco_keypoints_in_order = COCO_TO_OPENPOSE
                     elif valid_overlay_strategy == "mp_pose": 
                         data_pose_keypoints = data_frame_keypoints
-                        coco_keypoints_in_order = COCO_TO_MEDIAPIPE
                     else:
                          raise ValueError(f"Invalid overlay strategy provided to maskanyone_combine_json_files in utils.py") 
 
-                    keypoints = []
-                    if data_pose_keypoints is not None:
-                        for idx in coco_keypoints_in_order:
-                            kp = data_pose_keypoints[idx]
-                            if kp is None:
-                                keypoints.append(PoseKeypoint(x=0, y=0)) 
-                            else:
-                                keypoints.append(PoseKeypoint(x=kp[0], y=kp[1])) # confidence is not provided by maskanyone
+                    if data_pose_keypoints is None:
+                        frames.append(keypoints)
+                        continue
+                    
+                    for kp in data_pose_keypoints:
+                        if kp is None:
+                            keypoints.append(PoseKeypoint(x=0, y=0)) 
+                        else:
+                            keypoints.append(PoseKeypoint(x=kp[0], y=kp[1])) # confidence is not provided by maskanyone
                     
                     frames.append(keypoints)
                 persons.append(frames)

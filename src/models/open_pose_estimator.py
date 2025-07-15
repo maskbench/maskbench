@@ -7,7 +7,7 @@ import requests
 import utils
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import COCO_TO_OPENPOSE, COCO_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS
 class OpenPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
         """
@@ -16,7 +16,10 @@ class OpenPoseEstimator(PoseEstimator):
         super().__init__(name, config)
 
     def get_keypoint_pairs(self):
-        return COCO_KEYPOINT_PAIRS
+        if self.config.get("save_keypoints_in_coco_format", False):
+            return COCO_KEYPOINT_PAIRS
+        else:
+            return OPENPOSE_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -38,7 +41,7 @@ class OpenPoseEstimator(PoseEstimator):
         url = (
             "http://openpose:8000/openpose/estimate-pose-on-video"  # docker image link
         )
-        options = {"model_pose": "BODY_25B"}  # config
+        options = {"model_pose": "BODY_25B", "multi_person_detection": True}  # config
 
         extension = os.path.splitext(video_path)[1].lower()
         if extension == ".mp4":
@@ -69,19 +72,23 @@ class OpenPoseEstimator(PoseEstimator):
             if frame and (
                 frame.get("pose_keypoints").size > 0
             ):  # if data from frame or no pose detected
-                keypoints = []
-                pose_kps = frame.get("pose_keypoints")
-                for idx in COCO_TO_OPENPOSE:
-                    kp = pose_kps[idx]
-                    keypoints.append(PoseKeypoint(x=kp[0], y=kp[1], confidence=kp[2]))
-                person = PersonPoseResult(keypoints=keypoints)
-                frame_results.append(
-                    FramePoseResult(persons=[person], frame_idx=idx)
-                )  # the MaskAnyone Openpose container only returns one person per frame
+                person_keypoints = []
+                for person in frame.get("pose_keypoints"):
+                    keypoints = []
+                    for kp in person:
+                        if kp[0] == 0 and kp[1] == 0:
+                            keypoints.append(PoseKeypoint(x=0, y=0, confidence=None))
+                        else:
+                            keypoints.append(PoseKeypoint(x=kp[0], y=kp[1], confidence=kp[2]))
+                    person_keypoints.append(PersonPoseResult(keypoints=keypoints))
+                frame_results.append(FramePoseResult(persons=person_keypoints, frame_idx=idx))
             else:
                 frame_results.append(FramePoseResult(persons=[], frame_idx=idx))
 
         self.assert_frame_count_is_correct(frame_results, video_metadata)
+        if self.config.get("save_keypoints_in_coco_format", False):
+            frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.name)
+
 
         return VideoPoseResult(
             frames=frame_results,
