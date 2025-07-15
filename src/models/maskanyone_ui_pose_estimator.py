@@ -42,12 +42,10 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
 
         frame_results = utils.maskanyone_combine_json_files(results_path)  # Combine the JSON files from processed chunks
     
-        self.assert_frame_count_is_correct(frame_results, video_metadata)
         if self.config.get("save_keypoints_in_coco_format", False):
             frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.config.get("overlay_strategy"))
 
-        
-        return VideoPoseResult(
+        video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
@@ -55,4 +53,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
             frames=frame_results
         )
 
+        self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        video_pose_result = self.filter_low_confidence_keypoints(video_pose_result) # this call will have no effect, because MaskAnyone does not provide confidence scores
+        return video_pose_result
     

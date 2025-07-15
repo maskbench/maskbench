@@ -12,13 +12,14 @@ class YoloPoseEstimator(PoseEstimator):
         """
         Initialize the YoloPoseEstimator with a model name and configuration.
         Args:
-            name (str): The name of the model (e.g. "yolo-pose-v8", "yolo-pose-v11").
-            config (dict): Configuration dictionary for the model. It must contain the key "weights" with the path to the weights file relative to the weights folder. Note that MaskBench does not download the weights for you. Please visit https://docs.ultralytics.com/tasks/pose/ to download the weights.
+            name (str): The name of the model (e.g. "YoloPose").
+            config (dict): Configuration dictionary for the model. It must contain the key "weights" with the path to the weights file relative to the weights folder, otherwise it uses 'yolo11n-pose.pt'.
         """
 
         super().__init__(name, config)
 
-        weights_file = self.config.get("weights")
+        weights_file = self.config.get("weights", "yolo11n-pose.pt")
+        print("Using weights file: ", weights_file)
         pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
         user_weights_file_path = os.path.join("/weights/user_weights", weights_file)
 
@@ -54,44 +55,52 @@ class YoloPoseEstimator(PoseEstimator):
         video_name = os.path.splitext(os.path.basename(video_path))[0]
         cap.release()
 
-        confidence = self.config.get("confidence_threshold", 0.85)
         results = self.model.track(
-            video_path, conf=confidence, stream=True, verbose=False
+            video_path, conf=self.confidence_threshold, stream=True, verbose=False
         )
 
         frame_results = []
-        for frame_idx, result in enumerate(results):
-            if not result.keypoints:  # if no keypoints detected
+        for frame_idx, frame_result in enumerate(results):
+            if not frame_result.keypoints:  # if no keypoints detected
                 frame_results.append(FramePoseResult(persons=[], frame_idx=frame_idx))
+                continue
+
+            xys = frame_result.keypoints.xy.cpu().numpy()
+            confidences = frame_result.keypoints.conf
+
+            if xys.size == 0: # if no persons detected
+                frame_results.append(FramePoseResult(persons=[], frame_idx=frame_idx))
+                continue
 
             persons = []
-            num_persons = result.keypoints.shape[0]
-            num_keypoints = result.keypoints.shape[1]
+            num_persons = frame_result.keypoints.shape[0]
+            num_keypoints = frame_result.keypoints.shape[1]
 
             for i in range(num_persons):
                 keypoints = []
                 for j in range(num_keypoints):
-                    xy = result.keypoints.xy.cpu().numpy()
-                    conf = result.keypoints.conf
+                    conf = float(confidences[i, j]) if (confidences is not None) and (xys[i, j, 0] != 0 and xys[i, j, 1] != 0) else None
                     kp = PoseKeypoint(
-                        x=float(xy[i, j, 0]),
-                        y=float(xy[i, j, 1]),
-                        confidence=float(conf[i, j]) if conf is not None else None,
+                        x=float(xys[i, j, 0]),
+                        y=float(xys[i, j, 1]),
+                        confidence=conf,
                     )
 
                     keypoints.append(kp)
                 persons.append(PersonPoseResult(keypoints=keypoints))
             frame_results.append(FramePoseResult(persons=persons, frame_idx=frame_idx))
 
-        self.assert_frame_count_is_correct(frame_results, video_metadata)
         if self.config.get("save_keypoints_in_coco_format", False):
             frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.name)
 
-        video_result = VideoPoseResult(
+        video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
             frames=frame_results,
             video_name=video_name,
         )
-        return video_result
+
+        self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
+        return video_pose_result

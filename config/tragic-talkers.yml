@@ -1,0 +1,36 @@
+checkpoint_name: None # comment out or set to "None" to run inference from scratch
+
+dataset:
+  name: TragicTalkers
+  module: datasets.tragic_talkers_dataset
+  class: TragicTalkersDataset
+  dataset_folder: /datasets/tragic_talkers
+  config:
+    video_folder: videos
+    ground_truth_folder: labels
+
+pose_estimators:
+  - name: OpenPose
+    enabled: true
+    module: models.open_pose_estimator
+    class: OpenPoseEstimator
+    config:
+      confidence_threshold: 0
+
+metrics:
+  - name: RMSE
+    module: evaluation.metrics.rmse
+    class: RMSEMetric
+    config:
+      normalize_by: bbox
+  
+  - name: PCK
+    module: evaluation.metrics.pck
+    class: PCKMetric
+    config:
+      normalize_by: bbox
+      threshold: 0.2
+
+  - name: Acceleration
+    module: evaluation.metrics.acceleration
+    class: AccelerationMetric

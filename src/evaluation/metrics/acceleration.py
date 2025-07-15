@@ -74,4 +74,5 @@ class AccelerationMetric(Metric):
             metric_name=self.name,
             video_name=video_result.video_name,
             model_name=model_name,
+            unit="pixels/frame^2",
         )

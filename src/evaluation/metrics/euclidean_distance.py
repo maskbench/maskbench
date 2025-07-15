@@ -14,22 +14,22 @@ class EuclideanDistanceMetric(Metric):
     Euclidean Distance metric.
     Args:
         config: Configuration for the Euclidean Distance metric. It must contain the following fields:
-            - threshold: The threshold for the metric.
             - normalize_by: The normalization strategy to use. Can be "bbox", "head" or "torso". Default is "bbox".
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__(name="EuclideanDistance", config=config)
+    def __init__(self, name: str = "Euclidean Distance", config: Optional[Dict[str, Any]] = None):
+        super().__init__(name=name, config=config)
 
         if config is None:
-            raise ValueError("Config is required for Euclidean Distance computation")
+            raise ValueError("Config is required for Euclidean Distance computation. Please provide at least the normalize_by field.")
+        if config.get("normalize_by") is None:
+            raise ValueError("'normalize_by' field is required in the config. Must be one of 'bbox', 'head' or 'torso'")
         if config["normalize_by"] not in ["bbox", "head", "torso"]:
             raise ValueError("Invalid normalization strategy. Must be one of 'bbox', 'head' or 'torso'")
         if config["normalize_by"] == "head" or config["normalize_by"] == "torso":
             raise NotImplementedError("Head and torso normalization is not implemented yet.")
 
         self.normalize_by = config["normalize_by"]
-        self.threshold = config["threshold"] 
     
     def compute(
         self,

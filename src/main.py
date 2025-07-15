@@ -8,7 +8,7 @@ from inference import InferenceEngine
 from checkpointer import Checkpointer
 from models import PoseEstimator
 from rendering import PoseRenderer
-from evaluation import Evaluator, Visualizer
+from evaluation import Evaluator, MaskBenchVisualizer
 from evaluation.metrics import Metric
 
 
@@ -17,6 +17,7 @@ def main():
 
     dataset_specification = config.get("dataset", {})
     dataset = load_dataset(dataset_specification)
+    print("Dataset:", dataset.name)
 
     pose_estimator_specifications = config.get("pose_estimators", [])
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
@@ -40,18 +41,21 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
     pose_results = inference_engine.estimate_pose_keypoints()
     
     evaluator = Evaluator(metrics=metrics)
-    results = evaluator.evaluate(pose_results, gt_pose_results)
+    metric_results = evaluator.evaluate(pose_results, gt_pose_results)
 
-    visualizer = Visualizer(checkpointer)
-    visualizer.save_plots(results)
+    visualizer = MaskBenchVisualizer(checkpointer)
+    visualizer.generate_all_plots(metric_results)
 
     estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
+    estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
+    pose_results["GroundTruth"] = gt_pose_results
+
     pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer)
     pose_renderer.render_all_videos(pose_results)
 
 
 def load_config() -> dict:
-    config_file_name = os.getenv("MASKBENCH_CONFIG_FILE", "maskbench-config.yml")
+    config_file_name = os.getenv("MASKBENCH_CONFIG_FILE")
     config_file_path = os.path.join("/config", config_file_name)
 
     with open(config_file_path, "r") as f:

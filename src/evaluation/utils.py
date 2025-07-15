@@ -1,6 +1,9 @@
 
+from typing import Dict
 import numpy as np
 import numpy.ma as ma
+
+from .metrics import MetricResult
 
 # This is the value that will be used to fill the distance matrix for keypoints
 # that are not visible in the prediction, but are visible in the ground truth.
@@ -29,4 +32,23 @@ def calculate_bbox_sizes_for_persons_in_frame(gt_poses: np.ndarray) -> np.ndarra
     heights = max_coords[..., 1] - min_coords[..., 1]  # Shape: (M,)
     
     return np.maximum(widths, heights)
+
+
+def aggregate_results_over_all_videos(metric_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, float]]:
+    """
+    Aggregate the results by averaging over the different datasets.
+    Returns:
+        Dict[str, Dict[str, float]]: Aggregated results for each metric and pose estimator.
+    """
+    aggregated_results = {}
+    for metric_name, pose_estimator_results in metric_results.items():
+        for pose_estimator_name, video_results in pose_estimator_results.items():
+            aggregated_results[metric_name] = {}
+            
+            aggregated_video_results = []
+            for video_name, result in video_results.items():
+                aggregated_video_results.append(result.aggregate_all())
+            aggregated_results[metric_name][pose_estimator_name] = np.round(np.mean(aggregated_video_results), decimals=2)
+
+    return aggregated_results
 

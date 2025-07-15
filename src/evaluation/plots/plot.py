@@ -36,7 +36,7 @@ class Plot(ABC):
             self.config['style'] = 'white'
         
         sns.set_style(self.config['style'])
-        sns.color_palette("rocket")
+        sns.color_palette("tab10")
         sns.set_context("paper")
         
     @abstractmethod

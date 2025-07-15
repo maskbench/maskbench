@@ -41,7 +41,7 @@ class OpenPoseEstimator(PoseEstimator):
         url = (
             "http://openpose:8000/openpose/estimate-pose-on-video"  # docker image link
         )
-        options = {"model_pose": "BODY_25B", "multi_person_detection": True}  # config
+        options = {"model_pose": "BODY_25B", "multi_person_detection": True}
 
         extension = os.path.splitext(video_path)[1].lower()
         if extension == ".mp4":
@@ -69,9 +69,7 @@ class OpenPoseEstimator(PoseEstimator):
     ) -> VideoPoseResult:
         frame_results = []
         for idx, frame in enumerate(pose_data):  # every frame
-            if frame and (
-                frame.get("pose_keypoints").size > 0
-            ):  # if data from frame or no pose detected
+            if frame and frame.get("pose_keypoints").size > 0:  # if data from frame or a pose detected
                 person_keypoints = []
                 for person in frame.get("pose_keypoints"):
                     keypoints = []
@@ -85,15 +83,17 @@ class OpenPoseEstimator(PoseEstimator):
             else:
                 frame_results.append(FramePoseResult(persons=[], frame_idx=idx))
 
-        self.assert_frame_count_is_correct(frame_results, video_metadata)
         if self.config.get("save_keypoints_in_coco_format", False):
             frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.name)
-
-
-        return VideoPoseResult(
+            
+        video_pose_result = VideoPoseResult(
             frames=frame_results,
             frame_width=video_metadata.get("width"),
             frame_height=video_metadata.get("height"),
             fps=video_metadata.get("fps"),
             video_name=video_name
         )
+
+        self.assert_frame_count_is_correct(video_pose_result, video_metadata)
+        video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
+        return video_pose_result
