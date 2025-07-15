@@ -80,3 +80,24 @@ YOLO_KEYPOINT_PAIRS = [
             (1, 3),
             (2, 4),
         ]
+
+COCO_KEYPOINT_NAMES = {
+    0: "Nose",
+    1: "Neck",
+    2: "R. Shoulder",
+    3: "R. Elbow",
+    4: "R. Wrist",
+    5: "L. Shoulder",
+    6: "L. Elbow",
+    7: "L. Wrist",
+    8: "R. Hip",
+    9: "R. Knee",
+    10: "R. Ankle",
+    11: "L. Hip",
+    12: "L. Knee",
+    13: "L. Ankle",
+    14: "R. Eye",
+    15: "L. Eye",
+    16: "R. Ear",
+    17: "L. Ear",
+}
