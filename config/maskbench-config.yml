@@ -63,6 +63,7 @@ pose_estimators:
       overlay_strategy: mp_pose
       hiding_strategy: pixelation
       save_keypoints_in_coco_format: true
+      confidence_threshold: 0
 
 metrics:
   - name: AccelerationMetric
