@@ -4,7 +4,7 @@ from typing import Dict
 from matplotlib import pyplot as plt
 
 from evaluation.metrics import MetricResult
-from evaluation.plots import AccelerationDistributionPlot, generate_result_table
+from evaluation.plots import AccelerationDistributionPlot, KeypointPlot, generate_result_table
 from checkpointer import Checkpointer
 
 
@@ -35,5 +35,10 @@ class Visualizer:
         acceleration_distribution_plot = AccelerationDistributionPlot()
         fig, filename = acceleration_distribution_plot.draw(pose_results)
         self._save_plot(fig, filename)
+
+        coco_keypoint_plot = KeypointPlot(metric_names=['Euclidean Distance', 'Acceleration'])
+        figures_and_names = coco_keypoint_plot.draw(pose_results)
+        for fig, filename in figures_and_names:
+            self._save_plot(fig, filename)
 
         generate_result_table(pose_results)
