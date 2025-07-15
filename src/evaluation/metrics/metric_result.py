@@ -24,6 +24,7 @@ class MetricResult:
         metric_name: str,
         video_name: str,
         model_name: Optional[str] = None,
+        unit: Optional[str] = None,
     ):
         """
         Initialize a metric result.
@@ -35,6 +36,7 @@ class MetricResult:
             metric_name: Name of the metric (e.g. 'mpjpe', 'acceleration_error')
             video_name: Name of the video this result is for
             model_name: Optional name of the model that produced these results
+            unit: Optional unit of the metric (e.g. 'pixels', 'pixels/frame^2', ...)
         """
         # Convert to masked array if needed
         if not isinstance(values, ma.MaskedArray):
@@ -49,6 +51,7 @@ class MetricResult:
         self.metric_name = metric_name
         self.video_name = video_name
         self.model_name = model_name
+        self.unit = unit
         
         # Create axis name to dimension mapping for easier lookup
         self.axis_name_to_dim = {name: i for i, name in enumerate(axis_names)}
@@ -101,6 +104,7 @@ class MetricResult:
             metric_name=self.metric_name,
             video_name=self.video_name,
             model_name=self.model_name,
+            unit=self.unit,
         )
     
     def aggregate_all(self) -> float:

@@ -51,6 +51,8 @@ class CocoKeypointPlot(Plot):
             
             for model_name, video_results in metric_results.items():
                 model_values = []
+                unit = next(iter(video_results.values())).unit # get the unit of the first video result
+
                 for video_name, metric_result in video_results.items():
                     avg_video_keypoint_values = metric_result.aggregate([PERSON_AXIS, KEYPOINT_AXIS], method='mean').values
                     model_values.append(avg_video_keypoint_values)
@@ -70,6 +72,8 @@ class CocoKeypointPlot(Plot):
             
             self.config['title'] = f'{metric} by Keypoint and Model'
             self.config['style'] = 'grid'
+            if unit:
+                self.config['ylabel'] = f'{metric} ({unit})'
             fig = self._setup_figure()
             
             sns.barplot(
