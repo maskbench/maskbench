@@ -29,6 +29,13 @@ class Dataset(ABC):
         """
         return []
 
+    def get_gt_keypoint_pairs(self) -> None | List[tuple]:
+        """
+        Load ground truth keypoint pairs from the dataset folder.
+        This method should be overridden by subclasses if ground truth data is available.
+        """
+        return None
+
     def __iter__(self):
         return iter(self.samples)
 

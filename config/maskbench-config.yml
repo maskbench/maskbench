@@ -23,6 +23,7 @@ pose_estimators:
     class: MediaPipePoseEstimator
     config:
       weights: pose_landmarker_heavy.task
+      max_num_poses: 3
       confidence_threshold: 0.4
 
   - name: YoloPose

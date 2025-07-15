@@ -22,6 +22,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         Args:
             estimator_name (str): The name of the estimator (e.g. "mediapipe_pose").
             config (dict): Configuration dictionary for the estimator. It must contain the key "weights" with the path to the weights file relative to the weights folder, otherwise it uses 'pose_landmarker_lite.task'.
+            It can also contain the key "max_num_poses" with the maximum number of poses to detect, otherwise it uses 3.
         """
 
         super().__init__(name, config)
@@ -47,6 +48,7 @@ class MediaPipePoseEstimator(PoseEstimator):
             ),
             running_mode=RunningMode.VIDEO,  # informs model we will provide videos/ sequence of frames | adds temporal sequencing
             output_segmentation_masks=False,
+            num_poses=self.config.get("max_num_poses", 3)
         )
 
     def get_keypoint_pairs(self):
