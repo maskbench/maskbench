@@ -18,7 +18,7 @@ class AccelerationDistributionPlot(Plot):
         super().__init__(
             name="AccelerationDistribution",
             config={
-                'xlabel': 'Acceleration Error',
+                'xlabel': 'Acceleration (px/frame^2)',
                 'ylabel': 'Percentage',
             }
         )
