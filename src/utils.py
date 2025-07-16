@@ -3,11 +3,10 @@ import cv2
 import glob
 import os
 import json
-from inference import VideoPoseResult, FramePoseResult, PersonPoseResult, PoseKeypoint
-from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_TO_OPENPOSE
+from typing import List
+from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
 
-def convert_keypoints_to_coco_format(video_pose_result: VideoPoseResult, model_to_coco_mapping: list) -> VideoPoseResult:
-    frame_results = video_pose_result.frames
+def convert_keypoints_to_coco_format(frame_results: List[FramePoseResult], model_to_coco_mapping: list) -> List[FramePoseResult]:
     for frame in frame_results: 
         if frame and frame.persons: # ensuring they are not None
             for person in frame.persons:
@@ -15,8 +14,7 @@ def convert_keypoints_to_coco_format(video_pose_result: VideoPoseResult, model_t
                     coco_keypoints = [person.keypoints[idx] for idx in model_to_coco_mapping]
                     person.keypoints = coco_keypoints 
     
-    video_pose_result.frames = frame_results
-    return video_pose_result
+    return frame_results
 
 def maskanyone_get_config(options: dict):
         """"Ensures Options are valid"""

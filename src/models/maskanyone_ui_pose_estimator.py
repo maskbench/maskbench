@@ -18,10 +18,8 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
     def get_keypoint_pairs(self):
         if self.config.get("save_keypoints_in_coco_format", False):
             return COCO_KEYPOINT_PAIRS
-        elif self.config.get("overlay_strategy") in ["mp_pose", "openpose_body25b"]:
-            return self.model_keypoint_pairs[self.config.get("overlay_strategy")]
         else:
-            raise ValueError(f"Invalid overlay strategy. Valid options are: {list(self.model_keypoint_pairs.keys())}")
+            return self.model_keypoint_pairs[self.config.get("overlay_strategy")]
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -52,6 +50,6 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result) # this call will have no effect, because MaskAnyone does not provide confidence scores
         if self.config.get("save_keypoints_in_coco_format", False):
-            video_pose_result = utils.convert_keypoints_to_coco_format(video_pose_result, self.model_to_coco_mapping[self.config.get("overlay_strategy")])
+            video_pose_result.frames = utils.convert_keypoints_to_coco_format(video_pose_result.frames, self.model_to_coco_mapping[self.config.get("overlay_strategy")])
         return video_pose_result
     
