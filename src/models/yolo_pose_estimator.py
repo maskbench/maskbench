@@ -90,7 +90,6 @@ class YoloPoseEstimator(PoseEstimator):
                 persons.append(PersonPoseResult(keypoints=keypoints))
             frame_results.append(FramePoseResult(persons=persons, frame_idx=frame_idx))
 
-
         video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
@@ -101,6 +100,5 @@ class YoloPoseEstimator(PoseEstimator):
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
-        if self.config.get("save_keypoints_in_coco_format", False):
-            video_pose_result = utils.convert_keypoints_to_coco_format(video_pose_result, self.name)
+        # we do not convert keypoints to coco format, because yolo already stores keypoints in coco format
         return video_pose_result

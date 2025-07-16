@@ -7,7 +7,7 @@ import requests
 import utils
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import COCO_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS, COCO_TO_OPENPOSE
 class OpenPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
         """
@@ -94,5 +94,5 @@ class OpenPoseEstimator(PoseEstimator):
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
         if self.config.get("save_keypoints_in_coco_format", False):
-            video_pose_result = utils.convert_keypoints_to_coco_format(video_pose_result, self.name)
+            video_pose_result = utils.convert_keypoints_to_coco_format(video_pose_result, COCO_TO_OPENPOSE)
         return video_pose_result

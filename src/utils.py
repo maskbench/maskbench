@@ -6,20 +6,13 @@ import json
 from inference import VideoPoseResult, FramePoseResult, PersonPoseResult, PoseKeypoint
 from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_TO_OPENPOSE
 
-def convert_keypoints_to_coco_format(video_pose_result: VideoPoseResult, model_name: str) -> list:
+def convert_keypoints_to_coco_format(video_pose_result: VideoPoseResult, model_to_coco_mapping: list) -> VideoPoseResult:
     frame_results = video_pose_result.frames
-    if model_name == "YoloPose":
-         return frame_results # Yolo keypoints are already stored in Coco format
-    
-    model_to_coco_mapping = {"MediaPipePose": COCO_TO_MEDIAPIPE, "OpenPose": COCO_TO_OPENPOSE, "mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_OPENPOSE}
-    if model_name not in model_to_coco_mapping:
-         raise ValueError(f"{model_name} is an invalid pose estimators. Acceptable pose estimators are {list(model_to_coco_mapping.keys())} and YoloPose")
-
     for frame in frame_results: 
         if frame and frame.persons: # ensuring they are not None
             for person in frame.persons:
                 if len(person.keypoints): # person is either [] or contains all keypoints
-                    coco_keypoints = [person.keypoints[idx] for idx in model_to_coco_mapping[model_name]]
+                    coco_keypoints = [person.keypoints[idx] for idx in model_to_coco_mapping]
                     person.keypoints = coco_keypoints 
     
     video_pose_result.frames = frame_results

@@ -8,7 +8,7 @@ import shutil
 from models import PoseEstimator
 from video_chunker import VideoChunker
 from inference import VideoPoseResult
-from keypoint_pairs import COCO_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS, COCO_TO_OPENPOSE, COCO_TO_MEDIAPIPE
 
 class MaskAnyoneApiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -20,16 +20,16 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         self.chunk_output_dir = "/tmp/chunks" # Temporary directory for video chunks
         self.processed_output_dir = "/tmp/processed_chunks" # Temporary directory for processed chunks
         self.options = utils.maskanyone_get_config(self.config)
+        self.model_keypoint_pairs = {"mp_pose": MEDIAPIPE_KEYPOINT_PAIRS, "openpose_body25b": OPENPOSE_KEYPOINT_PAIRS}
+        self.model_to_coco_mapping = {"mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_OPENPOSE}
 
     def get_keypoint_pairs(self):
         if self.config.get("save_keypoints_in_coco_format", False):
             return COCO_KEYPOINT_PAIRS
-        elif self.config.get("overlay_strategy") == "mp_pose":
-            return MEDIAPIPE_KEYPOINT_PAIRS 
-        elif self.config.get("overlay_strategy") == "openpose_body25b":
-            return OPENPOSE_KEYPOINT_PAIRS
+        elif self.config.get("overlay_strategy") in ["mp_pose", "openpose_body25b"]:
+            return self.model_keypoint_pairs[self.config.get("overlay_strategy")]
         else:
-            raise ValueError(f"Invalid overlay strategy. Valid options are: mp_pose and openpose_body25b ")
+            raise ValueError(f"Invalid overlay strategy. Valid options are: {list(self.model_keypoint_pairs.keys())}")
     
     def estimate_pose(self, video_path: str) -> list:
         """
@@ -55,7 +55,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         shutil.rmtree(self.processed_output_dir)
 
         if self.config.get("save_keypoints_in_coco_format", False):
-            frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.config.get("overlay_strategy"))
+            frame_results = utils.convert_keypoints_to_coco_format(frame_results, self.model_to_coco_mapping[self.config.get("overlay_strategy")])
 
         video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
