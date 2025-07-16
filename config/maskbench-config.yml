@@ -24,6 +24,7 @@ pose_estimators:
     config:
       weights: pose_landmarker_heavy.task
       max_num_poses: 3
+      save_keypoints_in_coco_format: true
       confidence_threshold: 0.4
 
   - name: YoloPose
@@ -31,7 +32,8 @@ pose_estimators:
     module: models.yolo_pose_estimator
     class: YoloPoseEstimator
     config:
-      weights: yolo11l-pose.pt
+      weights: yolo11n-pose.pt
+      save_keypoints_in_coco_format: true
       confidence_threshold: 0.6
 
   - name: OpenPose
@@ -39,6 +41,7 @@ pose_estimators:
     module: models.open_pose_estimator
     class: OpenPoseEstimator
     config:
+      save_keypoints_in_coco_format: true
       confidence_threshold: 0.15
   
   - name: MaskAnyoneApi
@@ -48,6 +51,7 @@ pose_estimators:
     config:
       hiding_strategy: pixelation
       overlay_strategy: mp_pose
+      save_keypoints_in_coco_format: true
       confidence_threshold: 0
       
   - name: MaskAnyoneUi
@@ -58,6 +62,7 @@ pose_estimators:
       dataset_folder_path: /datasets/maskanyone_ui    
       overlay_strategy: mp_pose
       hiding_strategy: pixelation
+      save_keypoints_in_coco_format: true
       confidence_threshold: 0
 
 metrics:

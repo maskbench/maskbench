@@ -8,7 +8,7 @@ import shutil
 from models import PoseEstimator
 from video_chunker import VideoChunker
 from inference import VideoPoseResult
-from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS, COCO_TO_OPENPOSE, COCO_TO_MEDIAPIPE
 
 class MaskAnyoneApiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -20,16 +20,15 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         self.chunk_output_dir = "/tmp/chunks" # Temporary directory for video chunks
         self.processed_output_dir = "/tmp/processed_chunks" # Temporary directory for processed chunks
         self.options = utils.maskanyone_get_config(self.config)
+        self.model_keypoint_pairs = {"mp_pose": MEDIAPIPE_KEYPOINT_PAIRS, "openpose_body25b": OPENPOSE_KEYPOINT_PAIRS}
+        self.model_to_coco_mapping = {"mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_OPENPOSE}
 
     def get_keypoint_pairs(self):
-        overlay_strategy = self.options.get("overlay_strategy")
-        if overlay_strategy == "openpose_body25b":
-            return OPENPOSE_KEYPOINT_PAIRS
-        elif overlay_strategy == "mp_pose":
-            return MEDIAPIPE_KEYPOINT_PAIRS
+        if self.config.get("save_keypoints_in_coco_format", False):
+            return COCO_KEYPOINT_PAIRS
         else:
-            raise ValueError(f"Overlay strategy {overlay_strategy} is not supported by MaskBench.")
-
+            return self.model_keypoint_pairs[self.config.get("overlay_strategy")]
+    
     def estimate_pose(self, video_path: str) -> list:
         """
         Estimate the pose of a video using Mask Anyone Api estimation.
@@ -47,12 +46,8 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         print("MaskAnyoneAPI: Processing chunks.")
         self._process_chunks(video_chunk_paths, self.processed_output_dir)
         print("MaskAnyoneAPI: Combining chunk outputs into a single video result.")
-        frame_results = utils.maskanyone_combine_json_files(self.processed_output_dir)
-
-        # Clean up temporary output directory
-        shutil.rmtree(self.chunk_output_dir)
-        shutil.rmtree(self.processed_output_dir)
-
+        frame_results = utils.maskanyone_combine_json_files(self.processed_output_dir, self.options.get("overlay_strategy"))
+        
         video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
@@ -61,8 +56,14 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
             frames=frame_results
         )
 
+        # Clean up temporary output directory
+        shutil.rmtree(self.chunk_output_dir)
+        shutil.rmtree(self.processed_output_dir)
+
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result) # this call will have no effect, because MaskAnyone does not provide confidence scores
+        if self.config.get("save_keypoints_in_coco_format", False):
+            video_pose_result.frames = utils.convert_keypoints_to_coco_format(video_pose_result.frames, self.model_to_coco_mapping[self.config.get("overlay_strategy")])
         return video_pose_result
 
     def _process_chunks(self, video_chunks: list, output_dir: str):

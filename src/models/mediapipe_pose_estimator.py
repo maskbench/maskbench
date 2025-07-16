@@ -1,9 +1,8 @@
 import os
-
+import utils
 import cv2
 import mediapipe as mp
 
-import utils
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import (
     PoseLandmarker,
@@ -13,7 +12,7 @@ from mediapipe.tasks.python.vision import (
 
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS, COCO_TO_MEDIAPIPE
 
 class MediaPipePoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -52,7 +51,10 @@ class MediaPipePoseEstimator(PoseEstimator):
         )
 
     def get_keypoint_pairs(self):
-        return MEDIAPIPE_KEYPOINT_PAIRS
+        if self.config.get("save_keypoints_in_coco_format", False):
+            return COCO_KEYPOINT_PAIRS
+        else:
+            return MEDIAPIPE_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -113,6 +115,8 @@ class MediaPipePoseEstimator(PoseEstimator):
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
+        if self.config.get("save_keypoints_in_coco_format", False):
+            video_pose_result = utils.convert_keypoints_to_coco_format(video_pose_result, COCO_TO_MEDIAPIPE)
         return video_pose_result
 
     def _execute_on_frame(self, frame, frame_number: int, fps: int):

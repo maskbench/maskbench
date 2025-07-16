@@ -3,7 +3,18 @@ import cv2
 import glob
 import os
 import json
+from typing import List
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
+
+def convert_keypoints_to_coco_format(frame_results: List[FramePoseResult], model_to_coco_mapping: list) -> List[FramePoseResult]:
+    for frame in frame_results: 
+        if frame and frame.persons: # ensuring they are not None
+            for person in frame.persons:
+                if len(person.keypoints): # person is either [] or contains all keypoints
+                    coco_keypoints = [person.keypoints[idx] for idx in model_to_coco_mapping]
+                    person.keypoints = coco_keypoints 
+    
+    return frame_results
 
 def maskanyone_get_config(options: dict):
         """"Ensures Options are valid"""
@@ -17,7 +28,7 @@ def maskanyone_get_config(options: dict):
         
         return options
 
-def maskanyone_combine_json_files(processed_chunks_dir: str) -> list:
+def maskanyone_combine_json_files(processed_chunks_dir: str, overlay_strategy: str) -> list:
         """
             Combine JSON files from Mask Anyone Ui dataset into a standardized format.
             processed_chunks_dir: Directory containing Json file for video chunks
@@ -28,12 +39,12 @@ def maskanyone_combine_json_files(processed_chunks_dir: str) -> list:
         all_chunks_keypoints = []  # combined keypoints for all frames all persons
 
         for chunk_file in json_file_paths:
-            frame_results = maskanyone_convert_json_to_nested_arrays(chunk_file)
+            frame_results = maskanyone_convert_json_to_nested_arrays(chunk_file, overlay_strategy)
             all_chunks_keypoints.extend(frame_results)
 
         return all_chunks_keypoints
 
-def maskanyone_convert_json_to_nested_arrays(chunk_poses_file: str) -> list:
+def maskanyone_convert_json_to_nested_arrays(chunk_poses_file: str, overlay_strategy: str) -> list:
         with open(chunk_poses_file, 'r') as f: 
             data = json.load(f)
             first_person_data = next(iter(data.values()))
@@ -42,15 +53,22 @@ def maskanyone_convert_json_to_nested_arrays(chunk_poses_file: str) -> list:
             frame_results = [FramePoseResult(persons=[], frame_idx=i) for i in range(number_of_frames)]
             
             for person_idx, data_person_keypoints in data.items():
+                frames = []
                 for frame_idx, data_frame_keypoints in enumerate(data_person_keypoints):
                     keypoints = []
-                    
-                    try: # The output of MaskAnyone API for a frame is different for MediaPipe and OpenPose:
-                        # For Openpose, the frame output is a dictionary with a key "pose_keypoints" (and other keys like "face_keypoints", "hand_keypoints")
-                        data_pose_keypoints = data_frame_keypoints.get("pose_keypoints")
-                    except AttributeError:
-                        # For MediaPipe, the frame output is a list of keypoints
+                    if data_frame_keypoints is None:
+                         frames.append(keypoints)
+                         continue
+
+                    # The output of MaskAnyone API for a frame is different for MediaPipe and OpenPose:
+                    # For Openpose, the frame output is a dictionary with a key "pose_keypoints" (and other keys like "face_keypoints", "hand_keypoints")
+                    # For MediaPipe, the frame output is a list of keypoints
+                    if overlay_strategy == "openpose_body25b":
+                        data_pose_keypoints = data_frame_keypoints.get("pose_keypoints", None)
+                    elif overlay_strategy == "mp_pose": 
                         data_pose_keypoints = data_frame_keypoints
+                    else:
+                         raise ValueError(f"Invalid overlay strategy provided to maskanyone_combine_json_files in utils.py") 
 
                     if data_pose_keypoints is None:
                         continue

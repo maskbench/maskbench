@@ -5,7 +5,7 @@ from ultralytics import YOLO
 
 from models import PoseEstimator
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
-from keypoint_pairs import YOLO_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS
 
 class YoloPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -38,7 +38,8 @@ class YoloPoseEstimator(PoseEstimator):
         self.model.to(device)
 
     def get_keypoint_pairs(self):
-        return YOLO_KEYPOINT_PAIRS
+        # Yolo keypoints are stored in Coco format
+        return COCO_KEYPOINT_PAIRS
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -89,7 +90,6 @@ class YoloPoseEstimator(PoseEstimator):
                 persons.append(PersonPoseResult(keypoints=keypoints))
             frame_results.append(FramePoseResult(persons=persons, frame_idx=frame_idx))
 
-
         video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
             frame_width=video_metadata.get("width"),
@@ -100,4 +100,5 @@ class YoloPoseEstimator(PoseEstimator):
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
+        # we do not convert keypoints to coco format, because yolo already stores keypoints in coco format
         return video_pose_result

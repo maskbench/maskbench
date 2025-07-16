@@ -2,7 +2,7 @@ import os
 import utils
 from inference import VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import MEDIAPIPE_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_TO_OPENPOSE, COCO_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS
 
 class MaskAnyoneUiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -12,15 +12,14 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         super().__init__(name, config)
         self.maskanyone_ui_dataset = self.config.get("dataset_folder_path")
         self.options = utils.maskanyone_get_config(self.config)
+        self.model_keypoint_pairs = {"mp_pose": MEDIAPIPE_KEYPOINT_PAIRS, "openpose_body25b": OPENPOSE_KEYPOINT_PAIRS}
+        self.model_to_coco_mapping = {"mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_OPENPOSE}
 
     def get_keypoint_pairs(self):
-        overlay_strategy = self.options.get("overlay_strategy")
-        if overlay_strategy == "openpose_body25b":
-            return OPENPOSE_KEYPOINT_PAIRS
-        elif overlay_strategy == "mp_pose":
-            return MEDIAPIPE_KEYPOINT_PAIRS
+        if self.config.get("save_keypoints_in_coco_format", False):
+            return COCO_KEYPOINT_PAIRS
         else:
-            raise ValueError(f"Overlay strategy {overlay_strategy} is not supported by MaskAnyone UI Pose Estimator.")
+            return self.model_keypoint_pairs[self.config.get("overlay_strategy")]
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -50,5 +49,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result) # this call will have no effect, because MaskAnyone does not provide confidence scores
+        if self.config.get("save_keypoints_in_coco_format", False):
+            video_pose_result.frames = utils.convert_keypoints_to_coco_format(video_pose_result.frames, self.model_to_coco_mapping[self.config.get("overlay_strategy")])
         return video_pose_result
     
