@@ -2,7 +2,7 @@ import os
 import utils
 from inference import VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_TO_OPENPOSE, COCO_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_TO_MEDIAPIPE, COCO_TO_MASKANYONE_OPENPOSE, COCO_KEYPOINT_PAIRS, OPENPOSE_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS
 
 class MaskAnyoneUiPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
@@ -13,7 +13,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         self.maskanyone_ui_dataset = self.config.get("dataset_folder_path")
         self.options = utils.maskanyone_get_config(self.config)
         self.model_keypoint_pairs = {"mp_pose": MEDIAPIPE_KEYPOINT_PAIRS, "openpose_body25b": OPENPOSE_KEYPOINT_PAIRS}
-        self.model_to_coco_mapping = {"mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_OPENPOSE}
+        self.model_to_coco_mapping = {"mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_MASKANYONE_OPENPOSE}
 
     def get_keypoint_pairs(self):
         if self.config.get("save_keypoints_in_coco_format", False):
