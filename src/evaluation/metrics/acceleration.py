@@ -2,11 +2,10 @@ import numpy as np
 import numpy.ma as ma
 from typing import Dict, Optional, Any
 
-
-from evaluation.utils import DISTANCE_FILL_VALUE, calculate_bbox_sizes_for_persons_in_frame
 from inference.pose_result import VideoPoseResult
 from .metric import Metric
 from .metric_result import FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
+from .velocity import VelocityMetric
 
 
 class AccelerationMetric(Metric):
@@ -16,6 +15,7 @@ class AccelerationMetric(Metric):
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(name="Acceleration", config=config)
+        self.velocity_metric = VelocityMetric(config)
     
     def compute(
         self,
@@ -49,24 +49,11 @@ class AccelerationMetric(Metric):
                 model_name=model_name,
             )
 
-        for frame_idx in range(pred_poses.shape[0] - 1):
-            current_frame_poses = pred_poses[frame_idx]
-            next_frame_poses = pred_poses[frame_idx + 1]
-
-            sorted_next_frame_poses = self._match_person_indices(next_frame_poses, current_frame_poses)
-            pred_poses[frame_idx + 1] = sorted_next_frame_poses
-
-
-        # Mask all (0, 0) keypoints in addition to the existing mask
-        zero_points_mask = np.repeat((pred_poses == 0).all(axis=-1)[..., np.newaxis], 2, axis=-1)
-        pred_poses.mask |= zero_points_mask
-
+        velocity_result = self.velocity_metric.compute(video_result, gt_video_result, model_name)
+        
         fps = video_result.fps
         timedelta = 1 / fps
-
-        velocity = ma.diff(pred_poses, axis=0) / timedelta  # shape: (frames-1, persons, keypoints, 2)
-        velocity_magnitude = ma.sqrt(ma.sum(velocity * velocity, axis=-1))  # shape: (frames-1, persons, keypoints)
-        acceleration = ma.diff(velocity_magnitude, axis=0) / timedelta  # shape: (frames-2, persons, keypoints)
+        acceleration = ma.diff(velocity_result.values, axis=0) / timedelta  # shape: (frames-2, persons, keypoints)
 
         return MetricResult(
             values=acceleration,
