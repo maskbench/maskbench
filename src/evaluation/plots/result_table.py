@@ -25,6 +25,9 @@ def generate_result_table(metric_results: Dict[str, Dict[str, Dict[str, MetricRe
     for col in df.columns:
         if col != 'Pose Estimator':
             df[col] = df[col].apply(lambda x: f'{x:.2f}') # Format numeric columns to 2 decimal places
+
+    # Construct column alignment - first column left, metric columns right
+    column_alignments = tuple(["left"] + ["right"] * (len(df.columns) - 1))
             
     print(tabulate(
                 df,
@@ -32,7 +35,7 @@ def generate_result_table(metric_results: Dict[str, Dict[str, Dict[str, MetricRe
                 tablefmt="fancy_grid", 
                 numalign="right",
                 stralign="right",
-                colalign=("left", "right", "right", "right", "right"),
+                colalign=column_alignments,
                 intfmt=","
     ))
     

@@ -47,8 +47,9 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
     visualizer.generate_all_plots(metric_results)
 
     estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
-    estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
-    pose_results["GroundTruth"] = gt_pose_results
+    if gt_pose_results and dataset.get_gt_keypoint_pairs() is not None:
+        pose_results["GroundTruth"] = gt_pose_results
+        estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
 
     pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer)
     pose_renderer.render_all_videos(pose_results)
