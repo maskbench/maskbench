@@ -59,8 +59,8 @@ MEDIAPIPE_KEYPOINT_PAIRS = [
             (29, 31),
         ]
 
-COCO_TO_OPENPOSE = [
-    0,   # Nose
+COCO_TO_MASKANYONE_OPENPOSE = [
+    0,  # Nose
     1,  # Left Eye
     2,  # Right Eye
     3,  # Left Ear
@@ -77,6 +77,26 @@ COCO_TO_OPENPOSE = [
     14, # Right Knee
     15, # Left Ankle
     16, # Right Ankle
+]
+
+COCO_TO_TRAGIC_TALKERS_OPENPOSE = [
+    0,  # Nose
+    16, # Left Eye
+    15, # Right Eye
+    18, # Left Ear
+    17, # Right Ear
+    5,  # Left Shoulder
+    2,  # Right Shoulder
+    6,  # Left Elbow
+    3,  # Right Elbow
+    7,  # Left Wrist
+    4,  # Right Wrist
+    12, # Left Hip
+    9,  # Right Hip
+    13, # Left Knee
+    10, # Right Knee
+    14, # Left Ankle
+    11, # Right Ankle
 ]
 
 OPENPOSE_KEYPOINT_PAIRS = [
