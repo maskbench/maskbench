@@ -13,7 +13,7 @@ from evaluation.metrics import Metric
 
 
 def main():
-    config = load_config()
+    config, config_file_path = load_config()
 
     dataset_specification = config.get("dataset", {})
     dataset = load_dataset(dataset_specification)
@@ -30,6 +30,7 @@ def main():
     checkpoint_name = config.get("checkpoint_name", None)
     checkpoint_name = checkpoint_name if checkpoint_name != "None" else None
     checkpointer = Checkpointer(dataset.name, checkpoint_name)
+    checkpointer.save_config(config_file_path)
     
     run(dataset, pose_estimators, metrics, checkpointer)
     print("Done")
@@ -47,8 +48,9 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
     visualizer.generate_all_plots(metric_results)
 
     estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
-    estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
-    pose_results["GroundTruth"] = gt_pose_results
+    if gt_pose_results and dataset.get_gt_keypoint_pairs() is not None:
+        pose_results["GroundTruth"] = gt_pose_results
+        estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
 
     pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer)
     pose_renderer.render_all_videos(pose_results)
@@ -64,7 +66,7 @@ def load_config() -> dict:
     if config is None:
         raise ValueError("Configuration file is empty or not found.")
 
-    return config
+    return config, config_file_path
 
 
 def load_dataset(dataset_specification: dict) -> Dataset:
