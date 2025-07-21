@@ -13,7 +13,7 @@ from evaluation.metrics import Metric
 
 
 def main():
-    config = load_config()
+    config, config_file_path = load_config()
 
     dataset_specification = config.get("dataset", {})
     dataset = load_dataset(dataset_specification)
@@ -30,6 +30,7 @@ def main():
     checkpoint_name = config.get("checkpoint_name", None)
     checkpoint_name = checkpoint_name if checkpoint_name != "None" else None
     checkpointer = Checkpointer(dataset.name, checkpoint_name)
+    checkpointer.save_config(config_file_path)
     
     run(dataset, pose_estimators, metrics, checkpointer)
     print("Done")
@@ -65,7 +66,7 @@ def load_config() -> dict:
     if config is None:
         raise ValueError("Configuration file is empty or not found.")
 
-    return config
+    return config, config_file_path
 
 
 def load_dataset(dataset_specification: dict) -> Dataset:

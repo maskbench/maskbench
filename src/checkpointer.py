@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+import shutil
 import numpy as np
 from typing import Dict, Optional
 
@@ -112,6 +113,13 @@ class Checkpointer:
             json.dump(inference_times, f, indent=4)
             
         print(f"Inference time for {estimator_name} on {video_name}: {inference_time:.3f}s")
+
+    def save_config(self, config_file_path: str):
+        """
+        Copies the config file to the checkpoint directory.
+        """
+        config_file_name = os.path.basename(config_file_path)
+        shutil.copy(config_file_path, os.path.join(self.checkpoint_dir, config_file_name))
 
     def load_pose_results(self) -> Dict[str, Dict[str, VideoPoseResult]]:
         """
