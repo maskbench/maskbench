@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Dict, List
 
 from .video_sample import VideoSample
 from inference import VideoPoseResult
@@ -21,13 +21,13 @@ class Dataset(ABC):
         """
         raise NotImplementedError()
 
-    def get_gt_pose_results(self) -> List[VideoPoseResult]:
+    def get_gt_pose_results(self) -> Dict[str, VideoPoseResult]:
         """
         Load ground truth pose results from the dataset folder.
         This method should be overridden by subclasses if ground truth data is available.
         The order of the results should match the order of the samples returned by _load_samples.
         """
-        return []
+        return {}
 
     def get_gt_keypoint_pairs(self) -> None | List[tuple]:
         """

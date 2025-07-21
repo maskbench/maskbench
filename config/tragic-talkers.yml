@@ -8,6 +8,7 @@ dataset:
   config:
     video_folder: videos
     ground_truth_folder: labels
+    convert_gt_keypoints_to_coco: true
 
 pose_estimators:
   - name: OpenPose
@@ -16,6 +17,7 @@ pose_estimators:
     class: OpenPoseEstimator
     config:
       confidence_threshold: 0
+      save_keypoints_in_coco_format: true
 
 metrics:
   - name: RMSE
@@ -30,6 +32,12 @@ metrics:
     config:
       normalize_by: bbox
       threshold: 0.2
+
+  - name: Euclidean Distance
+    module: evaluation.metrics.euclidean_distance
+    class: EuclideanDistanceMetric
+    config:
+      normalize_by: bbox
 
   - name: Acceleration
     module: evaluation.metrics.acceleration
