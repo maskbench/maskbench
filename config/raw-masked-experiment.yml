@@ -1,0 +1,87 @@
+checkpoint_name: None # comment out or set to "None" to run inference from scratch
+
+dataset:
+  name: RawMaskedExperiment
+  module: datasets.ted_dataset
+  class: TedDataset
+  dataset_folder: /datasets/raw-masked-experiment/raw-videos
+  # dataset_folder: /datasets/raw-masked-experiment/masked-videos-pixelation
+  # dataset_folder: /datasets/raw-masked-experiment/masked-videos-blurring
+  # dataset_folder: /datasets/raw-masked-experiment/masked-videos-contours
+  # dataset_folder: /datasets/raw-masked-experiment/masked-videos-inpainting
+
+
+pose_estimators:
+  - name: MediaPipePose
+    enabled: true
+    module: models.mediapipe_pose_estimator
+    class: MediaPipePoseEstimator
+    config:
+      weights: pose_landmarker_heavy.task
+      max_num_poses: 3
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0.4
+
+  - name: YoloPose
+    enabled: true
+    module: models.yolo_pose_estimator
+    class: YoloPoseEstimator
+    config:
+      weights: yolo11n-pose.pt
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0.6
+
+  - name: OpenPose
+    enabled: true
+    module: models.open_pose_estimator
+    class: OpenPoseEstimator
+    config:
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0.15
+
+  - name: MaskAnyoneAPI-Mediapipe
+    enabled: true
+    module: models.maskanyone_api_pose_estimator
+    class: MaskAnyoneApiPoseEstimator
+    config:
+      hiding_strategy: pixelation
+      overlay_strategy: mp_pose
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
+
+  - name: MaskAnyoneAPI-OpenPose
+    enabled: true
+    module: models.maskanyone_api_pose_estimator
+    class: MaskAnyoneApiPoseEstimator
+    config:
+      hiding_strategy: pixelation
+      overlay_strategy: openpose_body25b
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
+
+  # - name: MaskAnyoneUI-Mediapipe
+  #   enabled: true
+  #   module: models.maskanyone_ui_pose_estimator
+  #   class: MaskAnyoneUiPoseEstimator  
+  #   config:
+  #     dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_mediapipe    
+  #     overlay_strategy: mp_pose
+  #     hiding_strategy: pixelation
+  #     save_keypoints_in_coco_format: true
+  #     confidence_threshold: 0
+
+  # - name: MaskAnyoneUI-OpenPose
+  #   enabled: true
+  #   module: models.maskanyone_ui_pose_estimator
+  #   class: MaskAnyoneUiPoseEstimator  
+  #   config:
+  #     dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_openpose
+  #     overlay_strategy: openpose_body25b
+  #     hiding_strategy: pixelation
+  #     save_keypoints_in_coco_format: true
+  #     confidence_threshold: 0
+  
+metrics:
+  - name: AccelerationMetric
+    module: evaluation.metrics.acceleration
+    class: AccelerationMetric
