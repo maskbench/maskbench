@@ -155,3 +155,78 @@ class TestPCKMetric(unittest.TestCase):
 
         result = compute_pck_metric(gt_data, pred_data)
         np.testing.assert_array_equal(result.values, np.array([0.5]))
+
+    def test_missing_keypoint_in_gt_and_prediction(self):
+        """
+        Test that the PCK metric handles missing keypoints in the ground truth and prediction.
+        Missing keypoints are ignored if they are not present in both the ground truth and prediction.
+        """
+        gt_data = [
+            [  # Frame 0
+                [(100, 100), (0, 0), (300, 300)], # Person 0
+            ],
+        ]
+
+        pred_data = [
+            [  # Frame 0
+                [(110, 110), (0, 0), (310, 310)], # Person 0
+            ],
+        ]
+
+        result_pck = compute_pck_metric(gt_data, pred_data)
+        np.testing.assert_array_almost_equal(
+            result_pck.values,
+            np.array([1.0]),
+            decimal=4
+        )
+
+    def test_missing_keypoint_in_prediction(self):
+        """
+        Test that the PCK metric handles missing keypoints in the prediction.
+        Missing keypoints in the prediction are set to a predetermined distance fill value, which is outside the threshold.
+        Therefore, the PCK metric will mark this as an incorrect detection.
+        """
+        gt_data = [
+            [  # Frame 0
+                [(100, 100), (200, 200), (300, 300)], # Person 0
+            ],
+        ]
+
+        pred_data = [
+            [  # Frame 0
+                [(110, 110), (0, 0), (310, 310)], # Person 0
+            ],
+        ]
+
+        result_pck = compute_pck_metric(gt_data, pred_data)
+        np.testing.assert_array_almost_equal(
+            result_pck.values,
+            np.array([0.6667]), # 2/3 correct keypoints
+            decimal=4
+        )
+
+    def test_missing_keypoint_in_gt(self):
+        """
+        Test that the PCK metric handles missing keypoints in the ground truth and not in the prediction.
+        Additional keypoints in the prediction are ignored, which means the pck will be 100% in this test case,
+        although one keypoint is not in the ground truth, but present in the prediction.
+        """
+        gt_data = [
+            [  # Frame 0
+                [(100, 100), (0, 0), (300, 300)], # Person 0
+            ],
+        ]
+
+        pred_data = [
+            [  # Frame 0
+                [(110, 110), (210, 210), (310, 310)], # Person 0
+            ],
+        ]
+
+        result_pck = compute_pck_metric(gt_data, pred_data)
+        np.testing.assert_array_almost_equal(
+            result_pck.values,
+            np.array([1.0]),
+            decimal=4
+        )
+        
