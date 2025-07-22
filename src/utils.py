@@ -44,8 +44,8 @@ def maskanyone_combine_json_files(processed_chunks_dir: str, overlay_strategy: s
 
         return all_chunks_keypoints
 
-def maskanyone_convert_json_to_nested_arrays(chunk_poses_file: str, overlay_strategy: str) -> list:
-        with open(chunk_poses_file, 'r') as f: 
+def maskanyone_convert_json_to_nested_arrays(json_pose_file: str, overlay_strategy: str) -> list:
+        with open(json_pose_file, 'r') as f: 
             data = json.load(f)
             first_person_data = next(iter(data.values()))
             number_of_frames = len(first_person_data)

@@ -10,7 +10,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         Initialize the MaskAnyoneUiPoseEstimator with a name and configuration.
         """
         super().__init__(name, config)
-        self.maskanyone_ui_dataset = self.config.get("dataset_folder_path")
+        self.dataset_folder_path = self.config.get("dataset_folder_path")
         self.options = utils.maskanyone_get_config(self.config)
         self.model_keypoint_pairs = {"mp_pose": MEDIAPIPE_KEYPOINT_PAIRS, "openpose_body25b": OPENPOSE_KEYPOINT_PAIRS}
         self.model_to_coco_mapping = {"mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_MASKANYONE_OPENPOSE}
@@ -33,11 +33,19 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         _, video_metadata = utils.get_video_metadata(video_path) # get video specs
 
         video_name = os.path.splitext(os.path.basename(video_path))[0] # get video name
-        results_path = os.path.join(self.maskanyone_ui_dataset, video_name) # path of jsons
-        if not os.path.exists(results_path):
-            raise FileNotFoundError(f"{results_path} was not found in Mask Anyone Ui Dataset Folder Path")
+        dir_path = os.path.join(self.dataset_folder_path, video_name) # path of directory
+        json_path = os.path.join(self.dataset_folder_path, f"{video_name}.json") # path of json file
+        
+        if not os.path.exists(dir_path) and not os.path.exists(json_path):
+            raise FileNotFoundError(f"Neither {dir_path} nor {json_path} was found in Mask Anyone Ui Dataset Folder Path")
 
-        frame_results = utils.maskanyone_combine_json_files(results_path)  # Combine the JSON files from processed chunks
+        overlay_strategy = self.config.get("overlay_strategy")
+        if os.path.exists(json_path): # If it's a single JSON file, process it directly
+            frame_results = utils.maskanyone_convert_json_to_nested_arrays(json_path, overlay_strategy)
+        elif os.path.exists(dir_path) and os.path.isdir(dir_path): # If it's a directory containing JSON chunks, combine them
+            frame_results = utils.maskanyone_combine_json_files(dir_path, overlay_strategy)
+        else:
+            raise ValueError(f"Neither {dir_path} is a directory nor {json_path} is a file")
     
         video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
