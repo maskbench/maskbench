@@ -27,15 +27,18 @@ class MaskBenchVisualizer(Visualizer):
             fig, filename = acceleration_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
+            coco_keypoint_plot = CocoKeypointPlot(metric_name="Acceleration")
+            fig, filename = coco_keypoint_plot.draw(pose_results)
+            self._save_plot(fig, filename)
+
         if "Jerk" in pose_results.keys():
             jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk", kinematic_limit=30000)
             fig, filename = jerk_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
-        if "Euclidean Distance" in pose_results.keys() and "Acceleration" in pose_results.keys():
-            coco_keypoint_plot = CocoKeypointPlot(metric_names=['Euclidean Distance', 'Acceleration'])
-            figures_and_names = coco_keypoint_plot.draw(pose_results)
-            for fig, filename in figures_and_names:
-                self._save_plot(fig, filename)
+        if "Euclidean Distance" in pose_results.keys():
+            coco_keypoint_plot = CocoKeypointPlot(metric_name="Euclidean Distance")
+            fig, filename = coco_keypoint_plot.draw(pose_results)
+            self._save_plot(fig, filename)
 
         generate_result_table(pose_results)
