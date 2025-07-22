@@ -41,4 +41,5 @@ class MaskBenchVisualizer(Visualizer):
             fig, filename = coco_keypoint_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
-        generate_result_table(pose_results)
+        table = generate_result_table(pose_results)
+        self._save_table(table, "result_table.txt")

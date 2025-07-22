@@ -29,7 +29,7 @@ def generate_result_table(metric_results: Dict[str, Dict[str, Dict[str, MetricRe
     # Construct column alignment - first column left, metric columns right
     column_alignments = tuple(["left"] + ["right"] * (len(df.columns) - 1))
             
-    print(tabulate(
+    table = tabulate(
                 df,
                 headers='keys',
                 tablefmt="fancy_grid", 
@@ -37,7 +37,9 @@ def generate_result_table(metric_results: Dict[str, Dict[str, Dict[str, MetricRe
                 stralign="right",
                 colalign=column_alignments,
                 intfmt=","
-    ))
+    )
+    print(table)
+    return table
     
 
 
