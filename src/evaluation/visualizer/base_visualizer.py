@@ -5,7 +5,6 @@ from typing import Dict
 from matplotlib import pyplot as plt
 
 from evaluation.metrics import MetricResult
-from evaluation.plots import AccelerationDistributionPlot, CocoKeypointPlot, generate_result_table
 from checkpointer import Checkpointer
 
 
