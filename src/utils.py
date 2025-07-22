@@ -17,12 +17,14 @@ def convert_keypoints_to_coco_format(frame_results: List[FramePoseResult], model
     return frame_results
 
 def maskanyone_get_config(options: dict):
-        """"Ensures Options are valid"""
-        valid_hiding_strategies = ['solid_fill', 'transparent_fill', 'blurring', 'pixelation', 'contours', 'none']
+        """"Ensures MaskAnyone overlay strategy is valid. Sets hiding strategy to 'none', because it is not used by MaskBench."""
+
+        options["hiding_strategy"] = "none"
+        # valid_hiding_strategies = ['solid_fill', 'transparent_fill', 'blurring', 'pixelation', 'contours', 'none']
+        # if options.get("hiding_strategy") not in valid_hiding_strategies:
+        #     raise ValueError(f"Invalid hiding strategy. Valid options are: {valid_hiding_strategies}")
+
         valid_overlay_strategies = ['mp_pose', 'openpose_body25b', 'openpose']
-        
-        if options.get("hiding_strategy") not in valid_hiding_strategies:
-            raise ValueError(f"Invalid hiding strategy. Valid options are: {valid_hiding_strategies}")
         if options.get("overlay_strategy") not in valid_overlay_strategies:
             raise ValueError(f"Invalid overlay strategy. Valid options are: {valid_overlay_strategies}")
         
