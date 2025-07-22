@@ -39,6 +39,14 @@ metrics:
     config:
       normalize_by: bbox
 
+  - name: Velocity
+    module: evaluation.metrics.velocity
+    class: VelocityMetric
+
   - name: Acceleration
     module: evaluation.metrics.acceleration
     class: AccelerationMetric
+  
+  - name: Jerk
+    module: evaluation.metrics.jerk
+    class: JerkMetric
