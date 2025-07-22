@@ -7,19 +7,27 @@ import requests
 import utils
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
-from keypoint_pairs import COCO_KEYPOINT_PAIRS, OPENPOSE_BODY_25B_KEYPOINT_PAIRS, COCO_TO_OPENPOSE_BODY25B
+from keypoint_pairs import COCO_KEYPOINT_PAIRS, COCO_TO_OPENPOSE_BODY25, OPENPOSE_BODY25B_KEYPOINT_PAIRS, COCO_TO_OPENPOSE_BODY25B, OPENPOSE_BODY25_KEYPOINT_PAIRS
 class OpenPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
         """
         Initialize the OpenPoseEstimator with a name and configuration.
+        The config parameter 'overlay_strategy' must be one of 'BODY_25' or 'BODY_25B'.
+        If no 'overlay_strategy' is provided in config, default is 'BODY_25B'.
         """
         super().__init__(name, config)
+        self.overlay_strategy = config.get("overlay_strategy", "BODY_25B")
+        if self.overlay_strategy not in ["BODY_25", "BODY_25B"]:
+            raise ValueError(f"Invalid overlay strategy: {self.overlay_strategy}")
+
+        self.model_keypoint_pairs = {"BODY_25": OPENPOSE_BODY25_KEYPOINT_PAIRS, "BODY_25B": OPENPOSE_BODY25B_KEYPOINT_PAIRS}
+        self.model_to_coco_mapping = {"BODY_25": COCO_TO_OPENPOSE_BODY25, "BODY_25B": COCO_TO_OPENPOSE_BODY25B}
 
     def get_keypoint_pairs(self):
         if self.config.get("save_keypoints_in_coco_format", False):
             return COCO_KEYPOINT_PAIRS
         else:
-            return OPENPOSE_BODY_25B_KEYPOINT_PAIRS
+            return self.model_keypoint_pairs[self.config.get("overlay_strategy")]
 
     def estimate_pose(self, video_path: str) -> VideoPoseResult:
         """
@@ -41,7 +49,7 @@ class OpenPoseEstimator(PoseEstimator):
         url = (
             "http://openpose:8000/openpose/estimate-pose-on-video"  # docker image link
         )
-        options = {"model_pose": "BODY_25B", "multi_person_detection": True}
+        options = {"model_pose": self.overlay_strategy, "multi_person_detection": True}
 
         extension = os.path.splitext(video_path)[1].lower()
         if extension == ".mp4":
@@ -94,5 +102,5 @@ class OpenPoseEstimator(PoseEstimator):
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result)
         if self.config.get("save_keypoints_in_coco_format", False):
-            video_pose_result.frames = utils.convert_keypoints_to_coco_format(video_pose_result.frames, COCO_TO_OPENPOSE_BODY25B)
+            video_pose_result.frames = utils.convert_keypoints_to_coco_format(video_pose_result.frames, self.model_to_coco_mapping[self.overlay_strategy])
         return video_pose_result
