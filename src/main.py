@@ -10,7 +10,7 @@ from models import PoseEstimator
 from rendering import PoseRenderer
 from evaluation import Evaluator, MaskBenchVisualizer
 from evaluation.metrics import Metric
-
+from scripts.raw_masked_experiment import run_raw_masked_experiment
 
 def main():
     config, config_file_path = load_config()
@@ -125,3 +125,4 @@ def load_metrics(metric_specifications: List[dict]) -> List[Metric]:
 
 if __name__ == "__main__":
     main()
+    # run_raw_masked_experiment()

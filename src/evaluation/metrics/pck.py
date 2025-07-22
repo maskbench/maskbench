@@ -40,8 +40,14 @@ class PCKMetric(EuclideanDistanceMetric):
         Returns:
             MetricResult object containing the PCK metric values for each frame for the video.
         """
-        euclidean_distance = super().compute(video_result, gt_video_result, model_name)
-        values = (euclidean_distance.values < self.threshold).sum(axis=(1, 2)) / euclidean_distance.values[0].size
+        # euclidean_distance = super().compute(video_result, gt_video_result, model_name)
+        # print(euclidean_distance.values)
+        # values = (euclidean_distance.values < self.threshold).sum(axis=(1, 2)) / euclidean_distance.values[0].size
+        euclidean_distances = super().compute(video_result, gt_video_result, model_name).values
+        valid_distances = ma.masked_array(euclidean_distances, mask=(euclidean_distances == np.nan))
+        correct_keypoints = (valid_distances < self.threshold)
+        num_valid_distances = (~valid_distances.mask).sum(axis=(1, 2))
+        values = correct_keypoints.sum(axis=(1, 2)) / num_valid_distances
 
         return MetricResult(
             values=values,

@@ -148,8 +148,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
     def test_missing_person_in_prediction(self):
         """
         Test that the Euclidean distance metric handles missing persons in the prediction.
-        Every missing person in the prediction receives an infinite distance, 
-        thereby resulting in a distance greater than the threshold
+        The Euclidean distance will be set to a predetermined distance fill value for the entire undetected person, which negatively affects the RMSE.
         """
         gt_data = [
             [  # Frame 0
@@ -215,7 +214,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
         """
         In this test, one person is missing in the prediction. The remaining person is at index 0 in the
         prediction, but at index 1 in the ground truth.
-        The metric must still match this correctly.
+        The Euclidean distance will be set to a predetermined distance fill value for the entire undetected person, which negatively affects the RMSE.
         """
         gt_data = [
             [  # Frame 0
@@ -249,7 +248,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
     def test_missing_keypoint_in_gt_and_prediction(self):
         """
         Test that the Euclidean distance metric handles missing keypoints in the ground truth and prediction.
-        Missing keypoints are ignored if they are not present in both the ground truth and prediction.
+        Missing keypoints are ignored if they are present in both the ground truth and prediction.
         """
         gt_data = [
             [  # Frame 0
@@ -279,7 +278,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
     def test_missing_keypoint_in_prediction(self):
         """
         Test that the Euclidean distance metric handles missing keypoints in the prediction.
-        Missing keypoints are ignored if they are not present in both the ground truth and prediction.
+        Missing keypoints in the prediction are set to a predetermined distance fill value, which negatively affects the RMSE.
         """
         gt_data = [
             [  # Frame 0
@@ -309,8 +308,8 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
     def test_missing_keypoint_in_gt(self):
         """
-        Test that the Euclidean distance metric handles missing keypoints in the ground truth and not in the prediction.
-        Missing keypoints are ignored if they are not present in both the ground truth and prediction.
+        Test that the Euclidean distance metric handles missing keypoints which are not present in the ground truth but in the prediction.
+        The Euclidean distance will be np.nan for the keypoint and ignored in the RMSE calculation.
         """
         gt_data = [
             [  # Frame 0
