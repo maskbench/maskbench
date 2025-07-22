@@ -19,7 +19,7 @@ def convert_keypoints_to_coco_format(frame_results: List[FramePoseResult], model
 def maskanyone_get_config(options: dict):
         """"Ensures Options are valid"""
         valid_hiding_strategies = ['solid_fill', 'transparent_fill', 'blurring', 'pixelation', 'contours', 'none']
-        valid_overlay_strategies = ['mp_pose', 'openpose_body25b']
+        valid_overlay_strategies = ['mp_pose', 'openpose_body25b', 'openpose']
         
         if options.get("hiding_strategy") not in valid_hiding_strategies:
             raise ValueError(f"Invalid hiding strategy. Valid options are: {valid_hiding_strategies}")
@@ -63,7 +63,7 @@ def maskanyone_convert_json_to_nested_arrays(json_pose_file: str, overlay_strate
                     # The output of MaskAnyone API for a frame is different for MediaPipe and OpenPose:
                     # For Openpose, the frame output is a dictionary with a key "pose_keypoints" (and other keys like "face_keypoints", "hand_keypoints")
                     # For MediaPipe, the frame output is a list of keypoints
-                    if overlay_strategy == "openpose_body25b":
+                    if overlay_strategy == "openpose_body25b" or overlay_strategy == "openpose":
                         data_pose_keypoints = data_frame_keypoints.get("pose_keypoints", None)
                     elif overlay_strategy == "mp_pose": 
                         data_pose_keypoints = data_frame_keypoints

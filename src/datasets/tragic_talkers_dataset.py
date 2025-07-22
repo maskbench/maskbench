@@ -5,7 +5,7 @@ from typing import Dict, List
 from dataclasses import asdict
 
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
-from keypoint_pairs import COCO_KEYPOINT_PAIRS, COCO_TO_TRAGIC_TALKERS_OPENPOSE, OPENPOSE_KEYPOINT_PAIRS
+from keypoint_pairs import COCO_KEYPOINT_PAIRS, COCO_TO_OPENPOSE, OPENPOSE_BODY_25B_KEYPOINT_PAIRS
 from utils import convert_keypoints_to_coco_format
 from .dataset import Dataset
 from .video_sample import VideoSample
@@ -33,7 +33,7 @@ class TragicTalkersDataset(Dataset):
         if self.convert_gt_keypoints_to_coco:
             return COCO_KEYPOINT_PAIRS
         else:
-            return OPENPOSE_KEYPOINT_PAIRS
+            return OPENPOSE_BODY_25B_KEYPOINT_PAIRS
 
     def get_gt_pose_results(self) -> Dict[str, VideoPoseResult]:
         gt_pose_results = {}
@@ -42,7 +42,7 @@ class TragicTalkersDataset(Dataset):
             video_name = self._extract_video_name_from_labels_folder(video_json_folder)
             gt_pose_result = self.combine_json_files_for_video(video_json_folder, video_name)
             if self.convert_gt_keypoints_to_coco:
-                gt_pose_result.frames = convert_keypoints_to_coco_format(gt_pose_result.frames, COCO_TO_TRAGIC_TALKERS_OPENPOSE)
+                gt_pose_result.frames = convert_keypoints_to_coco_format(gt_pose_result.frames, COCO_TO_OPENPOSE)
             gt_pose_results[video_name] = gt_pose_result
         return gt_pose_results
 
