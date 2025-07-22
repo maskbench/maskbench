@@ -12,6 +12,15 @@ dataset:
 
 
 pose_estimators:
+  - name: YoloPose
+    enabled: true
+    module: models.yolo_pose_estimator
+    class: YoloPoseEstimator
+    config:
+      weights: yolo11l-pose.pt
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0.4
+
   - name: MediaPipePose
     enabled: true
     module: models.mediapipe_pose_estimator
@@ -22,29 +31,20 @@ pose_estimators:
       save_keypoints_in_coco_format: true
       confidence_threshold: 0.4
 
-  - name: YoloPose
-    enabled: true
-    module: models.yolo_pose_estimator
-    class: YoloPoseEstimator
-    config:
-      weights: yolo11n-pose.pt
-      save_keypoints_in_coco_format: true
-      confidence_threshold: 0.6
-
   - name: OpenPose
     enabled: true
     module: models.open_pose_estimator
     class: OpenPoseEstimator
     config:
       save_keypoints_in_coco_format: true
+      overlay_strategy: BODY_25B
       confidence_threshold: 0.15
-
-  - name: MaskAnyoneAPI-Mediapipe
+  
+  - name: MaskAnyoneAPI-MediaPipe
     enabled: true
     module: models.maskanyone_api_pose_estimator
     class: MaskAnyoneApiPoseEstimator
     config:
-      hiding_strategy: pixelation
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
@@ -54,12 +54,11 @@ pose_estimators:
     module: models.maskanyone_api_pose_estimator
     class: MaskAnyoneApiPoseEstimator
     config:
-      hiding_strategy: pixelation
       overlay_strategy: openpose_body25b
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
 
-  - name: MaskAnyoneUI-Mediapipe
+  - name: MaskAnyoneUI-MediaPipe
     enabled: true
     module: models.maskanyone_ui_pose_estimator
     class: MaskAnyoneUiPoseEstimator  
@@ -70,7 +69,6 @@ pose_estimators:
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/contours
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/inpainting
       overlay_strategy: mp_pose
-      hiding_strategy: pixelation
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
 
@@ -85,7 +83,6 @@ pose_estimators:
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/contours
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/inpainting
       overlay_strategy: openpose_body25b
-      hiding_strategy: pixelation
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
   
