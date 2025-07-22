@@ -9,17 +9,17 @@ from typing import Dict, List, Any
 def _create_metric_table(
     results: Dict[str, Dict[str, float]],
 ) -> str:
-    strategies = set()
-    for pose_estimator_results in results.values():
-        strategies.update(pose_estimator_results.keys())
-    strategies = sorted(list(strategies))
-    
+    strategies = ["Blurring", "Pixelation", "Contours", "Inpainting"]
     table_data = []
     for pose_estimator, pose_estimator_results in results.items():
-        row = [pose_estimator] + [pose_estimator_results.get(strategy, "N/A") for strategy in strategies]
+        row_values = [pose_estimator_results.get(strategy, "N/A") for strategy in strategies]
+        # Calculate average, skipping "N/A" values
+        numeric_values = [v for v in row_values if v != "N/A"]
+        avg = sum(numeric_values) / len(numeric_values) if numeric_values else "N/A"
+        row = [pose_estimator] + row_values + [avg]
         table_data.append(row)
     
-    headers = ["Pose Estimator"] + strategies
+    headers = ["Pose Estimator"] + strategies + ["Average over all strategies"]
     return tabulate(table_data, headers=headers, tablefmt="grid", floatfmt=".2f")
 
 def _evaluate_strategy(
@@ -79,8 +79,16 @@ def run_raw_masked_experiment():
         
         print()
 
+    rmse_table = _create_metric_table(rmse_results)
+    with open("/output/raw_masked_rmse_table.txt", "w") as f:
+        f.write("RMSE Results:\n")
+        f.write(rmse_table)
     print("\nRMSE Results:")
-    print(_create_metric_table(rmse_results))
+    print(rmse_table)
 
+    pck_table = _create_metric_table(pck_results)
+    with open("/output/raw_masked_pck_table.txt", "w") as f:
+        f.write("PCK Results:\n")
+        f.write(pck_table)
     print("\nPCK Results:")
-    print(_create_metric_table(pck_results))
+    print(pck_table)

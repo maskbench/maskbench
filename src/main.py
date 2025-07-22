@@ -125,3 +125,4 @@ def load_metrics(metric_specifications: List[dict]) -> List[Metric]:
 
 if __name__ == "__main__":
     main()
+    # run_raw_masked_experiment()
