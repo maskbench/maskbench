@@ -1,4 +1,4 @@
-from .acceleration_distribution_plot import *
+from .kinematic_distribution_plot import *
 from .acceleration_plot import *
 from .keypoint_plot import *
 from .plot import *
