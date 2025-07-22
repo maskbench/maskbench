@@ -4,11 +4,11 @@ dataset:
   name: RawMaskedExperiment
   module: datasets.ted_dataset
   class: TedDataset
-  dataset_folder: /datasets/raw-masked-experiment/raw-videos
-  # dataset_folder: /datasets/raw-masked-experiment/masked-videos-pixelation
-  # dataset_folder: /datasets/raw-masked-experiment/masked-videos-blurring
-  # dataset_folder: /datasets/raw-masked-experiment/masked-videos-contours
-  # dataset_folder: /datasets/raw-masked-experiment/masked-videos-inpainting
+  dataset_folder: /datasets/raw-masked-experiment/videos/raw
+  # dataset_folder: /datasets/raw-masked-experiment/videos/blurring
+  # dataset_folder: /datasets/raw-masked-experiment/videos/pixelation
+  # dataset_folder: /datasets/raw-masked-experiment/videos/contours
+  # dataset_folder: /datasets/raw-masked-experiment/videos/inpainting
 
 
 pose_estimators:
@@ -59,27 +59,35 @@ pose_estimators:
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
 
-  # - name: MaskAnyoneUI-Mediapipe
-  #   enabled: true
-  #   module: models.maskanyone_ui_pose_estimator
-  #   class: MaskAnyoneUiPoseEstimator  
-  #   config:
-  #     dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_mediapipe    
-  #     overlay_strategy: mp_pose
-  #     hiding_strategy: pixelation
-  #     save_keypoints_in_coco_format: true
-  #     confidence_threshold: 0
+  - name: MaskAnyoneUI-Mediapipe
+    enabled: true
+    module: models.maskanyone_ui_pose_estimator
+    class: MaskAnyoneUiPoseEstimator  
+    config:
+      dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/raw
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/blurring
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/pixelation
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/contours
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/inpainting
+      overlay_strategy: mp_pose
+      hiding_strategy: pixelation
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
 
-  # - name: MaskAnyoneUI-OpenPose
-  #   enabled: true
-  #   module: models.maskanyone_ui_pose_estimator
-  #   class: MaskAnyoneUiPoseEstimator  
-  #   config:
-  #     dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_openpose
-  #     overlay_strategy: openpose_body25b
-  #     hiding_strategy: pixelation
-  #     save_keypoints_in_coco_format: true
-  #     confidence_threshold: 0
+  - name: MaskAnyoneUI-OpenPose
+    enabled: true
+    module: models.maskanyone_ui_pose_estimator
+    class: MaskAnyoneUiPoseEstimator  
+    config:
+      dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/raw
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/blurring
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/pixelation
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/contours
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/inpainting
+      overlay_strategy: openpose_body25b
+      hiding_strategy: pixelation
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
   
 metrics:
   - name: AccelerationMetric
