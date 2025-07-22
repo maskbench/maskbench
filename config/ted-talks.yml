@@ -4,19 +4,18 @@ dataset:
   name: TedTalks
   module: datasets.ted_dataset
   class: TedDataset
-  dataset_folder: /datasets/ted-talks
-
-# dataset:
-#   name: TragicTalkers
-#   module: datasets.tragic_talkers_dataset
-#   class: TragicTalkersDataset
-#   dataset_folder: /datasets/tragic_talkers
-#   config:
-#     video_folder: videos
-#     ground_truth_folder: labels
-#     convert_gt_keypoints_to_coco: true
+  dataset_folder: /datasets/ted-talks/videos
 
 pose_estimators:
+  - name: YoloPose
+    enabled: true
+    module: models.yolo_pose_estimator
+    class: YoloPoseEstimator
+    config:
+      weights: yolo11l-pose.pt
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0.6
+
   - name: MediaPipePose
     enabled: true
     module: models.mediapipe_pose_estimator
@@ -27,41 +26,50 @@ pose_estimators:
       save_keypoints_in_coco_format: true
       confidence_threshold: 0.4
 
-  - name: YoloPose
-    enabled: true
-    module: models.yolo_pose_estimator
-    class: YoloPoseEstimator
-    config:
-      weights: yolo11n-pose.pt
-      save_keypoints_in_coco_format: true
-      confidence_threshold: 0.6
-
   - name: OpenPose
     enabled: true
     module: models.open_pose_estimator
     class: OpenPoseEstimator
     config:
       save_keypoints_in_coco_format: true
+      overlay_strategy: BODY_25
       confidence_threshold: 0.15
   
-  - name: MaskAnyoneApi
+  - name: MaskAnyoneAPI-MediaPipe
     enabled: true
     module: models.maskanyone_api_pose_estimator
     class: MaskAnyoneApiPoseEstimator
     config:
-      hiding_strategy: pixelation
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
-      
-  - name: MaskAnyoneUi
+
+  - name: MaskAnyoneAPI-OpenPose
+    enabled: true
+    module: models.maskanyone_api_pose_estimator
+    class: MaskAnyoneApiPoseEstimator
+    config:
+      overlay_strategy: openpose # uses BODY_25 model
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
+
+  - name: MaskAnyoneUI-MediaPipe
     enabled: true
     module: models.maskanyone_ui_pose_estimator
     class: MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/maskanyone_ui    
+      dataset_folder_path: /datasets/ted-talks/maskanyone_ui_mediapipe
       overlay_strategy: mp_pose
-      hiding_strategy: pixelation
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
+
+  - name: MaskAnyoneUI-OpenPose
+    enabled: true
+    module: models.maskanyone_ui_pose_estimator
+    class: MaskAnyoneUiPoseEstimator  
+    config:
+      dataset_folder_path: /datasets/ted-talks/maskanyone_ui_openpose
+      overlay_strategy: openpose # uses BODY_25 model
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
 

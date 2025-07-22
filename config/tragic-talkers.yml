@@ -4,20 +4,78 @@ dataset:
   name: TragicTalkers
   module: datasets.tragic_talkers_dataset
   class: TragicTalkersDataset
-  dataset_folder: /datasets/tragic_talkers
+  dataset_folder: /datasets/tragic-talkers
   config:
     video_folder: videos
     ground_truth_folder: labels
     convert_gt_keypoints_to_coco: true
 
 pose_estimators:
+  - name: YoloPose
+    enabled: true
+    module: models.yolo_pose_estimator
+    class: YoloPoseEstimator
+    config:
+      weights: yolo11l-pose.pt
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0.6
+
+  - name: MediaPipePose
+    enabled: true
+    module: models.mediapipe_pose_estimator
+    class: MediaPipePoseEstimator
+    config:
+      weights: pose_landmarker_heavy.task
+      max_num_poses: 3
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0.4
+
   - name: OpenPose
     enabled: true
     module: models.open_pose_estimator
     class: OpenPoseEstimator
     config:
-      confidence_threshold: 0
       save_keypoints_in_coco_format: true
+      overlay_strategy: BODY_25
+      confidence_threshold: 0.15
+  
+  - name: MaskAnyoneAPI-MediaPipe
+    enabled: true
+    module: models.maskanyone_api_pose_estimator
+    class: MaskAnyoneApiPoseEstimator
+    config:
+      overlay_strategy: mp_pose
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
+
+  - name: MaskAnyoneAPI-OpenPose
+    enabled: true
+    module: models.maskanyone_api_pose_estimator
+    class: MaskAnyoneApiPoseEstimator
+    config:
+      overlay_strategy: openpose # uses BODY_25 model
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
+
+  - name: MaskAnyoneUI-MediaPipe
+    enabled: true
+    module: models.maskanyone_ui_pose_estimator
+    class: MaskAnyoneUiPoseEstimator  
+    config:
+      dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_mediapipe
+      overlay_strategy: mp_pose
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
+
+  - name: MaskAnyoneUI-OpenPose
+    enabled: true
+    module: models.maskanyone_ui_pose_estimator
+    class: MaskAnyoneUiPoseEstimator  
+    config:
+      dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_openpose
+      overlay_strategy: openpose # uses BODY_25 model
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
 
 metrics:
   - name: RMSE
