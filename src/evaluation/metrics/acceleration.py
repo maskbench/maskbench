@@ -4,7 +4,7 @@ from typing import Dict, Optional, Any
 
 from inference.pose_result import VideoPoseResult
 from .metric import Metric
-from .metric_result import FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
+from .metric_result import COORDINATE_AXIS, FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
 from .velocity import VelocityMetric
 
 
@@ -53,11 +53,11 @@ class AccelerationMetric(Metric):
         
         fps = video_result.fps
         timedelta = 1 / fps
-        acceleration = ma.diff(velocity_result.values, axis=0) / timedelta  # shape: (frames-2, persons, keypoints)
+        acceleration = ma.diff(velocity_result.values, axis=0) / timedelta  # shape: (frames-2, persons, keypoints, 2)
 
         return MetricResult(
             values=acceleration,
-            axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS],
+            axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS, COORDINATE_AXIS],
             metric_name=self.name,
             video_name=video_result.video_name,
             model_name=model_name,

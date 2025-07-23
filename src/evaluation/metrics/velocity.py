@@ -6,7 +6,7 @@ from typing import Dict, Optional, Any
 from evaluation.utils import DISTANCE_FILL_VALUE, calculate_bbox_sizes_for_persons_in_frame
 from inference.pose_result import VideoPoseResult
 from .metric import Metric
-from .metric_result import FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
+from .metric_result import COORDINATE_AXIS, FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
 
 
 class VelocityMetric(Metric):
@@ -63,11 +63,10 @@ class VelocityMetric(Metric):
         timedelta = 1 / fps
 
         velocity = ma.diff(pred_poses, axis=0) / timedelta  # shape: (frames-1, persons, keypoints, 2)
-        velocity_magnitude = ma.sqrt(ma.sum(velocity * velocity, axis=-1))  # shape: (frames-1, persons, keypoints)
 
         return MetricResult(
-            values=velocity_magnitude,
-            axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS],
+            values=velocity,
+            axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS, COORDINATE_AXIS],
             metric_name=self.name,
             video_name=video_result.video_name,
             model_name=model_name,

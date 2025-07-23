@@ -6,6 +6,7 @@ import numpy.ma as ma
 FRAME_AXIS = 'frame'
 PERSON_AXIS = 'person'
 KEYPOINT_AXIS = 'keypoint'
+COORDINATE_AXIS = 'coordinate'
 
 
 class MetricResult:
@@ -85,6 +86,10 @@ class MetricResult:
         
         if method == 'mean':
             new_values = ma.mean(self.values, axis=tuple(axes))
+        elif method == 'vector_magnitude':
+            if dims != [COORDINATE_AXIS]: # Should only be called on the coordinate axis
+                raise ValueError(f"'vector_magnitude' method must aggregate over only {COORDINATE_AXIS}")
+            new_values = ma.sqrt(ma.sum(self.values**2, axis=tuple(axes)))
         elif method == 'rmse':
             new_values = ma.sqrt(ma.mean(self.values**2, axis=tuple(axes)))
         elif method == 'median':

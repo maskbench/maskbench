@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-from evaluation.metrics.metric_result import FRAME_AXIS, PERSON_AXIS, MetricResult
+from evaluation.metrics.metric_result import COORDINATE_AXIS, FRAME_AXIS, PERSON_AXIS, MetricResult
 from keypoint_pairs import COCO_KEYPOINT_NAMES
 from .plot import Plot
 
@@ -25,6 +25,8 @@ class CocoKeypointPlot(Plot):
             }
         )
         self.metric_name = metric_name
+        if self.metric_name in ["Velocity", "Acceleration", "Jerk"]:
+            self.convert_to_magnitude = True
     
     def draw(
         self,
@@ -51,6 +53,8 @@ class CocoKeypointPlot(Plot):
             unit = next(iter(video_results.values())).unit # get the unit of the first video result
 
             for video_name, metric_result in video_results.items():
+                if self.convert_to_magnitude:
+                    metric_result = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
                 avg_video_keypoint_values = metric_result.aggregate([FRAME_AXIS, PERSON_AXIS], method='mean').values
                 model_values.append(avg_video_keypoint_values)
             avg_model_keypoint_values = np.mean(np.stack(model_values, axis=0), axis=0)

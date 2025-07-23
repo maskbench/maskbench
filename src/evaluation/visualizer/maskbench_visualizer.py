@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from evaluation.metrics import MetricResult
 from evaluation.plots import KinematicDistributionPlot, CocoKeypointPlot, generate_result_table, InferenceTimePlot
 from checkpointer import Checkpointer
+from evaluation.metrics.metric_result import COORDINATE_AXIS
 from .base_visualizer import Visualizer
 
 
@@ -23,7 +24,7 @@ class MaskBenchVisualizer(Visualizer):
             self._save_plot(fig, filename)
 
         if "Acceleration" in pose_results.keys():
-            acceleration_distribution_plot = KinematicDistributionPlot(metric_name="Acceleration", kinematic_limit=3000)
+            acceleration_distribution_plot = KinematicDistributionPlot(metric_name="Acceleration", kinematic_limit=5000)
             fig, filename = acceleration_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
@@ -32,7 +33,7 @@ class MaskBenchVisualizer(Visualizer):
             self._save_plot(fig, filename)
 
         if "Jerk" in pose_results.keys():
-            jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk", kinematic_limit=30000)
+            jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk", kinematic_limit=200000)
             fig, filename = jerk_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
@@ -44,11 +45,11 @@ class MaskBenchVisualizer(Visualizer):
         inference_times = self.checkpointer.load_inference_times()
         if inference_times:
             inference_times = self.set_maskanyone_ui_inference_times(inference_times)
-            print(inference_times)
             inference_time_plot = InferenceTimePlot()
             fig, filename = inference_time_plot.draw(inference_times)
             self._save_plot(fig, filename)
 
+        pose_results = self.calculate_kinematic_magnitudes(pose_results)
         table = generate_result_table(pose_results)
         self._save_table(table, "result_table.txt")
 
@@ -72,4 +73,16 @@ class MaskBenchVisualizer(Visualizer):
                 mapped_times[ui_model] = mapped_times[api_model].copy()
                     
         return mapped_times
+
+    def calculate_kinematic_magnitudes(self, pose_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, Dict[str, MetricResult]]]:
+        """
+        Calculate the magnitude of the kinematic metrics.
+        """
+        for metric_name in ["Velocity", "Acceleration", "Jerk"]:
+            if metric_name in pose_results.keys():
+                for model_name, video_results in pose_results[metric_name].items():
+                    for video_name, metric_result in video_results.items():
+                        magnitude_values = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
+                        pose_results[metric_name][model_name][video_name] = magnitude_values
+        return pose_results
         
