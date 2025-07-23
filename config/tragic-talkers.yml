@@ -18,7 +18,7 @@ pose_estimators:
     config:
       weights: yolo11l-pose.pt
       save_keypoints_in_coco_format: true
-      confidence_threshold: 0.6
+      confidence_threshold: 0.3
 
   - name: MediaPipePose
     enabled: true
@@ -28,7 +28,7 @@ pose_estimators:
       weights: pose_landmarker_heavy.task
       max_num_poses: 3
       save_keypoints_in_coco_format: true
-      confidence_threshold: 0.4
+      confidence_threshold: 0.3
 
   - name: OpenPose
     enabled: true
