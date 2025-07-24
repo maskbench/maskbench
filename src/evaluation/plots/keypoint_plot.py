@@ -25,6 +25,7 @@ class CocoKeypointPlot(Plot):
             }
         )
         self.metric_name = metric_name
+        self.convert_to_magnitude = False
         if self.metric_name in ["Velocity", "Acceleration", "Jerk"]:
             self.convert_to_magnitude = True
     
