@@ -11,17 +11,20 @@ class InferenceEngine:
         self.checkpointer = checkpointer
 
     def estimate_pose_keypoints(self) -> Dict[str, Dict[str, List[VideoPoseResult]]]:
+        results = {}
         if self.checkpointer.load_checkpoint:
             print(f"Loading results from checkpoint {self.checkpointer.checkpoint_dir}")
-            return self.checkpointer.load_pose_results()
+            results = self.checkpointer.load_pose_results()
             
-        results = {}
         for estimator in self.pose_estimators:
-            results[estimator.name] = {}
-
+            if estimator.name not in results:
+                results[estimator.name] = {} 
+            
             for video in self.dataset:
-                print(f"Running estimator '{estimator.name}' on video {video.path}")
+                if video.get_filename() in results[estimator.name]:
+                    continue 
 
+                print(f"Running estimator '{estimator.name}' on video {video.path}")
                 start_time = time.time()
                 try:
                     video_pose_result = estimator.estimate_pose(video.path)
