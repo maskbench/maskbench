@@ -164,13 +164,13 @@ class KinematicDistributionPlot(Plot):
 
     def _finish_label_grid_axes_styling(self, x_positions: np.ndarray, bin_labels: List[str], lines: List[plt.Line2D], labels: List[str]):
         # Configure x-axis
-        plt.xlim(0, 1.00)
+        plt.xlim(-0.01, 1.01)
         plt.xticks(x_positions, bin_labels, rotation=45)
         
         # Configure y-axis
-        y_ticks = np.arange(0, 62, 20)
+        y_ticks = np.arange(0, 90, 20)
         plt.yticks(y_ticks, [f'{x:.2f} %' for x in y_ticks])
-        plt.ylim(0, 62)
+        plt.ylim(0, 90)
         
         # Configure grid
         plt.grid(True, axis='y', alpha=0.3, linestyle='-', color='gray')
