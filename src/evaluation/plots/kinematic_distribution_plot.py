@@ -5,7 +5,7 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 
-from evaluation.metrics.metric_result import MetricResult
+from evaluation.metrics.metric_result import COORDINATE_AXIS, MetricResult
 from .plot import Plot
 
 
@@ -107,16 +107,16 @@ class KinematicDistributionPlot(Plot):
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
     ) -> Tuple[plt.Figure, str]:
-        metric_results = results[self.metric_name]
+        pose_estimator_results = results[self.metric_name]
         
         # First pass: collect all kinematic values
         all_values = []
-        for video_results in metric_results.values():
-            self.unit = next(iter(video_results.values())).unit if self.unit is None else self.unit
+        for metric_results in pose_estimator_results.values():
+            self.unit = next(iter(metric_results.values())).unit if self.unit is None else self.unit
 
-            for video_result in video_results.values():
-                values = video_result.values
-                flattened_valid_clipped_vals = self._flatten_clip_validate(values)
+            for metric_result in metric_results.values():
+                magnitude_result = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
+                flattened_valid_clipped_vals = self._flatten_clip_validate(magnitude_result.values)
                 all_values.extend(np.abs(flattened_valid_clipped_vals))
         
         if self.unit:
@@ -133,10 +133,10 @@ class KinematicDistributionPlot(Plot):
         # Create x positions that span the full width
         x_positions = np.linspace(0, 1, len(bin_labels))
         
-        for model_name, video_results in metric_results.items():
+        for model_name, metric_results in pose_estimator_results.items():
             model_values = []
-            for video_result in video_results.values():
-                values = video_result.values
+            for metric_result in metric_results.values():
+                values = metric_result.values
                 flattened_valid_clipped_vals = self._flatten_clip_validate(values)
                 model_values.extend(np.abs(flattened_valid_clipped_vals.flatten()))
                 
@@ -164,13 +164,13 @@ class KinematicDistributionPlot(Plot):
 
     def _finish_label_grid_axes_styling(self, x_positions: np.ndarray, bin_labels: List[str], lines: List[plt.Line2D], labels: List[str]):
         # Configure x-axis
-        plt.xlim(0, 1.00)
+        plt.xlim(-0.01, 1.01)
         plt.xticks(x_positions, bin_labels, rotation=45)
         
         # Configure y-axis
-        y_ticks = np.arange(0, 62, 20)
+        y_ticks = np.arange(0, 90, 20)
         plt.yticks(y_ticks, [f'{x:.2f} %' for x in y_ticks])
-        plt.ylim(0, 62)
+        plt.ylim(0, 90)
         
         # Configure grid
         plt.grid(True, axis='y', alpha=0.3, linestyle='-', color='gray')

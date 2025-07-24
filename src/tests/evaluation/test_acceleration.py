@@ -3,7 +3,7 @@ import numpy as np
 import numpy.ma as ma
 import pytest
 
-from evaluation.metrics import AccelerationMetric
+from evaluation.metrics import AccelerationMetric, COORDINATE_AXIS
 from tests.utils import create_example_video_pose_result
 
 def compute_acceleration_metric(pred_data, fps: int = 30):
@@ -15,7 +15,7 @@ def compute_acceleration_metric(pred_data, fps: int = 30):
         video_result=pred_video_result,
         model_name="example_model"
     )
-    return result
+    return result.aggregate(dims=[COORDINATE_AXIS], method="vector_magnitude")
 
 class TestAccelerationMetric(unittest.TestCase):
     """Test suite for the AccelerationMetric class."""
@@ -42,7 +42,7 @@ class TestAccelerationMetric(unittest.TestCase):
         # Note: we get T-2 frames for acceleration where T is number of input frames
         expected_shape = (2, 1, 3)  # (frames, persons, keypoints)
         self.assertEqual(result.values.shape, expected_shape)
-        np.testing.assert_array_equal(result.values, np.zeros(expected_shape))
+        np.testing.assert_array_equal(result.values.data, np.zeros(expected_shape))
 
     def test_non_zero_acceleration(self):
         """Test specific non-zero accelerations for each keypoint."""
@@ -70,7 +70,7 @@ class TestAccelerationMetric(unittest.TestCase):
             [[14, 28, 56]],
             [[28, 56, 113]]
         ])
-        np.testing.assert_array_almost_equal(result.values, expected_accelerations, decimal=0)
+        np.testing.assert_array_almost_equal(result.values.data, expected_accelerations, decimal=0)
 
     def test_not_enough_frames(self):
         """
@@ -86,7 +86,7 @@ class TestAccelerationMetric(unittest.TestCase):
         result = compute_acceleration_metric(pred_data)
         expected_shape = (1, 1, 3)  # (frames, persons, keypoints)
         self.assertEqual(result.values.shape, expected_shape)
-        np.testing.assert_array_equal(result.values, np.nan * np.ones(expected_shape))
+        np.testing.assert_array_equal(result.values.data, np.nan * np.ones(expected_shape))
 
     def test_missing_keypoints(self):
         """
@@ -115,7 +115,7 @@ class TestAccelerationMetric(unittest.TestCase):
             [[np.nan, np.nan, np.nan, np.nan, 226, 0]],
             [[28, np.nan, np.nan, np.nan, 452, np.nan]]
         ])
-        np.testing.assert_array_almost_equal(result.values, expected_result, decimal=0)
+        np.testing.assert_array_almost_equal(result.values.data, expected_result, decimal=0)
 
     def test_mismatched_person_indices_over_frames(self):
         """
@@ -152,7 +152,7 @@ class TestAccelerationMetric(unittest.TestCase):
                 [28, 28, 28]    # Person 1
             ]
         ])
-        np.testing.assert_array_almost_equal(result.values, expected_accelerations, decimal=0)
+        np.testing.assert_array_almost_equal(result.values.data, expected_accelerations, decimal=0)
 
     def test_additional_person_within_next_frames(self):
         """
@@ -171,7 +171,7 @@ class TestAccelerationMetric(unittest.TestCase):
                 [(270, 270), (270, 370), (320, 320)], # Person 1
             ],
             [  # Frame 3
-                [(300, 300), (300, 400), (350, 350)], # Person 2
+                [(400, 400), (400, 500), (450, 450)], # Person 2
                 [(130, 130), (130, 230), (180, 180)], # Person 0
                 [(230, 230), (230, 330), (280, 280)], # Person 1
             ],
@@ -179,7 +179,7 @@ class TestAccelerationMetric(unittest.TestCase):
 
         result = compute_acceleration_metric(pred_data, fps=1)
         self.assertEqual(result.values.shape, (2, 3, 3))
-        expected_accelerations = np.array([
+        expected_accelerations = ma.array([
             [ # Pseudo-Frame 0
                 [0, 0, 0],                  # Person 0
                 [np.nan, np.nan, np.nan],   # Person 1
@@ -187,11 +187,13 @@ class TestAccelerationMetric(unittest.TestCase):
             ],
             [ # Pseudo-Frame 1
                 [0, 0, 0],                  # Person 0
-                [14, 14, 14],               # Person 1
+                [28, 28, 28],               # Person 1
                 [np.nan, np.nan, np.nan]    # Person 2
             ],
         ])
-        np.testing.assert_array_almost_equal(result.values, expected_accelerations, decimal=0)
+        print("Expected accelerations: ", expected_accelerations)
+        print("Result accelerations: ", result.values.data)
+        np.testing.assert_array_almost_equal(result.values.data, expected_accelerations, decimal=0)
 
     def test_missing_person_within_next_frames(self):
         pred_data = [
@@ -225,9 +227,11 @@ class TestAccelerationMetric(unittest.TestCase):
             ],
             [ # Pseudo-Frame 1
                 [np.nan, np.nan, np.nan],   # Person 0
-                [0, 0, 0],                  # Person 1
+                [np.nan, np.nan, np.nan],   # Person 1
                 [np.nan, np.nan, np.nan],   # Person 2
                 [28, 28, 28],               # Person 3
             ],
         ])
-        np.testing.assert_array_almost_equal(result.values, expected_accelerations, decimal=0)
+        print("Expected accelerations: ", expected_accelerations)
+        print("Result accelerations: ", result.values.data)
+        np.testing.assert_array_almost_equal(result.values.data, expected_accelerations, decimal=0)

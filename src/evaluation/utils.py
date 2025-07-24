@@ -42,9 +42,9 @@ def aggregate_results_over_all_videos(metric_results: Dict[str, Dict[str, Dict[s
     """
     aggregated_results = {}
     for metric_name, pose_estimator_results in metric_results.items():
+        aggregated_results[metric_name] = {}
+        
         for pose_estimator_name, video_results in pose_estimator_results.items():
-            aggregated_results[metric_name] = {}
-            
             aggregated_video_results = []
             for video_name, result in video_results.items():
                 aggregated_video_results.append(result.aggregate_all())

@@ -4,7 +4,7 @@ from typing import Dict, Optional, Any
 
 from inference.pose_result import VideoPoseResult
 from .metric import Metric
-from .metric_result import FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
+from .metric_result import COORDINATE_AXIS, FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
 from .velocity import VelocityMetric
 
 
@@ -42,8 +42,8 @@ class AccelerationMetric(Metric):
         if pred_poses.shape[0] <= 2:
             print("Warning: Acceleration metric requires at least 3 frames to compute. Returning empty MetricResult.")
             return MetricResult(
-                values=np.nan * np.ones((1, pred_poses.shape[1], pred_poses.shape[2])),
-                axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS],
+                values=np.nan * np.ones((1, pred_poses.shape[1], pred_poses.shape[2], 2)),
+                axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS, COORDINATE_AXIS],
                 metric_name=self.name,
                 video_name=video_result.video_name,
                 model_name=model_name,
@@ -53,13 +53,14 @@ class AccelerationMetric(Metric):
         
         fps = video_result.fps
         timedelta = 1 / fps
-        acceleration = ma.diff(velocity_result.values, axis=0) / timedelta  # shape: (frames-2, persons, keypoints)
+        acceleration = ma.diff(velocity_result.values, axis=0) / timedelta  # shape: (frames-2, persons, keypoints, 2)
+        acceleration.data[acceleration.mask] = np.nan
 
         return MetricResult(
             values=acceleration,
-            axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS],
+            axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS, COORDINATE_AXIS],
             metric_name=self.name,
             video_name=video_result.video_name,
             model_name=model_name,
-            unit="pixels/frame^2",
+            unit="pixels/second^2",
         )

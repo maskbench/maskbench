@@ -24,6 +24,12 @@ class Visualizer:
         output_path = os.path.join(self.plots_dir, filename)
         fig.savefig(output_path, bbox_inches='tight', dpi=300)
 
+    def _save_table(self, table: str, filename: str) -> None:
+        """Save a table to the plots directory."""
+        output_path = os.path.join(self.plots_dir, filename)
+        with open(output_path, "w") as f:
+            f.write(table)
+
     @abstractmethod
     def generate_all_plots(self, pose_results: Dict[str, Dict[str, Dict[str, MetricResult]]]):
         """

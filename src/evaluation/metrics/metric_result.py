@@ -6,6 +6,7 @@ import numpy.ma as ma
 FRAME_AXIS = 'frame'
 PERSON_AXIS = 'person'
 KEYPOINT_AXIS = 'keypoint'
+COORDINATE_AXIS = 'coordinate'
 
 
 class MetricResult:
@@ -65,14 +66,17 @@ class MetricResult:
         Aggregate the metric values along specified dimensions.
         
         Args:
-            dims: Dimension name(s) to aggregate over (e.g. 'frame' or ['frame', 'person'])
-            method: Aggregation method ('mean', 'rmse','median', 'sum', 'min', 'max')
+            dims: Dimension name(s) to aggregate over (e.g. 'frame' or ['frame', 'person']). Allowed dimensions are: 'frame', 'person', 'keypoint', 'coordinate'.
+            method: Aggregation method ('mean', 'rmse', 'median', 'vector_magnitude', 'sum', 'min', 'max')
             
         Returns:
             New MetricResult with aggregated values.
         """
         if isinstance(dims, str):
             dims = [dims]
+
+        if method == 'vector_magnitude' and dims != [COORDINATE_AXIS]:
+            raise ValueError(f"'vector_magnitude' method must only be called on the {COORDINATE_AXIS} axis")
             
         # Convert dimension names to axis numbers
         axes = [self.axis_name_to_dim[dim] for dim in dims]
@@ -85,6 +89,9 @@ class MetricResult:
         
         if method == 'mean':
             new_values = ma.mean(self.values, axis=tuple(axes))
+        elif method == 'vector_magnitude':
+            new_values = ma.sqrt(ma.sum(self.values**2, axis=tuple(axes)))
+            new_values.data[new_values.mask] = np.nan
         elif method == 'rmse':
             new_values = ma.sqrt(ma.mean(self.values**2, axis=tuple(axes)))
         elif method == 'median':

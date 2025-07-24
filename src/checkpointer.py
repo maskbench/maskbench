@@ -175,3 +175,22 @@ class Checkpointer:
                     results[estimator_name][video_name] = video_pose_result
                     
         return results 
+
+    def load_inference_times(self) -> Dict[str, Dict[str, float]]:
+        """
+        Load all inference times from the checkpoint.
+        
+        Returns:
+            Dict[str, Dict[str, float]]: Dictionary mapping estimator names to
+            video names to their inference times in seconds.
+        """
+        inference_file_path = os.path.join(self.checkpoint_dir, "inference_times.json")
+        
+        if not os.path.exists(inference_file_path):
+            print(f"No inference times found in checkpoint {self.checkpoint_dir}. Skipping inference time plot.")
+            return {}
+            
+        with open(inference_file_path, 'r') as f:
+            inference_times = json.load(f)
+            
+        return inference_times
