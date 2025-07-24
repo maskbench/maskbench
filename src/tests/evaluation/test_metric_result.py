@@ -45,25 +45,25 @@ class TestMetricResult(unittest.TestCase):
         
         # For frame 0, person 0: mean of all keypoints
         np.testing.assert_array_almost_equal(
-            keypoint_agg.values[0, 0],
+            keypoint_agg.values[0, 0].data,
             (1.0 + 2.0 + 3.0 + 4.0) / 4
         )
         
         # For frame 0, person 1: mean of all keypoints
         np.testing.assert_array_almost_equal(
-            keypoint_agg.values[0, 1],
+            keypoint_agg.values[0, 1].data,
             (5.0 + 6.0 + 7.0 + 8.0) / 4
         )
         
         # For frame 1, person 0: mean of all keypoints
         np.testing.assert_array_almost_equal(
-            keypoint_agg.values[1, 0],
+            keypoint_agg.values[1, 0].data,
             (13.0 + 14.0 + 15.0 + 16.0) / 4
         )
         
         # For frame 1, person 2: mean of all keypoints
         np.testing.assert_array_almost_equal(
-            keypoint_agg.values[1, 2],
+            keypoint_agg.values[1, 2].data,
             (21.0 + 22.0 + 23.0 + 24.0) / 4
         )
     
@@ -81,7 +81,7 @@ class TestMetricResult(unittest.TestCase):
             (3.0 + 7.0 + 15.0 + 23.0) / 4,  # Third keypoint
             (4.0 + 8.0 + 16.0 + 24.0) / 4   # Fourth keypoint
         ])
-        np.testing.assert_array_almost_equal(result.values, expected)
+        np.testing.assert_array_almost_equal(result.values.data, expected)
     
     def test_different_aggregation_methods(self):
         """Test different aggregation methods (mean, median, min, max)."""
@@ -101,25 +101,25 @@ class TestMetricResult(unittest.TestCase):
         # Test different methods along first dimension
         mean_result = metric.aggregate('dim1', method='mean')
         np.testing.assert_array_almost_equal(
-            mean_result.values,
+            mean_result.values.data,
             [4.0, 5.0, 6.0]  # Mean of each column
         )
         
         median_result = metric.aggregate('dim1', method='median')
         np.testing.assert_array_almost_equal(
-            median_result.values,
+            median_result.values.data,
             [4.0, 5.0, 6.0]  # Median of each column
         )
         
         min_result = metric.aggregate('dim1', method='min')
         np.testing.assert_array_almost_equal(
-            min_result.values,
+            min_result.values.data,
             [1.0, 2.0, 3.0]  # Min of each column
         )
         
         max_result = metric.aggregate('dim1', method='max')
         np.testing.assert_array_almost_equal(
-            max_result.values,
+            max_result.values.data,
             [7.0, 8.0, 9.0]  # Max of each column
         )
     

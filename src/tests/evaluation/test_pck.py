@@ -44,7 +44,7 @@ class TestPCKMetric(unittest.TestCase):
         ]
 
         result = compute_pck_metric(gt_data, pred_data)
-        np.testing.assert_array_equal(result.values, np.array([0.5]))
+        np.testing.assert_array_equal(result.values.data, np.array([0.5]))
 
     def test_basic_computation_with_multiple_frames(self):
         """Test basic PCK computation, where a single person is detected correctly in each frame."""
@@ -66,7 +66,7 @@ class TestPCKMetric(unittest.TestCase):
         ]
 
         result = compute_pck_metric(gt_data, pred_data)
-        np.testing.assert_array_equal(result.values, np.array([1.0, 1.0]))
+        np.testing.assert_array_equal(result.values.data, np.array([1.0, 1.0]))
 
     def test_correct_detection_wrong_order(self):
         """
@@ -88,7 +88,7 @@ class TestPCKMetric(unittest.TestCase):
         ]
 
         result = compute_pck_metric(gt_data, pred_data)
-        np.testing.assert_array_equal(result.values, np.array([1.0]))
+        np.testing.assert_array_equal(result.values.data, np.array([1.0]))
 
     def test_missing_person_in_prediction(self):
         """
@@ -110,7 +110,7 @@ class TestPCKMetric(unittest.TestCase):
         ]
 
         result = compute_pck_metric(gt_data, pred_data)
-        np.testing.assert_array_equal(result.values, np.array([0.5]))
+        np.testing.assert_array_equal(result.values.data, np.array([0.5]))
 
     def test_additional_person_in_prediction(self):
         """
@@ -131,7 +131,7 @@ class TestPCKMetric(unittest.TestCase):
         ]
 
         result = compute_pck_metric(gt_data, pred_data)
-        np.testing.assert_array_equal(result.values, np.array([1.0]))
+        np.testing.assert_array_equal(result.values.data, np.array([1.0]))
 
 
     def test_missing_person_in_wrong_prediction_order(self):
@@ -154,7 +154,7 @@ class TestPCKMetric(unittest.TestCase):
         ]
 
         result = compute_pck_metric(gt_data, pred_data)
-        np.testing.assert_array_equal(result.values, np.array([0.5]))
+        np.testing.assert_array_equal(result.values.data, np.array([0.5]))
 
     def test_missing_keypoint_in_gt_and_prediction(self):
         """
@@ -175,7 +175,7 @@ class TestPCKMetric(unittest.TestCase):
 
         result_pck = compute_pck_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_pck.values,
+            result_pck.values.data,
             np.array([1.0]),
             decimal=4
         )
@@ -200,7 +200,7 @@ class TestPCKMetric(unittest.TestCase):
 
         result_pck = compute_pck_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_pck.values,
+            result_pck.values.data,
             np.array([0.6667]), # 2/3 correct keypoints
             decimal=4
         )
@@ -225,7 +225,7 @@ class TestPCKMetric(unittest.TestCase):
 
         result_pck = compute_pck_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_pck.values,
+            result_pck.values.data,
             np.array([1.0]),
             decimal=4
         )

@@ -61,7 +61,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
         result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_distances.values,
+            result_distances.values.data,
             np.array([[
                 [0.0707, 0.0707, 0.0707], 
                 [0.1414, 0.1414, 0.1414]
@@ -70,7 +70,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
         )
         result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_rmse.values,
+            result_rmse.values.data,
             np.array([0.1118]),
             decimal=4
         )
@@ -96,7 +96,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
         result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_distances.values,
+            result_distances.values.data,
             np.array([
                 [[0.0707, 0.0707, 0.0707]], 
                 [[0.0707, 0.0707, 0.0707]]
@@ -105,7 +105,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
         )
         result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_rmse.values,
+            result_rmse.values.data,
             np.array([0.0707, 0.0707]),
             decimal=4
         )
@@ -131,7 +131,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
         result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_distances.values,
+            result_distances.values.data,
             np.array([[
                 [0.0707, 0.0707, 0.0707], 
                 [0.0707, 0.0707, 0.0707]
@@ -140,7 +140,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
         )
         result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_rmse.values,
+            result_rmse.values.data,
             np.array([0.0707]),
             decimal=4
         )
@@ -165,7 +165,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
         result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_distances.values,
+            result_distances.values.data,
             np.array([[
                 [0.0707, 0.0707, 0.0707], 
                 [DISTANCE_FILL_VALUE, DISTANCE_FILL_VALUE, DISTANCE_FILL_VALUE]
@@ -174,7 +174,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
         )
         result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_rmse.values,
+            result_rmse.values.data,
             np.array([0.7089]),
             decimal=4
         )
@@ -199,13 +199,13 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
         result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_distances.values,
+            result_distances.values.data,
             np.array([[[0.0707, 0.0707, 0.0707]]]),
             decimal=4
         )
         result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_rmse.values,
+            result_rmse.values.data,
             np.array([0.0707]),
             decimal=4
         )
@@ -231,7 +231,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
         result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_distances.values,
+            result_distances.values.data,
             np.array([[
                 [DISTANCE_FILL_VALUE, DISTANCE_FILL_VALUE, DISTANCE_FILL_VALUE],
                 [0.0707, 0.0707, 0.0707] 
@@ -240,7 +240,7 @@ class TestRmseEuclideanDistance(unittest.TestCase):
         )
         result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_rmse.values,
+            result_rmse.values.data,
             np.array([0.7089]),
             decimal=4
         )
@@ -264,13 +264,13 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
         result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_distances.values,
+            result_distances.values.data,
             np.array([[[0.0707, np.nan, 0.0707]]]),
             decimal=4
         )
         result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_rmse.values,
+            result_rmse.values.data,
             np.array([0.0707]),
             decimal=4
         )
@@ -294,14 +294,14 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
         result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_distances.values,
+            result_distances.values.data,
             np.array([[[0.0707, DISTANCE_FILL_VALUE, 0.0707]]]),
             decimal=4
         )
 
         result_rmse = compute_rmse_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_rmse.values,
+            result_rmse.values.data,
             np.array([0.5802]),
             decimal=4
         )
@@ -325,13 +325,13 @@ class TestRmseEuclideanDistance(unittest.TestCase):
 
         result_distances = compute_euclidean_distance_metric(gt_data, pred_data)
         np.testing.assert_array_almost_equal(
-            result_distances.values,
+            result_distances.values.data,
             np.array([[[0.0707, np.nan, 0.0707]]]),
             decimal=4
         )
         result_rmse = result_distances.aggregate(dims=["person", "keypoint"], method="rmse")
         np.testing.assert_array_almost_equal(
-            result_rmse.values,
+            result_rmse.values.data,
             np.array([0.0707]),
             decimal=4
         )
