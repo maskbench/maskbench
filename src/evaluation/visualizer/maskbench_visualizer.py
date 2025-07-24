@@ -19,12 +19,12 @@ class MaskBenchVisualizer(Visualizer):
         os.makedirs(self.plots_dir, exist_ok=True)
 
         if "Velocity" in pose_results.keys():
-            velocity_distribution_plot = KinematicDistributionPlot(metric_name="Velocity", kinematic_limit=500)
+            velocity_distribution_plot = KinematicDistributionPlot(metric_name="Velocity")
             fig, filename = velocity_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
         if "Acceleration" in pose_results.keys():
-            acceleration_distribution_plot = KinematicDistributionPlot(metric_name="Acceleration", kinematic_limit=5000)
+            acceleration_distribution_plot = KinematicDistributionPlot(metric_name="Acceleration")
             fig, filename = acceleration_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
@@ -33,7 +33,7 @@ class MaskBenchVisualizer(Visualizer):
             self._save_plot(fig, filename)
 
         if "Jerk" in pose_results.keys():
-            jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk", kinematic_limit=200000)
+            jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk")
             fig, filename = jerk_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 

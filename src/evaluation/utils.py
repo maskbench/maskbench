@@ -36,7 +36,7 @@ def calculate_bbox_sizes_for_persons_in_frame(gt_poses: np.ndarray) -> np.ndarra
 
 def aggregate_results_over_all_videos(metric_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, float]]:
     """
-    Aggregate the results by averaging over the different datasets.
+    Aggregate the results by averaging over the different videos.
     Returns:
         Dict[str, Dict[str, float]]: Aggregated results for each metric and pose estimator.
     """

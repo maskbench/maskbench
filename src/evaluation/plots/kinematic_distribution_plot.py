@@ -12,7 +12,7 @@ from .plot import Plot
 class KinematicDistributionPlot(Plot):
     """Plot class for visualizing kinematic distributions (velocity, acceleration, jerk) for different models."""
     
-    def __init__(self, metric_name: str, kinematic_limit: float):
+    def __init__(self, metric_name: str, kinematic_limit: float = None):
         """
         Initialize the kinematic distribution plot.
         
@@ -56,25 +56,15 @@ class KinematicDistributionPlot(Plot):
         Returns:
             Flattened array of valid values clipped to kinematic limit
         """
-        # First handle masked values if it's a masked array
+        # Handle masked values if it's a masked array
         if isinstance(values, ma.MaskedArray):
             valid_values = values[~values.mask].data
         else:
             valid_values = values
             
-        # Remove NaN values
-        valid_values = valid_values[~np.isnan(valid_values)]
-        
-        # Flatten the array
+        valid_values = valid_values[~np.isnan(valid_values)] # Remove NaN values
         flattened_values = valid_values.flatten()
-        
-        # Finally clip the values
         clipped_values = np.clip(flattened_values, -self.kinematic_limit, self.kinematic_limit)
-        
-        # print("Original shape:", values.shape)
-        # print("Valid (non-masked, non-NaN) values shape:", valid_values.shape)
-        # print("Final clipped values shape:", clipped_values.shape)
-        
         return clipped_values
 
     def _compute_distribution(self, values: np.ndarray, bin_edges: np.ndarray) -> np.ndarray:
@@ -102,27 +92,56 @@ class KinematicDistributionPlot(Plot):
                 bin_labels.append(f'[{bin_edges[i]},{bin_edges[i+1]}]')
                 
         return bin_edges, bin_labels
+
+    def _round_to_nearest_magnitude(self, value: float) -> float:
+        """Round a value to the nearest magnitude based on its range.
+        
+        For values:
+        - Between 0-100: Round to nearest 10
+        - Between 100-1000: Round to nearest 100 
+        - Between 1000-10000: Round to nearest 1000
+        And so on up to 1,000,000
+        """
+        if value <= 0:
+            return 0
+            
+        magnitude = 10 ** (len(str(int(value))) - 1)
+        if magnitude < 10:
+            magnitude = 10
+        return np.ceil(value / magnitude) * magnitude
     
     def draw(
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
     ) -> Tuple[plt.Figure, str]:
-        pose_estimator_results = results[self.metric_name]
-        
-        # First pass: collect all kinematic values
-        all_values = []
-        for metric_results in pose_estimator_results.values():
-            self.unit = next(iter(metric_results.values())).unit if self.unit is None else self.unit
 
-            for metric_result in metric_results.values():
+        # First pass: compute the magnitude of the kinematic values and average over videos
+        pose_estimator_results = results[self.metric_name]
+        pose_estimator_averages = {} # store the average for each pose estimator over all videos
+        pose_estimator_magnitude_results = {} # store the magnitude results for each pose estimator
+
+        for pose_estimator_name, video_results in pose_estimator_results.items():
+            self.unit = next(iter(video_results.values())).unit if self.unit is None else self.unit
+
+            video_magnitudes = []
+            pose_estimator_magnitude_results[pose_estimator_name] = {}
+            for video_name, metric_result in video_results.items():
                 magnitude_result = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
-                flattened_valid_clipped_vals = self._flatten_clip_validate(magnitude_result.values)
-                all_values.extend(np.abs(flattened_valid_clipped_vals))
+
+                video_magnitudes.append(magnitude_result.aggregate_all())
+                pose_estimator_magnitude_results[pose_estimator_name][video_name] = magnitude_result
+
+            pose_estimator_averages[pose_estimator_name] = np.mean(video_magnitudes)
+
+        if self.kinematic_limit is None:
+            # Calculate the maximum average magnitude of all pose estimators to set the bounds of the plot
+            # This maximum value is increased by 20%
+            raw_limit = max(pose_estimator_averages.values()) * 1.20
+            self.kinematic_limit = self._round_to_nearest_magnitude(raw_limit)
         
         if self.unit:
             self.config['xlabel'] = f'{self.metric_name} ({self.unit})'
         fig = self._setup_figure()
-
 
         # Store lines for updating legend later
         lines = []
@@ -133,9 +152,10 @@ class KinematicDistributionPlot(Plot):
         # Create x positions that span the full width
         x_positions = np.linspace(0, 1, len(bin_labels))
         
-        for model_name, metric_results in pose_estimator_results.items():
+        # Second pass: flatten and clip the values
+        for model_name, video_results in pose_estimator_results.items():
             model_values = []
-            for metric_result in metric_results.values():
+            for metric_result in video_results.values():
                 values = metric_result.values
                 flattened_valid_clipped_vals = self._flatten_clip_validate(values)
                 model_values.extend(np.abs(flattened_valid_clipped_vals.flatten()))
@@ -143,13 +163,10 @@ class KinematicDistributionPlot(Plot):
             distribution = self._compute_distribution(model_values, bin_edges)
             
             marker = next(marker_cycle)
-            
             plt.plot(x_positions, distribution, 
                     marker=marker,
                     markersize=6,
             )
-            # plt.fill_between(x_positions, distribution, 
-            #                alpha=0.2)
             
             scatter = plt.scatter([], [], 
                                 marker=marker,

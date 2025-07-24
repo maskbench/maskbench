@@ -11,11 +11,19 @@ from .velocity import VelocityMetric
 class AccelerationMetric(Metric):
     """
     Acceleration metric.
+    
+    Required config parameters:
+        - time_unit: str, either "frame" or "second" - specifies whether to compute acceleration 
+          in pixels/frame² or pixels/second². Defaults to "frame".
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(name="Acceleration", config=config)
         self.velocity_metric = VelocityMetric(config)
+        time_unit = config.get("time_unit", "frame") if config else "frame"
+        if time_unit not in ["second", "frame"]:
+            raise ValueError("time_unit must be either 'second' or 'frame'")
+        self.time_unit = time_unit
     
     def compute(
         self,
@@ -36,6 +44,10 @@ class AccelerationMetric(Metric):
             For a given VideoPoseResult with T frames, the MetricResult will have T-2 frames.
             Every time a keypoint is missing in one of three consecutive frames, the acceleration is NaN.
             If the number of frames is less than 3, the MetricResult will have 1 frame with NaN values.
+            
+            The time_unit parameter in config controls the calculation:
+            - time_unit="second": acceleration is computed per second (pixels/second²) by dividing by the time delta between frames
+            - time_unit="frame": acceleration is computed per frame (pixels/frame²)
         """
         pred_poses = video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
 
@@ -51,9 +63,13 @@ class AccelerationMetric(Metric):
 
         velocity_result = self.velocity_metric.compute(video_result, gt_video_result, model_name)
         
-        fps = video_result.fps
-        timedelta = 1 / fps
-        acceleration = ma.diff(velocity_result.values, axis=0) / timedelta  # shape: (frames-2, persons, keypoints, 2)
+        acceleration = ma.diff(velocity_result.values, axis=0)  # shape: (frames-2, persons, keypoints, 2)
+        
+        if self.time_unit == "second":
+            fps = video_result.fps
+            timedelta = 1 / fps
+            acceleration = acceleration / timedelta
+            
         acceleration.data[acceleration.mask] = np.nan
 
         return MetricResult(
@@ -62,5 +78,5 @@ class AccelerationMetric(Metric):
             metric_name=self.name,
             video_name=video_result.video_name,
             model_name=model_name,
-            unit="pixels/second^2",
+            unit=f"pixels/{self.time_unit}²"
         )
