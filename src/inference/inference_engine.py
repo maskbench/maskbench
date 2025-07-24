@@ -21,7 +21,7 @@ class InferenceEngine:
                 results[estimator.name] = {} 
             
             for video in self.dataset:
-                if video in results[estimator.name]:
+                if video.get_filename() in results[estimator.name]:
                     continue 
 
                 print(f"Running estimator '{estimator.name}' on video {video.path}")
