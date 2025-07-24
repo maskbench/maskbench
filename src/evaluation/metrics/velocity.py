@@ -41,8 +41,8 @@ class VelocityMetric(Metric):
         if pred_poses.shape[0] <= 1:
             print("Warning: Velocity metric requires at least 2 frames to compute. Returning empty MetricResult.")
             return MetricResult(
-                values=np.nan * np.ones((1, pred_poses.shape[1], pred_poses.shape[2])),
-                axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS],
+                values=np.nan * np.ones((1, pred_poses.shape[1], pred_poses.shape[2], 2)),
+                axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS, COORDINATE_AXIS],
                 metric_name=self.name,
                 video_name=video_result.video_name,
                 model_name=model_name,
@@ -51,8 +51,8 @@ class VelocityMetric(Metric):
         for frame_idx in range(pred_poses.shape[0] - 1):
             current_frame_poses = pred_poses[frame_idx]
             next_frame_poses = pred_poses[frame_idx + 1]
-
             sorted_next_frame_poses = self._match_person_indices(next_frame_poses, current_frame_poses)
+            sorted_next_frame_poses.data[sorted_next_frame_poses.mask] = np.nan
             pred_poses[frame_idx + 1] = sorted_next_frame_poses
 
         # Mask all (0, 0) keypoints in addition to the existing mask
@@ -63,6 +63,7 @@ class VelocityMetric(Metric):
         timedelta = 1 / fps
 
         velocity = ma.diff(pred_poses, axis=0) / timedelta  # shape: (frames-1, persons, keypoints, 2)
+        velocity.data[velocity.mask] = np.nan
 
         return MetricResult(
             values=velocity,
@@ -70,5 +71,5 @@ class VelocityMetric(Metric):
             metric_name=self.name,
             video_name=video_result.video_name,
             model_name=model_name,
-            unit="pixels/frame",
+            unit="pixels/second",
         )

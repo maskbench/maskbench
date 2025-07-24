@@ -41,8 +41,8 @@ class JerkMetric(Metric):
         if pred_poses.shape[0] <= 3:
             print("Warning: Jerk metric requires at least 4 frames to compute. Returning empty MetricResult.")
             return MetricResult(
-                values=np.nan * np.ones((1, pred_poses.shape[1], pred_poses.shape[2])),
-                axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS],
+                values=np.nan * np.ones((1, pred_poses.shape[1], pred_poses.shape[2], 2)),
+                axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS, COORDINATE_AXIS],
                 metric_name=self.name,
                 video_name=video_result.video_name,
                 model_name=model_name,
@@ -54,6 +54,7 @@ class JerkMetric(Metric):
         timedelta = 1 / fps
         
         jerk = ma.diff(acceleration_result.values, axis=0) / timedelta  # shape: (frames-3, persons, keypoints, 2)
+        jerk.data[jerk.mask] = np.nan
 
         return MetricResult(
             values=jerk,
@@ -61,5 +62,5 @@ class JerkMetric(Metric):
             metric_name=self.name,
             video_name=video_result.video_name,
             model_name=model_name,
-            unit="pixels/frame^3",
+            unit="pixels/second^3",
         )
