@@ -25,6 +25,7 @@ class InferenceTimePlot(Plot):
     def draw(
         self,
         inference_times: Dict[str, Dict[str, float]],
+        add_title: bool = True,
     ) -> Tuple[plt.Figure, str]:
         """
         Draw inference time plot for each model.
@@ -32,6 +33,7 @@ class InferenceTimePlot(Plot):
         Args:
             inference_times: Dictionary mapping:
                     model_name -> video_name -> inference_time
+            add_title: Whether to add the title to the plot (default: True)
                     
         Returns:
             Tuple[plt.Figure, str]: The figure and suggested filename.
@@ -47,7 +49,7 @@ class InferenceTimePlot(Plot):
         
         df = pd.DataFrame(plot_data)
         
-        fig = self._setup_figure()
+        fig = self._setup_figure(add_title=add_title)
         
         # Create the bar plot
         ax = sns.barplot(

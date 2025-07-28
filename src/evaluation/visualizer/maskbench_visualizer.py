@@ -4,7 +4,7 @@ from typing import Dict
 from matplotlib import pyplot as plt
 
 from evaluation.metrics import MetricResult
-from evaluation.plots import KinematicDistributionPlot, CocoKeypointPlot, generate_result_table, InferenceTimePlot
+from evaluation.plots import KinematicDistributionPlot, CocoKeypointPlot, generate_result_table, InferenceTimePlot, AccelerationOverTimePlot
 from checkpointer import Checkpointer
 from evaluation.metrics.metric_result import COORDINATE_AXIS
 from .base_visualizer import Visualizer
@@ -20,26 +20,26 @@ class MaskBenchVisualizer(Visualizer):
 
         if "Velocity" in pose_results.keys():
             velocity_distribution_plot = KinematicDistributionPlot(metric_name="Velocity")
-            fig, filename = velocity_distribution_plot.draw(pose_results)
+            fig, filename = velocity_distribution_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
         if "Acceleration" in pose_results.keys():
             acceleration_distribution_plot = KinematicDistributionPlot(metric_name="Acceleration")
-            fig, filename = acceleration_distribution_plot.draw(pose_results)
+            fig, filename = acceleration_distribution_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
             coco_keypoint_plot = CocoKeypointPlot(metric_name="Acceleration")
-            fig, filename = coco_keypoint_plot.draw(pose_results)
+            fig, filename = coco_keypoint_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
         if "Jerk" in pose_results.keys():
             jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk")
-            fig, filename = jerk_distribution_plot.draw(pose_results)
+            fig, filename = jerk_distribution_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
         if "Euclidean Distance" in pose_results.keys():
             coco_keypoint_plot = CocoKeypointPlot(metric_name="Euclidean Distance")
-            fig, filename = coco_keypoint_plot.draw(pose_results)
+            fig, filename = coco_keypoint_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
         inference_times = self.checkpointer.load_inference_times()

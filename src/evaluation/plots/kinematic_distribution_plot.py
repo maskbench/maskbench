@@ -112,6 +112,7 @@ class KinematicDistributionPlot(Plot):
     def draw(
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
+        add_title: bool = True,
     ) -> Tuple[plt.Figure, str]:
 
         # First pass: compute the magnitude of the kinematic values and average over videos
@@ -140,7 +141,7 @@ class KinematicDistributionPlot(Plot):
         
         if self.unit:
             self.config['xlabel'] = f'{self.metric_name} ({self.unit})'
-        fig = self._setup_figure()
+        fig = self._setup_figure(add_title=add_title)
 
         # Store lines for updating legend later
         lines = []

@@ -32,6 +32,7 @@ class CocoKeypointPlot(Plot):
     def draw(
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
+        add_title: bool = True,
     ) -> Tuple[plt.Figure, str]:
         """
         Draw keypoint plot for the given metric. Assumes that all metric results for all pose estimators have the same number of keypoints.
@@ -39,6 +40,7 @@ class CocoKeypointPlot(Plot):
         Args:
             results: Dictionary mapping:
                     metric_name -> model_name -> video_name -> MetricResult
+            add_title: Whether to add the title to the plot (default: True)
                     
         Returns:
             Tuple[plt.Figure, str]: The figure and suggested filename.
@@ -76,7 +78,7 @@ class CocoKeypointPlot(Plot):
         self.config['style'] = 'grid'
         if unit:
             self.config['ylabel'] = f'{self.metric_name} ({unit})'
-        fig = self._setup_figure()
+        fig = self._setup_figure(add_title=add_title)
         
         sns.barplot(
             data=df,
