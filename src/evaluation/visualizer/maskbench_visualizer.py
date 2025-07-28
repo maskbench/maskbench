@@ -50,8 +50,8 @@ class MaskBenchVisualizer(Visualizer):
             self._save_plot(fig, filename)
 
         pose_results = self.calculate_kinematic_magnitudes(pose_results)
-        table = generate_result_table(pose_results)
-        self._save_table(table, "result_table.txt")
+        table_df = generate_result_table(pose_results)
+        self._save_table(table_df, "result_table.csv")
 
         
     def set_maskanyone_ui_inference_times(self, inference_times: Dict[str, Dict[str, float]]) -> Dict[str, Dict[str, float]]:

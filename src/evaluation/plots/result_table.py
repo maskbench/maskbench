@@ -7,7 +7,7 @@ from evaluation.metrics.metric_result import MetricResult
 from evaluation.utils import aggregate_results_over_all_videos
 
 
-def generate_result_table(metric_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> None:
+def generate_result_table(metric_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> pd.DataFrame:
     aggregated_results = aggregate_results_over_all_videos(metric_results)
 
     first_metric = list(metric_results.keys())[0]
@@ -40,7 +40,7 @@ def generate_result_table(metric_results: Dict[str, Dict[str, Dict[str, MetricRe
         intfmt=","
     )
     print(table)
-    return table
+    return df
     
 
 
