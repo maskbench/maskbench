@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 
 import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -58,9 +59,9 @@ class CocoKeypointPlot(Plot):
             for video_name, metric_result in video_results.items():
                 if self.convert_to_magnitude:
                     metric_result = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
-                avg_video_keypoint_values = metric_result.aggregate([FRAME_AXIS, PERSON_AXIS], method='mean').values
-                model_values.append(avg_video_keypoint_values)
-            median_model_keypoint_values = np.median(np.stack(model_values, axis=0), axis=0)
+                median_video_keypoint_values = metric_result.aggregate([FRAME_AXIS, PERSON_AXIS], method='median').values
+                model_values.append(median_video_keypoint_values)
+            median_model_keypoint_values = ma.median(np.stack(model_values, axis=0), axis=0)
             
             for keypoint_idx, value in enumerate(median_model_keypoint_values):
                 if keypoint_idx not in COCO_KEYPOINT_NAMES.keys():

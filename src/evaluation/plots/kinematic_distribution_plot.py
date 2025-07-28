@@ -117,7 +117,7 @@ class KinematicDistributionPlot(Plot):
         add_title: bool = True,
     ) -> Tuple[plt.Figure, str]:
 
-        # First pass: compute the magnitude of the kinematic values and average over videos
+        # First pass: compute the magnitude of the kinematic values and take median over videos
         pose_estimator_results = results[self.metric_name]
         pose_estimator_medians = {} # store the median for each pose estimator over all videos
         pose_estimator_magnitude_results = {} # store the magnitude results for each pose estimator
@@ -130,7 +130,7 @@ class KinematicDistributionPlot(Plot):
             for video_name, metric_result in video_results.items():
                 magnitude_result = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
 
-                video_magnitudes.append(magnitude_result.aggregate_all())
+                video_magnitudes.append(magnitude_result.aggregate_all(method='median'))
                 pose_estimator_magnitude_results[pose_estimator_name][video_name] = magnitude_result
 
             pose_estimator_medians[pose_estimator_name] = np.median(video_magnitudes)

@@ -114,12 +114,12 @@ class MetricResult:
             unit=self.unit,
         )
     
-    def aggregate_all(self) -> float:
+    def aggregate_all(self, method: str = 'mean') -> float:
         """
         Get a single scalar value by averaging over all dimensions.
         Useful for getting an overall score for the video.
         """
-        return float(ma.mean(self.values))
+        return self.aggregate(dims=self.axis_names, method=method).values
     
     def get_values_aggregated_to_axis(self, axis_name: str) -> np.ndarray:
         """
