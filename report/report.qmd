@@ -1,27 +1,157 @@
 ---
-title: "Quarto Basics"
+title: "MaskBench - A Comprehensive Benchmark Framework for Video De-Identification"
+date: "2025 08 08"
+author:
+    - name: Tim Riedel
+      affiliation: Hasso Plattner Institute, University of Potsdam, Germany
+    - name: Zainab Zafari
+      affiliation: Hasso Plattner Institute, University of Potsdam, Germany
+    - name: Sharjeel Shaik
+      affiliation: University of Potsdam, Germany
+    - name: Babajide Alamu Owoyele
+      affiliation: Hasso Plattner Institute, University of Potsdam, Germany
+    - name: Wim Pouw
+      affiliation: Tilburg University, Netherlands
+contact:
+    - name: Tim Riedel
+      email: tim.riedel@student.hpi.de
+    - name: Zainab Zafari
+      email: zainab.zafari@student.hpi.de
+    - name: Babajide Alamu Owoyele
+      email: babajide.owoyele@student.hpi.de
+    - name: Wim Pouw
+      email: w.pouw@tilburguniversity.edu
+bibliography: dependencies/refs.bib
+css: dependencies/styles.css
+theme: journal
 format:
-  html:
-    code-fold: true
+    html:
+        toc: true
+        toc-location: left
+        toc-title: "Contents"
+        toc-depth: 3
+        number-sections: true
+        code-fold: true
+        code-tools: true
+# engine: knitr
 jupyter: python3
 ---
 
-For a demonstration of a line plot on a polar axis, see @fig-polar.
+# Abstract / Overview
+(Tim - 6.)
 
-```{python}
-#| label: fig-polar
-#| fig-cap: "A line plot on a polar axis"
 
-import numpy as np
-import matplotlib.pyplot as plt
 
-r = np.arange(0, 2, 0.01)
-theta = 2 * np.pi * r
-fig, ax = plt.subplots(
-  subplot_kw = {'projection': 'polar'} 
-)
-ax.plot(theta, r)
-ax.set_rticks([0.5, 1, 1.5, 2])
-ax.grid(True)
-plt.show()
-```
+# Installation & Usage Instructions
+(Zainab - 3.)
+
+## Setup
+
+## Usage
+
+## Configuration of Experiments
+
+
+
+
+# Introduction
+(Zainab - 5.)
+
+
+
+# Related Work
+(Zainab - 4.)
+
+
+
+# MaskBench Architecture & Implementation
+(Tim - 1.)
+
+Figure of architecture & workflow (Zainab - 2.)
+
+## General Architecture and Workflow
+
+## Inference
+
+## Evaluation
+
+## Visualization
+
+## Rendering
+
+
+
+
+# Datasets
+(Zainab - 1.)
+
+## TED Kid Video
+
+## TED Talks
+
+## Tragic Talkers
+
+
+
+
+# Experiments & Evaluation Metrics
+(Tim - 2.)
+
+## Evaluation Metrics
+
+### Euclidean Distance
+
+### Percentage of Keypoints (PCK)
+
+### Root Mean Square Error (RMSE)
+
+### Velocity
+
+### Acceleration
+
+### Jerk
+
+
+## Experimental Setup
+(Tim - 3.)
+
+### TED Kid Video
+
+### TED Talks
+
+### Tragic Talkers
+
+### Inference on Raw vs. Masked Videos
+
+
+
+
+# Results
+(Tim - 4.)
+
+## TED Kid Video
+
+## TED Talks
+
+## Tragic Talkers
+
+## Inference on Raw vs. Masked Videos
+
+
+
+
+# Future Work & Limitations
+(Zainab - 4.)
+(Tim - 5.)
+
+
+
+
+# Conclusion
+(Tim - 7.)
+
+
+# References
+::: {#refs}
+:::
+
