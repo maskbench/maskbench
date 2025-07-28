@@ -35,7 +35,7 @@ def main():
     execute_evaluation = config.get("execute_evaluation", True)
     execute_rendering = config.get("execute_rendering", True)
     
-    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation=execute_evaluation, execute_rendering=execute_rendering)
+    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering)
     print("Done")
 
 

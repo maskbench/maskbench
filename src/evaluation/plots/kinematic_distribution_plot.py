@@ -81,6 +81,8 @@ class KinematicDistributionPlot(Plot):
                 - List[str]: Human-readable labels for the bins
         """
         diff = self.kinematic_limit / self.n_bins
+        # if n_bins is 10, then we want to have 11 bins, for the last bin which contains all values greater than the kinematic limit
+        # the last value in np.linspace is excluded (that's why we add 2 to n_bins)
         bin_edges = np.linspace(0, self.kinematic_limit + diff, self.n_bins + 2).astype(int)
         
         bin_labels = []
@@ -117,7 +119,7 @@ class KinematicDistributionPlot(Plot):
 
         # First pass: compute the magnitude of the kinematic values and average over videos
         pose_estimator_results = results[self.metric_name]
-        pose_estimator_medians = {} # store the average for each pose estimator over all videos
+        pose_estimator_medians = {} # store the median for each pose estimator over all videos
         pose_estimator_magnitude_results = {} # store the magnitude results for each pose estimator
 
         for pose_estimator_name, video_results in pose_estimator_results.items():

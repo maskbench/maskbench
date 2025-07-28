@@ -4,7 +4,7 @@ from typing import Dict
 from matplotlib import pyplot as plt
 
 from evaluation.metrics import MetricResult
-from evaluation.plots import KinematicDistributionPlot, CocoKeypointPlot, generate_result_table, InferenceTimePlot, AccelerationOverTimePlot
+from evaluation.plots import KinematicDistributionPlot, CocoKeypointPlot, generate_result_table, InferenceTimePlot
 from checkpointer import Checkpointer
 from evaluation.metrics.metric_result import COORDINATE_AXIS
 from .base_visualizer import Visualizer
