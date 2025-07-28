@@ -4,6 +4,7 @@ from typing import Dict, Optional, Tuple
 import matplotlib.pyplot as plt
 import seaborn as sns
 from evaluation.metrics.metric_result import MetricResult
+from utils import get_color_palette
 
 
 class Plot(ABC):
@@ -34,10 +35,10 @@ class Plot(ABC):
             self.config['dpi'] = 300
         if 'style' not in self.config:
             self.config['style'] = 'white'
-        self.config['palette'] = "tab10"
+        self.config['palette'] = get_color_palette()
         
         sns.set_style(self.config['style'])
-        sns.color_palette(self.config['palette'])
+        sns.set_palette(self.config['palette'])
         sns.set_context("paper")
         
     @abstractmethod

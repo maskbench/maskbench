@@ -45,6 +45,7 @@ class MaskBenchVisualizer(Visualizer):
         inference_times = self.checkpointer.load_inference_times()
         if inference_times:
             inference_times = self.set_maskanyone_ui_inference_times(inference_times)
+            inference_times = self.sort_inference_times_pose_estimator_order(inference_times, pose_results)
             inference_time_plot = InferenceTimePlot()
             fig, filename = inference_time_plot.draw(inference_times)
             self._save_plot(fig, filename)
@@ -85,4 +86,26 @@ class MaskBenchVisualizer(Visualizer):
                         magnitude_values = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
                         pose_results[metric_name][model_name][video_name] = magnitude_values
         return pose_results
+
+    def sort_inference_times_pose_estimator_order(self, inference_times: Dict[str, Dict[str, float]], pose_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, float]]:
+        """
+        Sort the inference times according to the order in pose_results.
+        
+        Args:
+            inference_times: Dictionary containing inference times for each pose estimator
+            pose_results: Dictionary containing pose estimation results, used to determine the order
+            
+        Returns:
+            Dictionary containing sorted inference times
+        """
+        # Get the list of pose estimators from any metric in pose_results
+        first_metric = next(iter(pose_results))
+        pose_estimator_order = list(pose_results[first_metric].keys())
+        
+        sorted_inference_times = {}
+        for pose_estimator in pose_estimator_order:
+            if pose_estimator in inference_times:
+                sorted_inference_times[pose_estimator] = inference_times[pose_estimator]
+        return sorted_inference_times
+
         

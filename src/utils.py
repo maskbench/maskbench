@@ -6,6 +6,18 @@ import json
 from typing import List
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
 
+def get_color_palette() -> list:
+    return [
+        '#4477AA', # blue
+        '#66CCEE', # cyan
+        '#8a8a8a', # grey
+        '#228833', # green
+        '#CCBB44', # yellow
+        '#EE6677', # red
+        '#AA4499', # purple
+        '#DDAA33', # yellow
+    ]
+
 def convert_keypoints_to_coco_format(frame_results: List[FramePoseResult], model_to_coco_mapping: list) -> List[FramePoseResult]:
     for frame in frame_results: 
         if frame and frame.persons: # ensuring they are not None
