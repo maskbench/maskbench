@@ -19,7 +19,7 @@ class CocoKeypointPlot(Plot):
             config={
                 'title': f'Coco Keypoint Plot',
                 'xlabel': 'Keypoint',
-                'ylabel': 'Average Value',
+                'ylabel': 'Median Value',
                 'style': 'white',
                 'figsize': (18, 6),
             }
@@ -60,16 +60,16 @@ class CocoKeypointPlot(Plot):
                     metric_result = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
                 avg_video_keypoint_values = metric_result.aggregate([FRAME_AXIS, PERSON_AXIS], method='mean').values
                 model_values.append(avg_video_keypoint_values)
-            avg_model_keypoint_values = np.mean(np.stack(model_values, axis=0), axis=0)
+            median_model_keypoint_values = np.median(np.stack(model_values, axis=0), axis=0)
             
-            for keypoint_idx, value in enumerate(avg_model_keypoint_values):
+            for keypoint_idx, value in enumerate(median_model_keypoint_values):
                 if keypoint_idx not in COCO_KEYPOINT_NAMES.keys():
                     continue
 
                 plot_data.append({
                     'Model': model_name,
                     'Keypoint': f"{COCO_KEYPOINT_NAMES[keypoint_idx]} ({keypoint_idx})",
-                    'Average Value': value
+                    'Median Value': value
                 })
         
         df = pd.DataFrame(plot_data)
@@ -77,19 +77,21 @@ class CocoKeypointPlot(Plot):
         self.config['title'] = f'{self.metric_name} by Keypoint and Model'
         self.config['style'] = 'grid'
         if unit:
-            self.config['ylabel'] = f'{self.metric_name} ({unit})'
+            self.config['ylabel'] = f'Median {self.metric_name} ({unit})'
         fig = self._setup_figure(add_title=add_title)
         
         sns.barplot(
             data=df,
             x='Keypoint',
-            y='Average Value',
+            y='Median Value',
             hue='Model',
         )
 
         plt.xticks(rotation=45, ha='right')
+
+        filename = f'keypoint_plot_{self.metric_name.lower().replace(" ", "_")}'
         
-        return (fig, f'keypoint_plot_{self.metric_name}')
+        return (fig, filename)
             
 
 
