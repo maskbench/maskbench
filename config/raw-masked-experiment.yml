@@ -8,7 +8,7 @@ dataset:
   # dataset_folder: /datasets/raw-masked-experiment/videos/blurring
   # dataset_folder: /datasets/raw-masked-experiment/videos/pixelation
   # dataset_folder: /datasets/raw-masked-experiment/videos/contours
-  # dataset_folder: /datasets/raw-masked-experiment/videos/inpainting
+  # dataset_folder: /datasets/raw-masked-experiment/videos/solid_fill
 
 
 pose_estimators:
@@ -67,7 +67,7 @@ pose_estimators:
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/blurring
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/pixelation
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/contours
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/inpainting
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/solid_fill
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
@@ -81,7 +81,7 @@ pose_estimators:
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/blurring
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/pixelation
       # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/contours
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/inpainting
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/solid_fill
       overlay_strategy: openpose_body25b
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
