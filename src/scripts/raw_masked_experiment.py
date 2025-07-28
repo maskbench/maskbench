@@ -5,22 +5,36 @@ from evaluation.evaluator import Evaluator
 from evaluation.metrics import PCKMetric, RMSEMetric
 from tabulate import tabulate
 from typing import Dict, List, Any
+import pandas as pd
 
-def _create_metric_table(
+STRATEGIES = ["Blurring", "Pixelation", "Contours", "Solid Fill"]
+POSE_ESTIMATOR_ORDER = [
+    "YoloPose",
+    "MediaPipePose",
+    "OpenPose",
+    "MaskAnyoneAPI-MediaPipe",
+    "MaskAnyoneAPI-OpenPose",
+    "MaskAnyoneUI-MediaPipe",
+    "MaskAnyoneUI-OpenPose"
+]
+
+def _create_metric_dataframe(
     results: Dict[str, Dict[str, float]],
-) -> str:
-    strategies = ["Blurring", "Pixelation", "Contours", "Inpainting"]
-    table_data = []
-    for pose_estimator, pose_estimator_results in results.items():
-        row_values = [pose_estimator_results.get(strategy, "N/A") for strategy in strategies]
-        # Calculate average, skipping "N/A" values
-        numeric_values = [v for v in row_values if v != "N/A"]
-        avg = sum(numeric_values) / len(numeric_values) if numeric_values else "N/A"
-        row = [pose_estimator] + row_values + [avg]
-        table_data.append(row)
+) -> pd.DataFrame:
+    df = pd.DataFrame(index=POSE_ESTIMATOR_ORDER, columns=STRATEGIES)
+    df.index.name = "Pose Estimator"
     
-    headers = ["Pose Estimator"] + strategies + ["Average over all strategies"]
-    return tabulate(table_data, headers=headers, tablefmt="grid", floatfmt=".2f")
+    for pose_estimator in POSE_ESTIMATOR_ORDER:
+        if pose_estimator in results:
+            for strategy in STRATEGIES:
+                df.loc[pose_estimator, strategy] = results[pose_estimator].get(strategy, "N/A")
+    
+    # Calculate average, handling "N/A" values
+    df = df.replace("N/A", pd.NA)  # Convert string "N/A" to pandas NA
+    df["Average"] = df[STRATEGIES].apply(lambda x: x.mean() if not x.isna().all() else "N/A", axis=1)
+    df = df.fillna("N/A")  # Convert back NA to "N/A" string
+    
+    return df
 
 def _evaluate_strategy(
     evaluator: Evaluator,
@@ -43,14 +57,14 @@ def run_raw_masked_experiment():
         - RawMaskedExperiment-Blurring
         - RawMaskedExperiment-Pixelation
         - RawMaskedExperiment-Contours
-        - RawMaskedExperiment-Inpainting
+        - RawMaskedExperiment-SolidFill
     The experiment then runs the following:
         - For each pose estimator, it assumes that the pose results for the raw videos are the "ground truth" pose results.
         - For each pose estimator, it then evaluates the RMSE and PCK metrics for each of the 5 hiding strategies compared to the "ground truth" pose resultsfrom the raw videos.
         - It then prints the results in a table.
     """
     dataset_name = "RawMaskedExperiment"
-    strategies = ["Raw", "Blurring", "Pixelation", "Contours", "Inpainting"]
+    strategies = ["Raw"] + STRATEGIES
     
     checkpointers = {strategy: Checkpointer(dataset_name, f"{dataset_name}-{strategy}") for strategy in strategies}
     pose_results = {strategy: checkpointer.load_pose_results() for strategy, checkpointer in checkpointers.items()}
@@ -79,16 +93,12 @@ def run_raw_masked_experiment():
         
         print()
 
-    rmse_table = _create_metric_table(rmse_results)
-    with open("/output/raw_masked_rmse_table.txt", "w") as f:
-        f.write("RMSE Results:\n")
-        f.write(rmse_table)
+    rmse_df = _create_metric_dataframe(rmse_results)
+    rmse_df.to_csv("/output/raw_masked_rmse_results.csv", float_format="%.2f")
     print("\nRMSE Results:")
-    print(rmse_table)
+    print(tabulate(rmse_df, headers="keys", tablefmt="grid", floatfmt=".2f", showindex=True))
 
-    pck_table = _create_metric_table(pck_results)
-    with open("/output/raw_masked_pck_table.txt", "w") as f:
-        f.write("PCK Results:\n")
-        f.write(pck_table)
+    pck_df = _create_metric_dataframe(pck_results)
+    pck_df.to_csv("/output/raw_masked_pck_results.csv", float_format="%.2f")
     print("\nPCK Results:")
-    print(pck_table)
+    print(tabulate(pck_df, headers="keys", tablefmt="grid", floatfmt=".2f", showindex=True))
