@@ -7,10 +7,10 @@ dataset:
   module: datasets.ted_dataset
   class: TedDataset
   dataset_folder: /datasets/TED-kid/videos/raw
-  # dataset_folder: /datasets/raw-masked-experiment/videos/blurring
-  # dataset_folder: /datasets/raw-masked-experiment/videos/pixelation
-  # dataset_folder: /datasets/raw-masked-experiment/videos/contours
-  # dataset_folder: /datasets/raw-masked-experiment/videos/inpainting
+  # dataset_folder: /datasets/TED-kid/videos/blurring
+  # dataset_folder: /datasets/TED-kid/videos/pixelation
+  # dataset_folder: /datasets/TED-kid/videos/contours
+  # dataset_folder: /datasets/TED-kid/videos/inpainting
 
 
 pose_estimators:
@@ -66,10 +66,10 @@ pose_estimators:
     class: MaskAnyoneUiPoseEstimator  
     config:
       dataset_folder_path: /datasets/TED-kid/maskanyone_ui_mediapipe/raw
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/blurring
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/pixelation
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/contours
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/inpainting
+      # dataset_folder_path: /datasets/TED-kid/maskanyone_ui_mediapipe/blurring
+      # dataset_folder_path: /datasets/TED-kid/maskanyone_ui_mediapipe/pixelation
+      # dataset_folder_path: /datasets/TED-kid/maskanyone_ui_mediapipe/contours
+      # dataset_folder_path: /datasets/TED-kid/maskanyone_ui_mediapipe/inpainting
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
@@ -80,10 +80,10 @@ pose_estimators:
     class: MaskAnyoneUiPoseEstimator  
     config:
       dataset_folder_path: /datasets/TED-kid/maskanyone_ui_openpose/raw
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/blurring
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/pixelation
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/contours
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/inpainting
+      # dataset_folder_path: /datasets/TED-kid/maskanyone_ui_openpose/blurring
+      # dataset_folder_path: /datasets/TED-kid/maskanyone_ui_openpose/pixelation
+      # dataset_folder_path: /datasets/TED-kid/maskanyone_ui_openpose/contours
+      # dataset_folder_path: /datasets/TED-kid/maskanyone_ui_openpose/inpainting
       overlay_strategy: openpose_body25b
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
