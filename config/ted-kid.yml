@@ -1,10 +1,15 @@
-checkpoint_name: None # comment out or set to "None"to run inference from scratch
+checkpoint_name: None # comment out or set to "None" to run inference from scratch
 
 dataset:
-  name: TedTalks
+  name: TED-kid
   module: datasets.ted_dataset
   class: TedDataset
-  dataset_folder: /datasets/ted-talks/videos
+  dataset_folder: /datasets/TED-kid/videos/raw
+  # dataset_folder: /datasets/raw-masked-experiment/videos/blurring
+  # dataset_folder: /datasets/raw-masked-experiment/videos/pixelation
+  # dataset_folder: /datasets/raw-masked-experiment/videos/contours
+  # dataset_folder: /datasets/raw-masked-experiment/videos/inpainting
+
 
 pose_estimators:
   - name: YoloPose
@@ -14,7 +19,7 @@ pose_estimators:
     config:
       weights: yolo11l-pose.pt
       save_keypoints_in_coco_format: true
-      confidence_threshold: 0.3
+      confidence_threshold: 0.4
 
   - name: MediaPipePose
     enabled: true
@@ -24,7 +29,7 @@ pose_estimators:
       weights: pose_landmarker_heavy.task
       max_num_poses: 3
       save_keypoints_in_coco_format: true
-      confidence_threshold: 0.3
+      confidence_threshold: 0.4
 
   - name: OpenPose
     enabled: true
@@ -32,7 +37,7 @@ pose_estimators:
     class: OpenPoseEstimator
     config:
       save_keypoints_in_coco_format: true
-      overlay_strategy: BODY_25
+      overlay_strategy: BODY_25B
       confidence_threshold: 0.15
   
   - name: MaskAnyoneAPI-MediaPipe
@@ -49,7 +54,7 @@ pose_estimators:
     module: models.maskanyone_api_pose_estimator
     class: MaskAnyoneApiPoseEstimator
     config:
-      overlay_strategy: openpose # uses BODY_25 model
+      overlay_strategy: openpose_body25b
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
 
@@ -58,7 +63,11 @@ pose_estimators:
     module: models.maskanyone_ui_pose_estimator
     class: MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/ted-talks/maskanyone_ui_mediapipe
+      dataset_folder_path: /datasets/TED-kid/maskanyone_ui_mediapipe/raw
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/blurring
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/pixelation
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/contours
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/inpainting
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
@@ -68,11 +77,15 @@ pose_estimators:
     module: models.maskanyone_ui_pose_estimator
     class: MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/ted-talks/maskanyone_ui_openpose
-      overlay_strategy: openpose # uses BODY_25 model
+      dataset_folder_path: /datasets/TED-kid/maskanyone_ui_openpose/raw
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/blurring
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/pixelation
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/contours
+      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/inpainting
+      overlay_strategy: openpose_body25b
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
-
+  
 metrics:
   - name: Velocity
     module: evaluation.metrics.velocity

@@ -34,9 +34,10 @@ class Plot(ABC):
             self.config['dpi'] = 300
         if 'style' not in self.config:
             self.config['style'] = 'white'
+        self.config['palette'] = "tab10"
         
         sns.set_style(self.config['style'])
-        sns.color_palette("tab10")
+        sns.color_palette(self.config['palette'])
         sns.set_context("paper")
         
     @abstractmethod

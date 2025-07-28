@@ -90,12 +90,18 @@ metrics:
   - name: Velocity
     module: evaluation.metrics.velocity
     class: VelocityMetric
+    config:
+      time_unit: frame
 
   - name: Acceleration
     module: evaluation.metrics.acceleration
     class: AccelerationMetric
+    config:
+      time_unit: frame
   
   - name: Jerk
     module: evaluation.metrics.jerk
     class: JerkMetric
+    config:
+      time_unit: frame
 

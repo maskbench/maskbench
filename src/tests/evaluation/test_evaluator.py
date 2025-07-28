@@ -113,11 +113,11 @@ class TestEvaluator(unittest.TestCase):
         
         # Check specific values
         np.testing.assert_array_almost_equal(
-            video1_result.values[0, 0],  # Frame 0, Person 0
+            video1_result.values[0, 0].data,  # Frame 0, Person 0
             [1.0, 2.0, 3.0]  # First person's x-coordinates
         )
         np.testing.assert_array_almost_equal(
-            video1_result.values[1, 2],  # Frame 1, Person 2
+            video1_result.values[1, 2].data,  # Frame 1, Person 2
             [13.0, 14.0, 15.0]  # Third person's x-coordinates
         )
         
@@ -127,7 +127,7 @@ class TestEvaluator(unittest.TestCase):
         
         # Check specific values
         np.testing.assert_array_almost_equal(
-            video2_result.values[0, 0],  # Frame 0, Person 0
+            video2_result.values[0, 0].data,  # Frame 0, Person 0
             [16.0, 17.0, 18.0]  # First person's x-coordinates
         )
     

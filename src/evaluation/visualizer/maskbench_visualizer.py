@@ -4,8 +4,9 @@ from typing import Dict
 from matplotlib import pyplot as plt
 
 from evaluation.metrics import MetricResult
-from evaluation.plots import KinematicDistributionPlot, CocoKeypointPlot, generate_result_table
+from evaluation.plots import KinematicDistributionPlot, CocoKeypointPlot, generate_result_table, InferenceTimePlot
 from checkpointer import Checkpointer
+from evaluation.metrics.metric_result import COORDINATE_AXIS
 from .base_visualizer import Visualizer
 
 
@@ -18,24 +19,70 @@ class MaskBenchVisualizer(Visualizer):
         os.makedirs(self.plots_dir, exist_ok=True)
 
         if "Velocity" in pose_results.keys():
-            velocity_distribution_plot = KinematicDistributionPlot(metric_name="Velocity", kinematic_limit=500)
+            velocity_distribution_plot = KinematicDistributionPlot(metric_name="Velocity")
             fig, filename = velocity_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
         if "Acceleration" in pose_results.keys():
-            acceleration_distribution_plot = KinematicDistributionPlot(metric_name="Acceleration", kinematic_limit=3000)
+            acceleration_distribution_plot = KinematicDistributionPlot(metric_name="Acceleration")
             fig, filename = acceleration_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
+            coco_keypoint_plot = CocoKeypointPlot(metric_name="Acceleration")
+            fig, filename = coco_keypoint_plot.draw(pose_results)
+            self._save_plot(fig, filename)
+
         if "Jerk" in pose_results.keys():
-            jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk", kinematic_limit=30000)
+            jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk")
             fig, filename = jerk_distribution_plot.draw(pose_results)
             self._save_plot(fig, filename)
 
-        if "Euclidean Distance" in pose_results.keys() and "Acceleration" in pose_results.keys():
-            coco_keypoint_plot = CocoKeypointPlot(metric_names=['Euclidean Distance', 'Acceleration'])
-            figures_and_names = coco_keypoint_plot.draw(pose_results)
-            for fig, filename in figures_and_names:
-                self._save_plot(fig, filename)
+        if "Euclidean Distance" in pose_results.keys():
+            coco_keypoint_plot = CocoKeypointPlot(metric_name="Euclidean Distance")
+            fig, filename = coco_keypoint_plot.draw(pose_results)
+            self._save_plot(fig, filename)
 
-        generate_result_table(pose_results)
+        inference_times = self.checkpointer.load_inference_times()
+        if inference_times:
+            inference_times = self.set_maskanyone_ui_inference_times(inference_times)
+            inference_time_plot = InferenceTimePlot()
+            fig, filename = inference_time_plot.draw(inference_times)
+            self._save_plot(fig, filename)
+
+        pose_results = self.calculate_kinematic_magnitudes(pose_results)
+        table = generate_result_table(pose_results)
+        self._save_table(table, "result_table.txt")
+
+        
+    def set_maskanyone_ui_inference_times(self, inference_times: Dict[str, Dict[str, float]]) -> Dict[str, Dict[str, float]]:
+        """
+        Set the inference times for MaskAnyoneUI to be equal to the corresponding MaskAnyoneAPI models.
+        """
+        # Create a copy to avoid modifying the original
+        mapped_times = inference_times.copy()
+        
+        # Define the mapping pairs
+        ui_to_api_mapping = {
+            'MaskAnyoneUI-MediaPipe': 'MaskAnyoneAPI-MediaPipe',
+            'MaskAnyoneUI-OpenPose': 'MaskAnyoneAPI-OpenPose'
+        }
+        
+        # For each UI model, set its times to the corresponding API model
+        for ui_model, api_model in ui_to_api_mapping.items():
+            if ui_model in inference_times and api_model in inference_times:
+                mapped_times[ui_model] = mapped_times[api_model].copy()
+                    
+        return mapped_times
+
+    def calculate_kinematic_magnitudes(self, pose_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, Dict[str, MetricResult]]]:
+        """
+        Calculate the magnitude of the kinematic metrics.
+        """
+        for metric_name in ["Velocity", "Acceleration", "Jerk"]:
+            if metric_name in pose_results.keys():
+                for model_name, video_results in pose_results[metric_name].items():
+                    for video_name, metric_result in video_results.items():
+                        magnitude_values = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
+                        pose_results[metric_name][model_name][video_name] = magnitude_values
+        return pose_results
+        
