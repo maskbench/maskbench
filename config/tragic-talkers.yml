@@ -93,12 +93,6 @@ metrics:
       normalize_by: bbox
       threshold: 0.2
 
-  - name: Euclidean Distance
-    module: evaluation.metrics.euclidean_distance
-    class: EuclideanDistanceMetric
-    config:
-      normalize_by: bbox
-
   - name: Velocity
     module: evaluation.metrics.velocity
     class: VelocityMetric

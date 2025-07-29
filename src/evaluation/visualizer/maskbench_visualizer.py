@@ -37,11 +37,6 @@ class MaskBenchVisualizer(Visualizer):
             fig, filename = jerk_distribution_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
-        if "Euclidean Distance" in pose_results.keys():
-            coco_keypoint_plot = CocoKeypointPlot(metric_name="Euclidean Distance")
-            fig, filename = coco_keypoint_plot.draw(pose_results, add_title=False)
-            self._save_plot(fig, filename)
-
         inference_times = self.checkpointer.load_inference_times()
         if inference_times:
             inference_times = self.set_maskanyone_ui_inference_times(inference_times)
