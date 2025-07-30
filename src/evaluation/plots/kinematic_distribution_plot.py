@@ -80,14 +80,15 @@ class KinematicDistributionPlot(Plot):
                 - np.ndarray: Bin edges for histogram computation
                 - List[str]: Human-readable labels for the bins
         """
-        bin_edges = np.linspace(0, self.kinematic_limit, self.n_bins + 1).astype(int)
+        diff = self.kinematic_limit / self.n_bins
+        # if n_bins is 10, then we want to have 11 bins, for the last bin which contains all values greater than the kinematic limit
+        # the last value in np.linspace is excluded (that's why we add 2 to n_bins)
+        bin_edges = np.linspace(0, self.kinematic_limit + diff, self.n_bins + 2).astype(int)
         
         bin_labels = []
         for i in range(len(bin_edges) - 1):
             if i == len(bin_edges) - 2:
                 bin_labels.append(f'> {bin_edges[i]}')
-            elif i == 0:
-                bin_labels.append(f'< {bin_edges[i+1]}')
             else:
                 bin_labels.append(f'[{bin_edges[i]},{bin_edges[i+1]}]')
                 
@@ -113,11 +114,12 @@ class KinematicDistributionPlot(Plot):
     def draw(
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
+        add_title: bool = True,
     ) -> Tuple[plt.Figure, str]:
 
-        # First pass: compute the magnitude of the kinematic values and average over videos
+        # First pass: compute the magnitude of the kinematic values and take median over videos
         pose_estimator_results = results[self.metric_name]
-        pose_estimator_averages = {} # store the average for each pose estimator over all videos
+        pose_estimator_medians = {} # store the median for each pose estimator over all videos
         pose_estimator_magnitude_results = {} # store the magnitude results for each pose estimator
 
         for pose_estimator_name, video_results in pose_estimator_results.items():
@@ -128,20 +130,20 @@ class KinematicDistributionPlot(Plot):
             for video_name, metric_result in video_results.items():
                 magnitude_result = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
 
-                video_magnitudes.append(magnitude_result.aggregate_all())
+                video_magnitudes.append(magnitude_result.aggregate_all(method='median'))
                 pose_estimator_magnitude_results[pose_estimator_name][video_name] = magnitude_result
 
-            pose_estimator_averages[pose_estimator_name] = np.mean(video_magnitudes)
+            pose_estimator_medians[pose_estimator_name] = np.median(video_magnitudes)
 
         if self.kinematic_limit is None:
             # Calculate the maximum average magnitude of all pose estimators to set the bounds of the plot
             # This maximum value is increased by 20%
-            raw_limit = max(pose_estimator_averages.values()) * 1.20
+            raw_limit = max(pose_estimator_medians.values()) * 1.20
             self.kinematic_limit = self._round_to_nearest_magnitude(raw_limit)
         
         if self.unit:
             self.config['xlabel'] = f'{self.metric_name} ({self.unit})'
-        fig = self._setup_figure()
+        fig = self._setup_figure(add_title=add_title)
 
         # Store lines for updating legend later
         lines = []

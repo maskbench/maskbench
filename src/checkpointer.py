@@ -121,7 +121,7 @@ class Checkpointer:
         config_file_name = os.path.basename(config_file_path)
         shutil.copy(config_file_path, os.path.join(self.checkpoint_dir, config_file_name))
 
-    def load_pose_results(self) -> Dict[str, Dict[str, VideoPoseResult]]:
+    def load_pose_results(self, pose_estimator_names: list[str]) -> Dict[str, Dict[str, VideoPoseResult]]:
         """
         Load all pose results from the checkpoint.
         
@@ -134,7 +134,10 @@ class Checkpointer:
             
         results = {}
         
-        for estimator_name in os.listdir(self.poses_dir):
+        for estimator_name in pose_estimator_names:
+            if estimator_name not in os.listdir(self.poses_dir):
+                raise ValueError(f"No pose results found for estimator {estimator_name}' in checkpoint {self.checkpoint_dir}")
+            
             estimator_dir = os.path.join(self.poses_dir, estimator_name)
             results[estimator_name] = {}
             

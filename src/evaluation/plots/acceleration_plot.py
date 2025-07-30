@@ -25,6 +25,7 @@ class AccelerationOverTimePlot(Plot):
     def draw(
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
+        add_title: bool = True,
     ) -> List[Tuple[plt.Figure, str]]:
         """
         Draw acceleration over time plot for each model.
@@ -32,6 +33,7 @@ class AccelerationOverTimePlot(Plot):
         Args:
             results: Dictionary mapping:
                     metric_name -> model_name -> video_name -> MetricResult
+            add_title: Whether to add the title to the plot (default: True)
                     
         Returns:
             List[Tuple[plt.Figure, str]]: List of tuples containing the figure and suggested filename
@@ -44,9 +46,10 @@ class AccelerationOverTimePlot(Plot):
         
         figures_and_names = []
         for video_name, model_results in video_groupings.items():
-            fig = self._setup_figure()
+            fig = self._setup_figure(add_title=add_title)
             
-            plt.title(f"{self.config['title']} - {video_name}", pad=20)
+            if add_title:
+                plt.title(f"{self.config['title']} - {video_name}", pad=20)
             
             for model_name, metric_result in model_results.items():
                 frame_accel = metric_result.aggregate([PERSON_AXIS, KEYPOINT_AXIS], method='mean')

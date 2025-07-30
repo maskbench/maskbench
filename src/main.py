@@ -27,33 +27,40 @@ def main():
     metrics = load_metrics(metric_specifications)
     print("Available metrics:", [metric.name for metric in metrics])
 
-    checkpoint_name = config.get("checkpoint_name", None)
+    checkpoint_name = config.get("inference_checkpoint_name", None)
     checkpoint_name = checkpoint_name if checkpoint_name != "None" else None
     checkpointer = Checkpointer(dataset.name, checkpoint_name)
     checkpointer.save_config(config_file_path)
+
+    execute_evaluation = config.get("execute_evaluation", True)
+    execute_rendering = config.get("execute_rendering", True)
     
-    run(dataset, pose_estimators, metrics, checkpointer)
+    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering)
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer):
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool):
     inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer)
     gt_pose_results = dataset.get_gt_pose_results()
     pose_results = inference_engine.estimate_pose_keypoints()
     
-    evaluator = Evaluator(metrics=metrics)
-    metric_results = evaluator.evaluate(pose_results, gt_pose_results)
+    if execute_evaluation:
+        print("Executing evaluation.")
+        evaluator = Evaluator(metrics=metrics)
+        metric_results = evaluator.evaluate(pose_results, gt_pose_results)
 
-    visualizer = MaskBenchVisualizer(checkpointer)
-    visualizer.generate_all_plots(metric_results)
+        visualizer = MaskBenchVisualizer(checkpointer)
+        visualizer.generate_all_plots(metric_results)
 
-    estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
-    if gt_pose_results and dataset.get_gt_keypoint_pairs() is not None:
-        pose_results["GroundTruth"] = gt_pose_results
-        estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
+    if execute_rendering:
+        print("Executing rendering.")
+        estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
+        if gt_pose_results and dataset.get_gt_keypoint_pairs() is not None:
+            pose_results["GroundTruth"] = gt_pose_results
+            estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
 
-    pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer)
-    pose_renderer.render_all_videos(pose_results)
+        pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer)
+        pose_renderer.render_all_videos(pose_results)
 
 
 def load_config() -> dict:

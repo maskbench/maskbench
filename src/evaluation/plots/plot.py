@@ -4,6 +4,7 @@ from typing import Dict, Optional, Tuple
 import matplotlib.pyplot as plt
 import seaborn as sns
 from evaluation.metrics.metric_result import MetricResult
+from utils import get_color_palette
 
 
 class Plot(ABC):
@@ -34,16 +35,17 @@ class Plot(ABC):
             self.config['dpi'] = 300
         if 'style' not in self.config:
             self.config['style'] = 'white'
-        self.config['palette'] = "tab10"
+        self.config['palette'] = get_color_palette()
         
         sns.set_style(self.config['style'])
-        sns.color_palette(self.config['palette'])
+        sns.set_palette(self.config['palette'])
         sns.set_context("paper")
         
     @abstractmethod
     def draw(
         self,
         results: Dict[str, Dict[str, Dict[str, MetricResult]]],
+        add_title: bool = True,
     ) -> Tuple[plt.Figure, str]:
         """
         Draw the plot using the provided results.
@@ -51,6 +53,7 @@ class Plot(ABC):
         Args:
             results: Dictionary mapping:
                     metric_name -> model_name -> video_name -> MetricResult
+            add_title: Whether to add the title to the plot (default: True)
             
         Returns:
             Tuple containing:
@@ -59,8 +62,13 @@ class Plot(ABC):
         """
         pass
     
-    def _setup_figure(self) -> plt.Figure:
-        """Set up the figure with standard configuration."""
+    def _setup_figure(self, add_title: bool = True) -> plt.Figure:
+        """
+        Set up the figure with standard configuration.
+        
+        Args:
+            add_title: Whether to add the title to the plot (default: True)
+        """
         fig = plt.figure(figsize=self.config['figsize'], dpi=self.config['dpi'])
         plt.tight_layout()
 
@@ -71,7 +79,7 @@ class Plot(ABC):
         plt.gca().spines['bottom'].set_visible(False)
 
         
-        if 'title' in self.config:
+        if add_title and 'title' in self.config:
             plt.title(self.config['title'])
         if 'xlabel' in self.config:
             plt.xlabel(self.config['xlabel'], labelpad=10)

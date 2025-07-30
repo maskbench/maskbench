@@ -43,12 +43,21 @@ def aggregate_results_over_all_videos(metric_results: Dict[str, Dict[str, Dict[s
     aggregated_results = {}
     for metric_name, pose_estimator_results in metric_results.items():
         aggregated_results[metric_name] = {}
+
+        use_mean = any(substr in metric_name.lower() for substr in ['pck'])
         
         for pose_estimator_name, video_results in pose_estimator_results.items():
             aggregated_video_results = []
             for video_name, result in video_results.items():
-                aggregated_video_results.append(result.aggregate_all())
-            aggregated_results[metric_name][pose_estimator_name] = np.round(np.mean(aggregated_video_results), decimals=2)
+                if use_mean:
+                    aggregated_video_results.append(result.aggregate_all(method='mean'))
+                else:
+                    aggregated_video_results.append(result.aggregate_all(method='median'))
+
+            if use_mean:
+                aggregated_results[metric_name][pose_estimator_name] = np.round(np.mean(aggregated_video_results), decimals=2)
+            else:
+                aggregated_results[metric_name][pose_estimator_name] = np.round(np.median(aggregated_video_results), decimals=2)
 
     return aggregated_results
 

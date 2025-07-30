@@ -14,7 +14,7 @@ class InferenceEngine:
         results = {}
         if self.checkpointer.load_checkpoint:
             print(f"Loading results from checkpoint {self.checkpointer.checkpoint_dir}")
-            results = self.checkpointer.load_pose_results()
+            results = self.checkpointer.load_pose_results(pose_estimator_names=list(map(lambda x: x.name, self.pose_estimators)))
             
         for estimator in self.pose_estimators:
             if estimator.name not in results:

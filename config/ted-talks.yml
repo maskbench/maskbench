@@ -1,4 +1,6 @@
-checkpoint_name: None # comment out or set to "None"to run inference from scratch
+inference_checkpoint_name: None # comment out or set to "None" to run inference from scratch
+execute_evaluation: true        # set to false to skip calculating evaluation metrics and plotting
+execute_rendering: true         # set to false to skip rendering the videos
 
 dataset:
   name: TedTalks

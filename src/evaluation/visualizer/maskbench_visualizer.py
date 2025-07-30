@@ -20,38 +20,34 @@ class MaskBenchVisualizer(Visualizer):
 
         if "Velocity" in pose_results.keys():
             velocity_distribution_plot = KinematicDistributionPlot(metric_name="Velocity")
-            fig, filename = velocity_distribution_plot.draw(pose_results)
+            fig, filename = velocity_distribution_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
         if "Acceleration" in pose_results.keys():
             acceleration_distribution_plot = KinematicDistributionPlot(metric_name="Acceleration")
-            fig, filename = acceleration_distribution_plot.draw(pose_results)
+            fig, filename = acceleration_distribution_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
             coco_keypoint_plot = CocoKeypointPlot(metric_name="Acceleration")
-            fig, filename = coco_keypoint_plot.draw(pose_results)
+            fig, filename = coco_keypoint_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
         if "Jerk" in pose_results.keys():
             jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk")
-            fig, filename = jerk_distribution_plot.draw(pose_results)
-            self._save_plot(fig, filename)
-
-        if "Euclidean Distance" in pose_results.keys():
-            coco_keypoint_plot = CocoKeypointPlot(metric_name="Euclidean Distance")
-            fig, filename = coco_keypoint_plot.draw(pose_results)
+            fig, filename = jerk_distribution_plot.draw(pose_results, add_title=False)
             self._save_plot(fig, filename)
 
         inference_times = self.checkpointer.load_inference_times()
         if inference_times:
             inference_times = self.set_maskanyone_ui_inference_times(inference_times)
+            inference_times = self.sort_inference_times_pose_estimator_order(inference_times, pose_results)
             inference_time_plot = InferenceTimePlot()
             fig, filename = inference_time_plot.draw(inference_times)
             self._save_plot(fig, filename)
 
         pose_results = self.calculate_kinematic_magnitudes(pose_results)
-        table = generate_result_table(pose_results)
-        self._save_table(table, "result_table.txt")
+        table_df = generate_result_table(pose_results)
+        self._save_table(table_df, "result_table.csv")
 
         
     def set_maskanyone_ui_inference_times(self, inference_times: Dict[str, Dict[str, float]]) -> Dict[str, Dict[str, float]]:
@@ -85,4 +81,26 @@ class MaskBenchVisualizer(Visualizer):
                         magnitude_values = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
                         pose_results[metric_name][model_name][video_name] = magnitude_values
         return pose_results
+
+    def sort_inference_times_pose_estimator_order(self, inference_times: Dict[str, Dict[str, float]], pose_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, float]]:
+        """
+        Sort the inference times according to the order in pose_results.
+        
+        Args:
+            inference_times: Dictionary containing inference times for each pose estimator
+            pose_results: Dictionary containing pose estimation results, used to determine the order
+            
+        Returns:
+            Dictionary containing sorted inference times
+        """
+        # Get the list of pose estimators from any metric in pose_results
+        first_metric = next(iter(pose_results))
+        pose_estimator_order = list(pose_results[first_metric].keys())
+        
+        sorted_inference_times = {}
+        for pose_estimator in pose_estimator_order:
+            if pose_estimator in inference_times:
+                sorted_inference_times[pose_estimator] = inference_times[pose_estimator]
+        return sorted_inference_times
+
         

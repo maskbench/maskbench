@@ -2,21 +2,11 @@ import time
 from typing import Dict, List
 import cv2
 import os
-import json
 
 from inference import FramePoseResult, VideoPoseResult
 from datasets import Dataset, VideoSample
 from checkpointer import Checkpointer
-
-COLORS = [  # these are colors that even color-blind people can see
-    (0, 115, 178),  # blue
-    (204, 102, 0),  # orange
-    (0, 153, 127),  # green-blue
-    (242, 229, 64),  # yellow
-    (89, 178, 229),  # cyan
-    (204, 153, 178),  # pink
-    (229, 153, 0),  # gold
-]
+from utils import get_color_palette
 
 
 class PoseRenderer:
@@ -40,7 +30,8 @@ class PoseRenderer:
             }
             self.render_video(video, video_pose_results)
 
-            print(f"Rendering {video.path} - {time.time() - start_time}")
+            time_taken = time.time() - start_time
+            print(f"Rendered {video.path} - {time_taken:.2f} seconds")
 
     def render_video(
         self,
@@ -72,6 +63,8 @@ class PoseRenderer:
             out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
             video_writers.append((estimator_name, out))
 
+        color_palette = get_color_palette()
+
         frame_number = 0
         while cap.isOpened():  # for every frame
             ret, frame = cap.read()
@@ -80,7 +73,6 @@ class PoseRenderer:
             frame_copies = [
                 frame.copy() for _ in range(len(video_writers))
             ]  # deep copy of frames to avoid overwriting
-            model_idx = 0
 
             for idx, (estimator_name, writer) in enumerate(video_writers):  # for every model
                 try:
@@ -89,12 +81,11 @@ class PoseRenderer:
                         frame_copies[idx],
                         frame_keypoints,
                         self.estimators_point_pairs[estimator_name],
-                        COLORS[model_idx],
+                        self.hex_to_bgr(color_palette[idx]),
                     )  # draw keypoints on frame
                 except IndexError as e:
                     print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
                 writer.write(frame_copies[idx])  # write rendered frame
-                model_idx += 1
 
             frame_number += 1
 
@@ -134,3 +125,10 @@ class PoseRenderer:
                 cv2.line(frame, point1, point2, color=color, thickness=2)
 
         return frame
+
+    def hex_to_bgr(self, hex_color: str) -> tuple[int, int, int]:
+        """Convert hex color to BGR tuple."""
+        hex_color = hex_color.lstrip('#')
+        rgb_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        bgr_color = rgb_color[::-1] # OpenCV uses BGR format, not RGB, therefore we need to reverse the tuple
+        return bgr_color
