@@ -26,6 +26,13 @@ class FramePoseResult:
 
 
 class VideoPoseResult:
+    """
+    This class is the main output of the pose estimation models.
+    It contains the pose estimation results for a video.
+    It is a nested object that contains a `FramePoseResult`object for each frame in the video.
+    Within each frame pose result, there is a list of `PersonPoseResult` objects, one for each person in the frame.
+    Every `PersonPoseResult` contains a list of `PoseKeypoint` objects, one for each keypoint in the model output format, with the x, y coordinates and a confidence score.
+    """
     def __init__(
         self,
         fps: int,
@@ -52,12 +59,16 @@ class VideoPoseResult:
     
     def to_numpy_ma(self) -> np.ndarray:
         """
-        Convert the video pose results to a masked array.
+        Convert the video pose results from a nested object to a masked array.
+        This method is useful for evaluation and plotting in order to work
+        with arrays rather than nested objects.
         
         Returns:
             Masked array with shape (num_frames, max_persons, num_keypoints, 2)
-            where 2 represents x and y coordinates. Values are masked for:
-            - Frames with fewer persons than max_persons
+            where 2 represents x and y coordinates. Max_persons is the maximum number
+            of detected persons in the entire video. Values are masked for frames with 
+            fewer persons than max_persons, which means that these values are not included
+            in computations (e.g. evaluation or plotting).
         """
         if not self.frames:
             print("Warning: No frames in video pose result.")
@@ -96,6 +107,7 @@ class VideoPoseResult:
             "frame_width": self.frame_width,
             "frame_height": self.frame_height,
             "frames": [asdict(frame) for frame in self.frames],
+            "video_name": self.video_name,
         }
 
     def __str__(self):
