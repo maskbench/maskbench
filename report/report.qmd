@@ -37,117 +37,122 @@ format:
 jupyter: python3
 ---
 
-# Abstract / Overview
+# Abstract / Overview {#sec-abstract}
 (Tim - 6.)
 
 
 
-# Installation & Usage Instructions
+# Getting Started {#sec-installation}
 (Zainab - 3.)
 
-## Setup
+## Installation / Setup {#sec-installation-setup}
 
-## Usage
+## Usage {#sec-installation-usage}
 
-## Configuration of Experiments
-
-
+## Configuration of Experiments {#sec-installation-configuration}
 
 
-# Introduction
+
+
+# Introduction {#sec-introduction}
 (Zainab - 5.)
 
 
 
-# Related Work
+# Related Work {#sec-related-work}
 (Zainab - 4.)
 
 
 
-# MaskBench Architecture & Implementation
+# MaskBench Architecture {#sec-architecture}
 (Tim - 1.)
 
 Figure of architecture & workflow (Zainab - 2.)
 
-## General Architecture and Workflow
+## General Architecture and Workflow {#sec-architecture-overview}
 
-## Inference
+## Dataset {#sec-architecture-dataset}
 
-## Evaluation
+## Inference Engine {#sec-architecture-inference}
 
-## Visualization
+## Evaluation {#sec-architecture-evaluation}
 
-## Rendering
-
-
+## Visualization {#sec-architecture-visualization}
 
 
-# Datasets
+## Rendering {#sec-architecture-rendering}
+
+
+
+
+# Datasets {#sec-datasets}
 (Zainab - 1.)
 
-## TED Kid Video
+## TED Kid Video {#sec-datasets-ted-kid}
 
-## TED Talks
+## TED Talks {#sec-datasets-ted-talks}
 
-## Tragic Talkers
-
-
+## Tragic Talkers {#sec-datasets-tragic-talkers}
 
 
-# Experiments & Evaluation Metrics
+
+
+
+# Experiments & Evaluation Metrics {#sec-experiments-metrics}
 (Tim - 2.)
 
-## Evaluation Metrics
+## Evaluation Metrics {#sec-metrics}
 
-### Euclidean Distance
+### Euclidean Distance {#sec-metrics-euclidean-distance}
 
-### Percentage of Keypoints (PCK)
+### Percentage of Keypoints (PCK) {#sec-metrics-pck}
 
-### Root Mean Square Error (RMSE)
+### Root Mean Square Error (RMSE) {#sec-metrics-rmse}
 
-### Velocity
+### Velocity {#sec-metrics-velocity}
 
-### Acceleration
+### Acceleration {#sec-metrics-acceleration}
 
-### Jerk
+### Jerk {#sec-metrics-jerk}
 
 
-## Experimental Setup
+
+## Experimental Setup {#sec-experiments}
 (Tim - 3.)
 
-### TED Kid Video
+### TED Kid Video {#sec-experiments-ted-kid}
 
-### TED Talks
+### TED Talks {#sec-experiments-ted-talks}
 
-### Tragic Talkers
+### Tragic Talkers {#sec-experiments-tragic-talkers}
 
-### Inference on Raw vs. Masked Videos
-
-
+### Inference on Raw vs. Masked Videos {#sec-experiments-inference-raw-masked}
 
 
-# Results
+
+
+# Results {#sec-results}
 (Tim - 4.)
 
-## TED Kid Video
+## TED Kid Video {#sec-results-ted-kid}
 
-## TED Talks
+## TED Kid Video {#sec-results-ted-talks}
 
-## Tragic Talkers
+## Tragic Talkers {#sec-results-tragic-talkers}
 
-## Inference on Raw vs. Masked Videos
-
-
+## Inference on Raw vs. Masked Videos {#sec-results-inference-raw-masked}
 
 
-# Future Work & Limitations
+
+
+# Future Work & Limitations {#sec-future-work}
 (Zainab - 4.)
 (Tim - 5.)
 
 
 
 
-# Conclusion
+# Conclusion {#sec-conclusion}
 (Tim - 7.)
 
 
