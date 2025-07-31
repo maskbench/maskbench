@@ -4,13 +4,23 @@ from typing import Dict, List
 from checkpointer import Checkpointer
 
 class InferenceEngine:
+    """Class responsible for running the pose estimators on the videos and saving the results in the `poses` folder."""
+    
     def __init__(self, dataset: dict, pose_estimators: list, checkpointer: Checkpointer):
         self.dataset = dataset
         self.pose_estimators = pose_estimators
         self.estimator_point_pairs = dict()
         self.checkpointer = checkpointer
 
-    def estimate_pose_keypoints(self) -> Dict[str, Dict[str, List[VideoPoseResult]]]:
+    def estimate_pose_keypoints(self) -> Dict[str, Dict[str, VideoPoseResult]]:
+        """
+        Run the pose estimators on the videos and save the results in the `poses` folder.
+        If a checkpoint name is provided in the configuration file, the inference engine will load the results from the checkpoint and skip the inference for the videos that already have results.
+        This allows to resume the inference process in case it fails or to skip the inference entirely and only evaluate the metrics.
+
+        Returns:
+            Dictionary mapping pose estimator names to video names and `VideoPoseResult` objects.
+        """
         results = {}
         if self.checkpointer.load_checkpoint:
             print(f"Loading results from checkpoint {self.checkpointer.checkpoint_dir}")

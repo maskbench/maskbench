@@ -7,28 +7,22 @@ class Evaluator:
     """Main evaluator class that orchestrates the evaluation process."""
     
     def __init__(self, metrics: List[Metric]):
-        """
-        Initialize the evaluator.
-        
-        Args:
-            metrics: List of instantiated metric objects to use for evaluation
-        """
         self.metrics = {metric.name: metric for metric in metrics}
     
     def evaluate(
         self,
         models_video_pose_results: Dict[str, Dict[str, VideoPoseResult]],
-        gt_video_pose_results: List[VideoPoseResult] = None
-    ) -> Dict[str, Dict[str, MetricResult]]:
+        gt_video_pose_results: Dict[str, VideoPoseResult] = None
+    ) -> Dict[str, Dict[str, Dict[str, MetricResult]]]:
         """
         Run evaluation for all metrics on all models and videos.
         
         Args:
-            models_video_pose_results: Dictionary mapping model names to their video results
-            gt_video_pose_results: Optional list of ground truth results
+            models_video_pose_results: Dictionary mapping model names to video names and `VideoPoseResult` objects.
+            gt_video_pose_results: Optional dictionary mapping video names to ground truth `VideoPoseResult` objects.
             
         Returns:
-            Dictionary mapping metric names to models to MetricResults.
+            Dictionary mapping metric names to models to video names to `MetricResult` objects.
         """
         results = {}
         

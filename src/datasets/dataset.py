@@ -26,7 +26,7 @@ class Dataset(ABC):
         """
         Load ground truth pose results from the dataset folder.
         This method should be overridden by subclasses if ground truth data is available.
-        The order of the results should match the order of the samples returned by _load_samples.
+        The returned dictionary should map video names to ground truth`VideoPoseResult` objects.
         """
         return {}
 
