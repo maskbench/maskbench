@@ -159,6 +159,57 @@ The inference engine returns a nested dictionary, mapping pose estimator names t
 
 ## Evaluation {#sec-architecture-evaluation}
 
+### Metric {#sec-architecture-evaluation-metric}
+Each metric inherits from the abstract `Metric` class and implements the `compute` method, which takes as input one predicted video pose result, a ground truth pose result, if available, and the name of the pose estimator.
+It outputs a `MetricResult` object, which contains the metric values for the video (see section @sec-architecture-evaluation-metric-result).
+
+::: {.callout-note collapse="true"}
+## Metric Class
+```{.python include="../src/evaluation/metrics/metric.py" code-line-numbers="true" filename="src/evaluation/metrics/metric.py"}
+```
+:::
+
+MaskBench currently implements ground truth-based metrics for Euclidean Distance, Percentage of Correct Keypoints (PCK) and Root Mean Square Error (RMSE).
+Furthermore, we provide kinematic metrics for velocity, acceleration and jerk.
+Section @sec-metrics contains a more extensive description of the implemented metrics.
+
+**Matching Person Indices**
+
+For some metrics, it is crucial to ensure, that the order of persons in video pose results match between a prediction and a reference.
+The metric class provides a method called `match_person_indices`, which is used in ground-truth based metrics to ensure that person indices match between the ground truth and the prediction.
+Furthermore, kinematic metrics also make use of this method, as they can only be calculated if the person indices match between consecutive frames.
+The implementation uses the Hungarian algorithm and the mean of a person's keypoints to find the best match between all persons in the reference and predicted pose result.
+
+Let $N$ be the number of persons in the reference, $M$ be the number of persons in the predicted pose result, and $K$ be the number of keypoints per person.
+The output of the match person indices method is an array of shape $\text{max}(N, M) \times K \times 2$, where the first $N$ positions contain the persons in the same order as in the reference.
+The last $N$ to $M$ positions (in case $M > N$) contain the remaining persons, which are not present in the reference.
+
+Edge cases include, where the first of two persons appears in one frame, but not in the next.
+In this case, the second person is still assigned the second index in the output array, while the first index contains infinite values to signal that the person is not present.
+The same applies, if the prediction contains less persons than the reference ($M<N$).
+Each metric can then decide how to handle these infinite values, for example by setting them to `NaN` (kinematic metrics) or a pre-defined value (euclidean distance and ground truth-based metrics).
+
+**Unit Testing**
+
+It is good practice to implement unit tests for the various metric classes to ensure that the output is correct and as expected.
+We provide unit tests for all metrics in the `src/tests` folder, which can be run with the command `pytest`.
+Running these tests after a change to the metric classes ensures that no other functionality is compromised.
+
+
+### Metric Result {#sec-architecture-evaluation-metric-result}
+The output of the metric's `compute` method is a `MetricResult` object.
+It contains the metric values in the form of a multi-dimensional array, where the axes are labeled with names, for example with a "frame", "person" and "keypoint" axis.
+The `aggregate` function of the class aggregates the values with a given method and along the specified axes only.
+Currently MaskBench supports mean, median, Root Mean Square Error, vector magnitude, sum, min and max as aggregation methods.
+The output of the aggregation method is once again a metric result, reduced in its dimensionality, having only the axes along which it was not aggregated.
+
+This flexible approach of storing the results with their axes names and using the names in the aggregation method allows for the visualization of the results in a variety of ways, for example as a per keypoint plot, distribution plot or as a single scalar value. Furthermore, it allows extending the framework with new metrics (possibly containing different axis names) and also different visualizations.
+
+### Evaluator {#sec-architecture-evaluation-evaluator}
+Given a list of metrics, the evaluator executes the configured metrics on the pose estimation results for all pose estimators and videos.
+It returns a nested dictionary, mapping metric names to pose estimator names to video names to `MetricResult` objects.
+It does not perform aggregation over the videos or pose estimators in order to allow for more flexibility in the visualization of the results.
+
 ## Visualization {#sec-architecture-visualization}
 
 ## Rendering {#sec-architecture-rendering}
