@@ -33,6 +33,8 @@ format:
         number-sections: true
         code-fold: true
         code-tools: true
+filters:
+    - include-code-files
 # engine: knitr
 jupyter: python3
 ---
