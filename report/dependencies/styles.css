@@ -1,3 +1,12 @@
+/* Text styling */
+body {
+    font-family: "Georgia", "Times New Roman", serif;
+}
+
+p, ul, ol, li, dl, dt, dd {
+    color: #666666;
+}
+
 /* Python code styling - using stronger selectors */
 div.sourceCode.language-python pre code,
 div.sourceCode[data-language="python"] pre code {
