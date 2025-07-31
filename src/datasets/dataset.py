@@ -18,6 +18,7 @@ class Dataset(ABC):
         """
         Load video samples from the dataset folder.
         This method should be overridden by subclasses to implement specific loading logic.
+        It should return one VideoSample for each video in the dataset.
         """
         raise NotImplementedError()
 
