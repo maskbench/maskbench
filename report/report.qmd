@@ -79,6 +79,31 @@ Lastly, for each video, the application creates a multiple rendered video, one f
 Each component of MaskBench is implemented in a modular way, so that it can be easily extended and modified, which we will discuss in the following sections.
 
 ## Dataset {#sec-architecture-dataset}
+The dataset provides the video data for the pose estimation and ground truth data for the evaluation, if available.
+When adding a new dataset, the user needs to create a new class that inherits from the `Dataset` class and overwrite the `_load_samples` method, which creates one `VideoSample` object for each video in the dataset.
+If the dataset provides ground truth data, the user additionally needs to overwrite the `get_gt_pose_results` and `get_gt_keypoint_pairs` methods.
+For each video, the `get_gt_pose_results` method should return a `VideoPoseResult` object.
+The `get_gt_keypoint_pairs` method is used for rendering the ground truth keypoints and contains a list of tuples, where each tuple contains the index of two keypoints to be connected in the rendered video. We provide default keypoint pairs for "YOLO", "Mediapipe" and various implementations of "OpenPose" models in the file `keypoint_pairs.py`.
+
+Below is the code implementation for the abstract dataset class, for the very simple TED talks dataset (without ground truth) and the more complicated TragicTalkers dataset (with ground truth data).
+
+::: {.callout-note collapse="true"}
+## Dataset Class
+```{.python include="../src/datasets/dataset.py" code-line-numbers="true" filename="src/datasets/dataset.py"}
+```
+:::
+
+::: {.callout-note collapse="true"}
+## TED Talks Dataset
+```{.python include="../src/datasets/ted_dataset.py" code-line-numbers="true" filename="src/datasets/ted_dataset.py"}
+```
+:::
+
+::: {.callout-note collapse="true"}
+## Tragic Talkers Dataset
+```{.python include="../src/datasets/tragic_talkers_dataset.py" code-line-numbers="true" filename="src/datasets/tragic_talkers_dataset.py"}
+```
+:::
 
 ## Inference Engine {#sec-architecture-inference}
 
