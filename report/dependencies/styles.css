@@ -3,9 +3,64 @@ body {
     font-family: "Georgia", "Times New Roman", serif;
 }
 
-p, ul, ol, li, dl, dt, dd {
-    color: #666666;
+p, ul, ol, li, dl, dt, dd, table {
+    color: #555555;
 }
+
+/* Table styling */
+table td,
+table th {
+    padding: 10px 10px;
+    text-align: center;
+    vertical-align: top;
+    word-break: normal;
+    overflow: hidden;
+    border: none;
+}
+
+table th {
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+table td:first-child,
+table th:first-child {
+    text-align: left;
+}
+
+/* Special cell variants */
+.border-top {
+    border-top: 1px solid black;
+}
+
+.border-bottom {
+    border-bottom: 1px solid black;
+}
+
+table.raw-masked-table th:first-child,
+table.raw-masked-table td:first-child {
+    border-right: 1px solid black;
+}
+
+table.raw-masked-table th:last-child,
+table.raw-masked-table td:last-child {
+    border-left: 1px solid black;
+}
+
+.maskanyone {
+    background-color: #efefef;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+.best {
+    font-weight: bold;
+}
+
+.second {
+    text-decoration: underline;
+}
+
 
 /* Python code styling - using stronger selectors */
 div.sourceCode.language-python pre code,
