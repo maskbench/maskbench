@@ -155,6 +155,7 @@ The inference engine is responsible for running the pose estimators on the video
 If a checkpoint name is provided in the configuration file, the inference engine will load the results from the checkpoint and skip inference for the videos that already have results.
 This allows to resume the inference process in case it fails or to skip the inference entirely and only evaluate the metrics.
 The inference engine returns a nested dictionary, mapping pose estimator names to video names and `VideoPoseResult` objects.
+Furthermore, it saves the inference times for each pose estimator and video in the checkpoint folder in a json file.
 
 
 ## Evaluation {#sec-architecture-evaluation}
@@ -211,6 +212,45 @@ It returns a nested dictionary, mapping metric names to pose estimator names to 
 It does not perform aggregation over the videos or pose estimators in order to allow for more flexibility in the visualization of the results.
 
 ## Visualization {#sec-architecture-visualization}
+After evaluation, the results are visualized in plots and tables.
+
+### Visualizer
+An abstract `BaseVisualizer` class defines the interface for all visualizers.
+We defined a MaskBench specific visualizer class for the experiments we conducted, which can either be reused for other experiments or extended to support new visualizations.
+
+::: {.callout-note collapse="true"}
+## MaskBench Visualizer
+```{.python include="../src/evaluation/visualizer/maskbench_visualizer.py" code-line-numbers="true" filename="src/visualization/maskbench_visualizer.py"}
+```
+:::
+
+The visualizer saves the plots and tables in the `plots` folder in the checkpoint.
+
+### Plots
+Each plot inherits from the abstract `Plot` class and implements the `draw` method.
+The draw method can take various forms of input data, most commonly the results of the evaluator.
+Each plot can implement a specific way to aggregate and organize the data, for example by taking the median over all videos for a given pose estimator.
+
+::: {.callout-note collapse="true"}
+## Plot Class
+```{.python include="../src/evaluation/plots/plot.py" code-line-numbers="true" filename="src/evaluation/plots/plot.py"}
+```
+:::
+
+::: {.callout-note collapse="true"}
+## Kinematic Distribution Plot
+```{.python include="../src/evaluation/plots/kinematic_distribution_plot.py" code-line-numbers="true" filename="src/evaluation/plots/kinematic_distribution_plot.py"}
+```
+:::
+
+
+We provide the following plots and tables:
+
+- **Kinematic Distribution Plot**: Visualizes the distribution of the kinematic values for each pose estimator.
+- **Per Keypoint Plot**: Displays the median kinematic metric values or euclidean distance for each COCO keypoint. Requires keypoints to be stored in the COCO format.
+- **Inference Time Plot**: Visualizes the inference time for each pose estimator.
+- **Result Table**: Aggregates the results for each pose estimator over all videos per metric and outputs a table.
+
 
 ## Rendering {#sec-architecture-rendering}
 
