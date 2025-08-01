@@ -253,8 +253,10 @@ We provide the following plots and tables:
 
 
 ## Rendering {#sec-architecture-rendering}
-
-
+Rendering of videos is performed by the `Renderer` class.
+For each video in the dataset, it creates a new folder in the `renderings` folder in the checkpoint folder.
+Within each video folder, it creates one video with the rendered keypoints for each pose estimator.
+Special care was taken to ensure that the color of pose estimators is consistent across all videos and plots by using a pre-defined color palette for color-blind friendly plots.
 
 
 # Datasets {#sec-datasets}
