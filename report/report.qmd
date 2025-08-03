@@ -62,9 +62,19 @@ jupyter: python3
 
 
 # Related Work {#sec-related-work}
-(Zainab - 4.)
+Human pose estimation aims to localize body joints (e.g., shoulders, elbows, knees) from visual input such as images or videos. Existing methods are generally categorized into two main strategies: top-down and bottom-up. In the top-down approach, human instances are first detected in the image, and pose estimation is then performed within each bounding box. In contrast, the bottom-up approach detects all keypoints in the image first and subsequently associates them with individual persons[@saiwa2025openpose], [@kaim2024comparison].
 
+Several studies have benchmarked popular pose estimation models across different datasets, conditions, and use cases. The following works are particularly relevant to our benchmarking framework:
 
+* **Comparision Of ML Models For Posture** [@kaim2024comparison]
+conducted a detailed empirical comparison between YOLOv7 Pose and MediaPipe Pose using both image (COCO) and video (Penn Action) datasets. The study evaluated key metrics such as keypoint accuracy (PCK@0.2), inference speed, and robustness under challenging conditions like low light and occlusion.
+    YOLOv7 achieved a slightly higher accuracy score of 87.8\% versus MediaPipe’s 84.1\%. However, MediaPipe demonstrated superior real-time performance on CPU-only devices, achieving 16--18 frames per second (FPS) compared to YOLOv7’s 4--5 FPS. In low-light environments, MediaPipe maintained detection consistency, whereas YOLOv7 performed better in occluded scenarios, successfully recognizing hidden body parts. The study highlights a trade-off: YOLOv7 is more robust under visually difficult conditions, while MediaPipe excels in lightweight, single-person use cases with real-time requirements.
+
+* **OpenPose vs MediaPipe: A Practical and Architectural Comparison** [@saiwa2025openpose]
+  A recent blog post by Saiwa presents a detailed comparison between OpenPose and MediaPipe, discussing their architectural differences, device compatibility, and practical applications. OpenPose uses a bottom-up approach with Part Affinity Fields and is optimized for multi-person full-body tracking, whereas MediaPipe follows a top-down strategy focusing on speed and cross-platform deployment. MediaPipe's modular design and high CPU efficiency make it suitable for real-time mobile apps, while OpenPose provides detailed skeletal tracking but at higher computational cost.
+
+* **YOLOv7 Pose vs MediaPipe in Human Pose Estimation in videos** [@learnopencv2022yolopose] 
+This benchmark-focused blog compares YOLOv7 Pose and MediaPipe on a variety of video scenarios such as sports, dance, crowd scenes, and occlusions. The comparison is qualitative and highlights where each model performs better. MediaPipe excels in handling low-resolution input, achieves faster CPU inference, and is well-suited for detecting distant individuals. However, it is limited to single-person detection. YOLOv7 performs better in occlusion-heavy scenarios, supports multi-person estimation, and handles fast motion more accurately, especially with high-resolution input and GPU support. The study underscores that MediaPipe is better for lightweight, real-time single-user applications, while YOLOv7 is better suited for more complex, high-performance environments.
 
 # MaskBench Architecture {#sec-architecture}
 Figure of architecture & workflow (Zainab - 2.)
@@ -248,6 +258,19 @@ These scenarios were chosen to reflect a variety of real-world human interaction
 
 
 # Experiments & Evaluation Metrics {#sec-experiments-metrics}
+
+## Data Preprocessing
+Data preprocessing was carried out to remove unnecessary parts of the videos and to split the TED Talk videos into shorter segments compatible with MaskAnyone. Since MaskAnyone cannot process videos longer than 2.5 minutes, and is already resource-intensive even at that limit, we divided the TED Talk videos into chunks of 30 or 50 seconds, depending on the content.
+
+TED Talks also showed some inconsistency in structure. Some videos were straightforward, with only the speaker and audience visible, making them easy to segment at any point. However, others included additional visual content such as slides, pictures, or unrelated scenes, which made it more difficult to determine clean chunking points.
+
+For these more complex videos, we carefully selected segment boundaries to ensure that each chunk started with frames where a human was clearly visible. When necessary, we manually trimmed the beginning of chunks to avoid starting with empty or unrelated frames. This step was critical because if a video starts with non-human content, MaskAnyone may incorrectly classify objects in the first frame as humans and then continue misdetecting them in subsequent frames.
+
+After preprocessing, the chunks from each TED Talk were merged back into a single video file. This allowed all pose estimation models to be evaluated on the same content and ensured consistency across results.
+
+No preprocessing was required for the Tragic Talkers dataset, as the videos were already clean and free of noise or unrelated visual content.
+
+# Experiments & Evaluation Metrics
 (Tim - 2.)
 
 ## Evaluation Metrics {#sec-metrics}
@@ -306,6 +329,5 @@ These scenarios were chosen to reflect a variety of real-world human interaction
 
 
 # References
-::: {#refs}
-:::
+
 
