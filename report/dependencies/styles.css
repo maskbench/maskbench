@@ -18,28 +18,31 @@ table th {
     border: none;
 }
 
-table th {
-    border-top: 1px solid black;
-    border-bottom: 1px solid black;
-}
-
-table td:first-child,
-table th:first-child {
-    text-align: left;
-}
-
 /* Special cell variants */
-.border-top {
+.border-top td {
     border-top: 1px solid black;
 }
 
-.border-bottom {
+.border-bottom td {
     border-bottom: 1px solid black;
 }
 
-table.raw-masked-table th:first-child,
-table.raw-masked-table td:first-child {
+
+/* Add top and bottom borders to results tables */
+table.results {
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+}
+
+table.results th {
+    border-bottom: 1px solid black;
+}
+
+
+table.results th:first-child,
+table.results td:first-child {
     border-right: 1px solid black;
+    text-align: left;
 }
 
 table.raw-masked-table th:last-child,
@@ -47,10 +50,12 @@ table.raw-masked-table td:last-child {
     border-left: 1px solid black;
 }
 
-.maskanyone {
-    background-color: #efefef;
-    border-top: 1px solid black;
-    border-bottom: 1px solid black;
+.maskanyone-api {
+    background-color: #f3f3f3;
+}
+
+.maskanyone-ui {
+    background-color: #e0e0e0;
 }
 
 .best {
