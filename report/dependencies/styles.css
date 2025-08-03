@@ -66,6 +66,52 @@ table.raw-masked-table td:last-child {
     text-decoration: underline;
 }
 
+/* Video zoom styling */
+.video-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.video-table td {
+    padding: 10px;
+    text-align: center;
+    vertical-align: top;
+    width: 25%;
+}
+.video-table video {
+    width: 100%;
+    height: auto;
+}
+.video-caption {
+    margin-top: 5px;
+}
+
+.video-zoom-wrapper {
+    width: 100%;
+    overflow: hidden;
+}
+
+.video-zoom {
+    width: 100%;
+    height: auto;
+    transform: scale(var(--video-zoom-scale));
+    transform-origin: var(--video-zoom-x) var(--video-zoom-y);
+    display: block; /* Prevents unwanted margins */
+}
+
+/* Zoom values */
+:root {
+    --video-zoom-scale: 1.0;
+    --video-zoom-x: 50%;
+    --video-zoom-y: 50%;
+}
+
+.ted-kid-video {
+    --video-zoom-scale: 1.4;
+    --video-zoom-x: 40%;
+    --video-zoom-y: 70%;
+}
+
+
 
 /* Python code styling - using stronger selectors */
 div.sourceCode.language-python pre code,

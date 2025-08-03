@@ -370,6 +370,85 @@ Special care was taken to ensure that the color of pose estimators is consistent
 Average metric results for different pose estimators on the TED-kid video.
 :::
 
+::: {#tbl-results-ted-kid-videos}
+```{=html}
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom" autoplay loop muted playsinline>
+                    <source src="videos/TED-kid/TED-kid.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">Raw Video</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom" autoplay loop muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_YoloPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">YOLOPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom" autoplay loop muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MediaPipePose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MediaPipe Pose</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom" autoplay loop muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">OpenPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom" autoplay loop muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-MediaPipe</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom" autoplay loop muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-OpenPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom" autoplay loop muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-MediaPipe</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom" autoplay loop muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-OpenPose</div>
+        </td>
+    </tr>
+</table>
+```
+Rendered result videos of different pose estimators on the TED-kid video.
+:::
 
 ## TED Talks {#sec-results-ted-talks}
 ::: {#tbl-results-ted-talks}
