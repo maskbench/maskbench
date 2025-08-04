@@ -168,7 +168,7 @@ Each metric inherits from the abstract `Metric` class and implements the `comput
 It outputs a `MetricResult` object, which contains the metric values for the video (see section @sec-architecture-evaluation-metric-result).
 
 ::: {.callout-note collapse="true"}
-## Metric Class
+## Metric Class 
 ```{.python include="../src/evaluation/metrics/metric.py" code-line-numbers="true" filename="src/evaluation/metrics/metric.py"}
 ```
 :::
@@ -282,9 +282,53 @@ Special care was taken to ensure that the color of pose estimators is consistent
 
 ### Euclidean Distance {#sec-metrics-euclidean-distance}
 
+The Euclidean distance metric measures the spatial accuracy of pose estimation by calculating the normalized distance between predicted and ground truth keypoint positions. For each keypoint of a person in a frame, it computes the L2 norm (Euclidean distance) between the predicted position $(x_p, y_p)$ and the ground truth position $(x_{gt}, y_{gt})$:
+
+$$ d = \frac{\sqrt{(x_p - x_{gt})^2 + (y_p - y_{gt})^2}}{s} $$
+
+where $s$ is a normalization factor. The normalization is crucial to make the metric scale-invariant and comparable across different person sizes. The metric is set up to support three normalization strategies, out of which we only implemented the first one:
+
+1. **Bounding Box Size**: The distance is normalized by the maximum of width and height of the person's bounding box, which is computed from the ground truth keypoints. While this adapts to different person sizes, it has a notable drawback: shorter limbs naturally have smaller variations in joint positions, and even small errors can constitute a large fraction of their true length. Using a fixed normalization factor like the bounding box size doesn't account for this, leading to over-penalization of errors in shorter limbs.
+
+2. **Head Size**: Normalization by the head bone link size (not implemented).
+
+3. **Torso Size**: Normalization by the torso diameter (not implemented).
+
+Head and torso normalization inherently solve the shorter limb problem as smaller limbs are typically accompanied by proportionally smaller torso diameters and head bone links. We outline future work for the implementation of head and torso normalization in section @sec-future-work.
+
+The metric handles several edge cases to ensure robust evaluation:
+
+- **Different Order of Persons**: The metric uses the Hungarian algorithm as described in section @sec-architecture-evaluation-metric to match person indices between ground truth and predictions, ensuring that distances are calculated between corresponding persons even if they appear in different orders.
+
+- **Keypoint Missing in Ground Truth but not in Prediction**: When a keypoint is missing in the ground truth (coordinates are (0,0)) but was detected in the prediction, the corresponding distance is set to `NaN` and excluded from aggregation calculations, as a distance to a missing keypoint is undefined.
+
+- **Keypoint Missing in Prediction but Present in Ground Truth**: When a keypoint exists in the ground truth but is missing in the prediction (coordinates are (0,0)), the distance is set to a predetermined fill value (in this case a large distance value of 1). This penalizes the model for failing to detect keypoints without overly impacting the aggregated results.
+
+- **Undetected Persons**: If a person present in the ground truth is entirely undetected in the prediction, all keypoint distances for that person are set to the same distance fill value.
+
+Euclidean distance is the basis for the computation of the Percentage the PCK and RMSE metrics.
+
 ### Percentage of Keypoints (PCK) {#sec-metrics-pck}
 
+The Percentage of Correct Keypoints (PCK) metric evaluates pose estimation accuracy by determining the proportion of predicted keypoints that fall within a specified threshold distance of their ground truth locations. A keypoint is considered "correct" if its normalized Euclidean distance to the ground truth is less than the threshold.
+
+For each frame, PCK is calculated as:
+
+$$
+PCK = \frac{\text{number of keypoints with distance < threshold}}{\text{total number of valid keypoints}}
+$$
+
+The metric produces a value between 0 and 1, where 1 indicates perfect prediction (all keypoints within the threshold) and 0 indicates complete failure (no keypoints within the threshold). PCK is particularly useful for understanding the overall reliability of pose predictions at a given precision level defined by the threshold.
+
 ### Root Mean Square Error (RMSE) {#sec-metrics-rmse}
+
+The Root Mean Square Error (RMSE) provides a single aggregate measure of pose estimation accuracy by computing the root mean square of normalized Euclidean distances across all keypoints and persons in a frame. RMSE is calculated as:
+
+$$
+RMSE = \sqrt{\frac{1}{N} \sum_{i=1}^{N} d_i^2}
+$$
+
+where $N$ is the total number of valid keypoints in the frame and $d_i$ is the normalized Euclidean distance for keypoint $i$. RMSE penalizes larger errors more heavily due to the squared term, making it particularly sensitive to outliers. 
 
 ### Velocity {#sec-metrics-velocity}
 
@@ -768,6 +812,8 @@ Root mean square error (RMSE) for different pose estimators on videos masked by 
 # Future Work & Limitations {#sec-future-work}
 (Zainab - 4.)
 (Tim - 5.)
+
+Implement head and torso normalization. This requires knowing the index of the head and torso keypoints. Care should be taken to not restraint the whole application from working on a specific keypoint set (like COCO) but still maintain flexibility in supporting various keypoint formats.
 
 
 
