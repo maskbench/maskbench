@@ -10,10 +10,11 @@ from utils import get_color_palette
 
 
 class PoseRenderer:
-    def __init__(self, dataset: Dataset, estimators_point_pairs: dict, checkpointer: Checkpointer):
+    def __init__(self, dataset: Dataset, estimators_point_pairs: dict, checkpointer: Checkpointer, line_thickness: int = 6):
         self.dataset = dataset
         self.estimators_point_pairs = estimators_point_pairs
         self.checkpointer = checkpointer
+        self.line_thickness = line_thickness
 
     def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]]):
         """
@@ -107,7 +108,7 @@ class PoseRenderer:
             for keypoint in person.keypoints: # draw a circle for each keypoint if it exists
                 if keypoint: 
                     center = (int(keypoint.x), int(keypoint.y))
-                    cv2.circle(frame, center, 4, color, -1)
+                    cv2.circle(frame, center, 6, color, -1)
                 
             for pair in point_pairs:  # iterate over point pairs to add lines between keypoints
                 try: # some keypoints might be missing, which would lead to an IndexError
@@ -122,7 +123,7 @@ class PoseRenderer:
 
                 point1 = (int(point1.x), int(point1.y))
                 point2 = (int(point2.x), int(point2.y))
-                cv2.line(frame, point1, point2, color=color, thickness=2)
+                cv2.line(frame, point1, point2, color=color, thickness=self.line_thickness)
 
         return frame
 
