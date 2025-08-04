@@ -273,20 +273,21 @@ Special care was taken to ensure that the color of pose estimators is consistent
 
 
 
+# Evaluation Metrics {#sec-metrics}
+In the following sections, we outline the metrics used for evaluating accuracy, smoothness and jitter of different pose estimators.
 
-
-# Experiments & Evaluation Metrics {#sec-experiments-metrics}
-(Tim - 2.)
-
-## Evaluation Metrics {#sec-metrics}
+## Ground-Truth Metrics
+The metrics in this section are based on ground truth data provided by the dataset and primarily evaluate the accuracy of the pose estimation compared to the reference ground truth.
 
 ### Euclidean Distance {#sec-metrics-euclidean-distance}
-
-The Euclidean distance metric measures the spatial accuracy of pose estimation by calculating the normalized distance between predicted and ground truth keypoint positions. For each keypoint of a person in a frame, it computes the L2 norm (Euclidean distance) between the predicted position $(x_p, y_p)$ and the ground truth position $(x_{gt}, y_{gt})$:
+The Euclidean distance metric measures the spatial accuracy of pose estimation by calculating the normalized distance between predicted and ground truth keypoint positions. 
+For each keypoint of a person in a frame, it computes the L2 norm (Euclidean distance) between the predicted position $(x_p, y_p)$ and the ground truth position $(x_{gt}, y_{gt})$:
 
 $$ d = \frac{\sqrt{(x_p - x_{gt})^2 + (y_p - y_{gt})^2}}{s} $$
 
-where $s$ is a normalization factor. The normalization is crucial to make the metric scale-invariant and comparable across different person sizes. The metric is set up to support three normalization strategies, out of which we only implemented the first one:
+where $s$ is a normalization factor. 
+The normalization is crucial to make the metric scale-invariant and comparable across different person sizes. 
+The metric is set up to support three normalization strategies, out of which we only implemented the first one:
 
 1. **Bounding Box Size**: The distance is normalized by the maximum of width and height of the person's bounding box, which is computed from the ground truth keypoints. While this adapts to different person sizes, it has a notable drawback: shorter limbs naturally have smaller variations in joint positions, and even small errors can constitute a large fraction of their true length. Using a fixed normalization factor like the bounding box size doesn't account for this, leading to over-penalization of errors in shorter limbs.
 
@@ -294,7 +295,8 @@ where $s$ is a normalization factor. The normalization is crucial to make the me
 
 3. **Torso Size**: Normalization by the torso diameter (not implemented).
 
-Head and torso normalization inherently solve the shorter limb problem as smaller limbs are typically accompanied by proportionally smaller torso diameters and head bone links. We outline future work for the implementation of head and torso normalization in section @sec-future-work.
+Head and torso normalization inherently solve the shorter limb problem as smaller limbs are typically accompanied by proportionally smaller torso diameters and head bone links. 
+We outline future work for the implementation of head and torso normalization in section @sec-future-work.
 
 The metric handles several edge cases to ensure robust evaluation:
 
@@ -309,8 +311,8 @@ The metric handles several edge cases to ensure robust evaluation:
 Euclidean distance is the basis for the computation of the Percentage the PCK and RMSE metrics.
 
 ### Percentage of Keypoints (PCK) {#sec-metrics-pck}
-
-The Percentage of Correct Keypoints (PCK) metric evaluates pose estimation accuracy by determining the proportion of predicted keypoints that fall within a specified threshold distance of their ground truth locations. A keypoint is considered "correct" if its normalized Euclidean distance to the ground truth is less than the threshold.
+The Percentage of Correct Keypoints (PCK) metric evaluates pose estimation accuracy by determining the proportion of predicted keypoints that fall within a specified threshold distance of their ground truth locations. 
+A keypoint is considered "correct" if its normalized Euclidean distance to the ground truth is less than the threshold.
 
 For each frame, PCK is calculated as:
 
@@ -318,21 +320,26 @@ $$
 PCK = \frac{\text{number of keypoints with distance < threshold}}{\text{total number of valid keypoints}}
 $$
 
-The metric produces a value between 0 and 1, where 1 indicates perfect prediction (all keypoints within the threshold) and 0 indicates complete failure (no keypoints within the threshold). PCK is particularly useful for understanding the overall reliability of pose predictions at a given precision level defined by the threshold.
+The metric produces a value between 0 and 1, where 1 indicates perfect prediction (all keypoints within the threshold) and 0 indicates complete failure (no keypoints within the threshold). 
+PCK is particularly useful for understanding the overall reliability of pose predictions at a given precision level defined by the threshold.
 
 ### Root Mean Square Error (RMSE) {#sec-metrics-rmse}
-
-The Root Mean Square Error (RMSE) provides a single aggregate measure of pose estimation accuracy by computing the root mean square of normalized Euclidean distances across all keypoints and persons in a frame. RMSE is calculated as:
+The Root Mean Square Error (RMSE) provides a single aggregate measure of pose estimation accuracy by computing the root mean square of normalized Euclidean distances across all keypoints and persons in a frame.
+RMSE is calculated as:
 
 $$
 RMSE = \sqrt{\frac{1}{N} \sum_{i=1}^{N} d_i^2}
 $$
 
-where $N$ is the total number of valid keypoints in the frame and $d_i$ is the normalized Euclidean distance for keypoint $i$. RMSE penalizes larger errors more heavily due to the squared term, making it particularly sensitive to outliers. 
+where $N$ is the total number of valid keypoints in the frame and $d_i$ is the normalized Euclidean distance for keypoint $i$. 
+RMSE penalizes larger errors more heavily due to the squared term, making it particularly sensitive to outliers. 
+
+## Kinematic Metrics
+Velocity, acceleration and jerk are kinematic metrics that are useful for identifying unnatural or jittery movements in pose estimations, as they highlight rapid changes in motion.
 
 ### Velocity {#sec-metrics-velocity}
-
-The velocity metric calculates the rate of change in keypoint positions between consecutive frames. For each keypoint of a person, it measures how quickly that keypoint moves in pixels per frame, giving insights into the smoothness and consistency of the pose estimation across frames.
+The velocity metric calculates the rate of change in keypoint positions between consecutive frames. 
+For each keypoint of a person, it measures how quickly that keypoint moves in pixels per frame, giving insights into the smoothness and consistency of the pose estimation across frames.
 
 The calculation of velocity follows a three-step process:
 
@@ -350,36 +357,26 @@ Several edge cases are handled specifically:
 - The output contains a coordinate axis (for x and y) to represent the velocity as a vector and to serve as a basis for the acceleration and jerk metrics. For evaluation and visualization, the metric result should therefore be aggregated with the method `vector_magnitude` along the coordinate axis to obtain a scalar velocity value.
 
 ### Acceleration {#sec-metrics-acceleration}
-
-The acceleration metric measures the rate of change in velocity over time, representing how quickly the movement speed of keypoints changes. It is computed by applying the same difference calculation as the velocity metric, but to the velocity values instead of positions:
-
-$a_t = v_{t+1} - v_t = (p_{t+2} - p_{t+1}) - (p_{t+1} - p_t)$
-
-where $a_t$ is the acceleration at time $t$, $v_t$ represents the velocity, and $p_t$ the keypoint position. Similar to the velocity metric, the acceleration can be reported in either pixels per frame squared or pixels per second squared, with the latter requiring division by the squared time delta between frames (1/fps²).
+The acceleration metric measures the rate of change in velocity over time, representing how quickly the movement speed of keypoints changes. 
+It is computed by $a_t = v_{t+1} - v_t$, where $a_t$ is the acceleration at time $t$, $v_t$ represents the velocity, and $p_t$ the keypoint position. 
+Similar to the velocity metric, the acceleration can be reported in either pixels per frame squared or pixels per second squared, with the latter requiring division by the squared time delta between frames (1/fps²).
 
 
 ### Jerk {#sec-metrics-jerk}
+The jerk metric, which measures the rate of change in acceleration, provides insights into the smoothness of motion by quantifying how abruptly the acceleration changes.
+It is calculated with $j_t = a_{t+1} - a_t$ as the difference between consecutive acceleration values, where $j_t$ is the jerk at time $t$ and $a_t$ represents the acceleration. 
+The metric can be configured to output values in pixels per frame cubed or pixels per second cubed. For the latter, the frame-based jerk is divided by the cubed time delta between frames (1/fps³).
 
-The jerk metric, which measures the rate of change in acceleration, provides insights into the smoothness of motion by quantifying how abruptly the acceleration changes. It is calculated as the difference between consecutive acceleration values:
-
-$j_t = a_{t+1} - a_t = (v_{t+2} - v_{t+1}) - (v_{t+1} - v_t)$
-
-where $j_t$ is the jerk at time $t$ and $a_t$ represents the acceleration. The metric can be configured to output values in pixels per frame cubed or pixels per second cubed. For the latter, the frame-based jerk is divided by the cubed time delta between frames (1/fps³).
-
-Both acceleration and jerk metrics are particularly useful for identifying unnatural or jittery movements in pose estimations, as they highlight rapid changes in motion.
-
-
-
-## Experimental Setup {#sec-experiments}
+# Experimental Setup {#sec-experiments}
 (Tim - 3.)
 
-### TED Kid Video {#sec-experiments-ted-kid}
+## TED Kid Video {#sec-experiments-ted-kid}
 
-### TED Talks {#sec-experiments-ted-talks}
+## TED Talks {#sec-experiments-ted-talks}
 
-### Tragic Talkers {#sec-experiments-tragic-talkers}
+## Tragic Talkers {#sec-experiments-tragic-talkers}
 
-### Inference on Raw vs. Masked Videos {#sec-experiments-inference-raw-masked}
+## Inference on Raw vs. Masked Videos {#sec-experiments-inference-raw-masked}
 
 
 
