@@ -48,9 +48,12 @@ jupyter: python3
 
 
 # Getting Started {#sec-installation}
-(Zainab - 3.)
-
 ## Installation / Setup {#sec-installation-setup}
+follow the following instruction for installation and doing experiments with MaskBench:
+Maskbench uses pre-build docker images, in order to use and do experiment with maskbench, first of all you need to install docker on your local machine. 
+
+Open a terminal on your local machine and clone the repository using git clone https://github.com/maskbench/maskbench.git and then switch to the cloned directory and run following commands. 
+## Setup
 
 ## Usage {#sec-installation-usage}
 
