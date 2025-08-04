@@ -33,6 +33,9 @@ class PCKMetric(EuclideanDistanceMetric):
     ) -> MetricResult:
         """
         Compute the PCK metric for a video result.
+        Keypoints are considered correct if their distance to the ground truth is less than the threshold.
+        Does not take into account invalid keypoints (i.e.) where ground truth is (0,0) but prediction is unequal (0,0).
+
         Args:
             video_result: VideoPoseResult object containing the predicted poses.
             gt_video_result: VideoPoseResult object containing the ground truth poses.
@@ -40,9 +43,6 @@ class PCKMetric(EuclideanDistanceMetric):
         Returns:
             MetricResult object containing the PCK metric values for each frame for the video.
         """
-        # euclidean_distance = super().compute(video_result, gt_video_result, model_name)
-        # print(euclidean_distance.values)
-        # values = (euclidean_distance.values < self.threshold).sum(axis=(1, 2)) / euclidean_distance.values[0].size
         euclidean_distances = super().compute(video_result, gt_video_result, model_name).values
         valid_distances = ma.masked_array(euclidean_distances, mask=(euclidean_distances == np.nan))
         correct_keypoints = (valid_distances < self.threshold)
