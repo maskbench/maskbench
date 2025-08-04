@@ -108,7 +108,7 @@ class PoseRenderer:
             for keypoint in person.keypoints: # draw a circle for each keypoint if it exists
                 if keypoint: 
                     center = (int(keypoint.x), int(keypoint.y))
-                    cv2.circle(frame, center, 6, color, -1)
+                    cv2.circle(frame, center, self.line_thickness, color, -1)
                 
             for pair in point_pairs:  # iterate over point pairs to add lines between keypoints
                 try: # some keypoints might be missing, which would lead to an IndexError
