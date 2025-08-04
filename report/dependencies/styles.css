@@ -3,9 +3,115 @@ body {
     font-family: "Georgia", "Times New Roman", serif;
 }
 
-p, ul, ol, li, dl, dt, dd {
-    color: #666666;
+p, ul, ol, li, dl, dt, dd, table {
+    color: #555555;
 }
+
+/* Table styling */
+table td,
+table th {
+    padding: 10px 10px;
+    text-align: center;
+    vertical-align: top;
+    word-break: normal;
+    overflow: hidden;
+    border: none;
+}
+
+/* Special cell variants */
+.border-top td {
+    border-top: 1px solid black;
+}
+
+.border-bottom td {
+    border-bottom: 1px solid black;
+}
+
+
+/* Add top and bottom borders to results tables */
+table.results {
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+}
+
+table.results th {
+    border-bottom: 1px solid black;
+}
+
+
+table.results th:first-child,
+table.results td:first-child {
+    border-right: 1px solid black;
+    text-align: left;
+}
+
+table.raw-masked-table th:last-child,
+table.raw-masked-table td:last-child {
+    border-left: 1px solid black;
+}
+
+.maskanyone-api {
+    background-color: #f3f3f3;
+}
+
+.maskanyone-ui {
+    background-color: #e0e0e0;
+}
+
+.best {
+    font-weight: bold;
+}
+
+.second {
+    text-decoration: underline;
+}
+
+/* Video zoom styling */
+.video-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.video-table td {
+    padding: 10px;
+    text-align: center;
+    vertical-align: top;
+    width: 25%;
+}
+.video-table video {
+    width: 100%;
+    height: auto;
+}
+.video-caption {
+    margin-top: 5px;
+}
+
+.video-zoom-wrapper {
+    width: 100%;
+    overflow: hidden;
+}
+
+.video-zoom {
+    width: 100%;
+    height: auto;
+    transform: scale(var(--video-zoom-scale));
+    transform-origin: var(--video-zoom-x) var(--video-zoom-y);
+    display: block; /* Prevents unwanted margins */
+}
+
+/* Zoom values */
+:root {
+    --video-zoom-scale: 1.0;
+    --video-zoom-x: 50%;
+    --video-zoom-y: 50%;
+}
+
+.ted-kid-video {
+    --video-zoom-scale: 1.4;
+    --video-zoom-x: 40%;
+    --video-zoom-y: 70%;
+}
+
+
 
 /* Python code styling - using stronger selectors */
 div.sourceCode.language-python pre code,

@@ -26,6 +26,7 @@ css: dependencies/styles.css
 theme: journal
 format:
     html:
+        tbl-cap-location: bottom
         toc: true
         toc-location: left
         toc-title: "Contents"
@@ -33,6 +34,8 @@ format:
         number-sections: true
         code-fold: true
         code-tools: true
+        grid:
+            margin-width: 100px
 filters:
     - include-code-files
 # engine: knitr
@@ -165,6 +168,7 @@ The inference engine is responsible for running the pose estimators on the video
 If a checkpoint name is provided in the configuration file, the inference engine will load the results from the checkpoint and skip inference for the videos that already have results.
 This allows to resume the inference process in case it fails or to skip the inference entirely and only evaluate the metrics.
 The inference engine returns a nested dictionary, mapping pose estimator names to video names and `VideoPoseResult` objects.
+Furthermore, it saves the inference times for each pose estimator and video in the checkpoint folder in a json file.
 
 
 ## Evaluation {#sec-architecture-evaluation}
@@ -174,7 +178,7 @@ Each metric inherits from the abstract `Metric` class and implements the `comput
 It outputs a `MetricResult` object, which contains the metric values for the video (see section @sec-architecture-evaluation-metric-result).
 
 ::: {.callout-note collapse="true"}
-## Metric Class
+## Metric Class 
 ```{.python include="../src/evaluation/metrics/metric.py" code-line-numbers="true" filename="src/evaluation/metrics/metric.py"}
 ```
 :::
@@ -221,10 +225,51 @@ It returns a nested dictionary, mapping metric names to pose estimator names to 
 It does not perform aggregation over the videos or pose estimators in order to allow for more flexibility in the visualization of the results.
 
 ## Visualization {#sec-architecture-visualization}
+After evaluation, the results are visualized in plots and tables.
+
+### Visualizer
+An abstract `BaseVisualizer` class defines the interface for all visualizers.
+We defined a MaskBench specific visualizer class for the experiments we conducted, which can either be reused for other experiments or extended to support new visualizations.
+
+::: {.callout-note collapse="true"}
+## MaskBench Visualizer
+```{.python include="../src/evaluation/visualizer/maskbench_visualizer.py" code-line-numbers="true" filename="src/visualization/maskbench_visualizer.py"}
+```
+:::
+
+The visualizer saves the plots and tables in the `plots` folder in the checkpoint.
+
+### Plots
+Each plot inherits from the abstract `Plot` class and implements the `draw` method.
+The draw method can take various forms of input data, most commonly the results of the evaluator.
+Each plot can implement a specific way to aggregate and organize the data, for example by taking the median over all videos for a given pose estimator.
+
+::: {.callout-note collapse="true"}
+## Plot Class
+```{.python include="../src/evaluation/plots/plot.py" code-line-numbers="true" filename="src/evaluation/plots/plot.py"}
+```
+:::
+
+::: {.callout-note collapse="true"}
+## Kinematic Distribution Plot
+```{.python include="../src/evaluation/plots/kinematic_distribution_plot.py" code-line-numbers="true" filename="src/evaluation/plots/kinematic_distribution_plot.py"}
+```
+:::
+
+
+We provide the following plots and tables:
+
+- **Kinematic Distribution Plot**: Visualizes the distribution of the kinematic values for each pose estimator.
+- **Per Keypoint Plot**: Displays the median kinematic metric values or euclidean distance for each COCO keypoint. Requires keypoints to be stored in the COCO format.
+- **Inference Time Plot**: Visualizes the inference time for each pose estimator.
+- **Result Table**: Aggregates the results for each pose estimator over all videos per metric and outputs a table.
+
 
 ## Rendering {#sec-architecture-rendering}
-
-
+Rendering of videos is performed by the `Renderer` class.
+For each video in the dataset, it creates a new folder in the `renderings` folder in the checkpoint folder.
+Within each video folder, it creates one video with the rendered keypoints for each pose estimator.
+Special care was taken to ensure that the color of pose estimators is consistent across all videos and plots by using a pre-defined color palette for color-blind friendly plots.
 
 
 # Datasets {#sec-datasets}
@@ -256,9 +301,6 @@ The dataset features a man in regular clothing and a woman wearing a long dress.
 
 These scenarios were chosen to reflect a variety of real-world human interactions, allowing us to test how well pose estimation models perform under conditions such as occlusion, multi-person scenes, and varied movement patterns.
 
-
-# Experiments & Evaluation Metrics {#sec-experiments-metrics}
-
 ## Data Preprocessing
 Data preprocessing was carried out to remove unnecessary parts of the videos and to split the TED Talk videos into shorter segments compatible with MaskAnyone. Since MaskAnyone cannot process videos longer than 2.5 minutes, and is already resource-intensive even at that limit, we divided the TED Talk videos into chunks of 30 or 50 seconds, depending on the content.
 
@@ -270,35 +312,111 @@ After preprocessing, the chunks from each TED Talk were merged back into a singl
 
 No preprocessing was required for the Tragic Talkers dataset, as the videos were already clean and free of noise or unrelated visual content.
 
-# Experiments & Evaluation Metrics
-(Tim - 2.)
 
-## Evaluation Metrics {#sec-metrics}
+# Evaluation Metrics {#sec-metrics}
+In the following sections, we outline the metrics used for evaluating accuracy, smoothness and jitter of different pose estimators.
+
+## Ground-Truth Metrics
+The metrics in this section are based on ground truth data provided by the dataset and primarily evaluate the accuracy of the pose estimation compared to the reference ground truth.
 
 ### Euclidean Distance {#sec-metrics-euclidean-distance}
+The Euclidean distance metric measures the spatial accuracy of pose estimation by calculating the normalized distance between predicted and ground truth keypoint positions. 
+For each keypoint of a person in a frame, it computes the L2 norm (Euclidean distance) between the predicted position $(x_p, y_p)$ and the ground truth position $(x_{gt}, y_{gt})$:
+
+$$ d = \frac{\sqrt{(x_p - x_{gt})^2 + (y_p - y_{gt})^2}}{s} $$
+
+where $s$ is a normalization factor. 
+The normalization is crucial to make the metric scale-invariant and comparable across different person sizes. 
+The metric is set up to support three normalization strategies, out of which we only implemented the first one:
+
+1. **Bounding Box Size**: The distance is normalized by the maximum of width and height of the person's bounding box, which is computed from the ground truth keypoints. While this adapts to different person sizes, it has a notable drawback: shorter limbs naturally have smaller variations in joint positions, and even small errors can constitute a large fraction of their true length. Using a fixed normalization factor like the bounding box size doesn't account for this, leading to over-penalization of errors in shorter limbs.
+
+2. **Head Size**: Normalization by the head bone link size (not implemented).
+
+3. **Torso Size**: Normalization by the torso diameter (not implemented).
+
+Head and torso normalization inherently solve the shorter limb problem as smaller limbs are typically accompanied by proportionally smaller torso diameters and head bone links. 
+We outline future work for the implementation of head and torso normalization in section @sec-future-work.
+
+The metric handles several edge cases to ensure robust evaluation:
+
+- **Different Order of Persons**: The metric uses the Hungarian algorithm as described in section @sec-architecture-evaluation-metric to match person indices between ground truth and predictions, ensuring that distances are calculated between corresponding persons even if they appear in different orders.
+
+- **Keypoint Missing in Ground Truth but not in Prediction**: When a keypoint is missing in the ground truth (coordinates are (0,0)) but was detected in the prediction, the corresponding distance is set to `NaN` and excluded from aggregation calculations, as a distance to a missing keypoint is undefined.
+
+- **Keypoint Missing in Prediction but Present in Ground Truth**: When a keypoint exists in the ground truth but is missing in the prediction (coordinates are (0,0)), the distance is set to a predetermined fill value (in this case a large distance value of 1). This penalizes the model for failing to detect keypoints without overly impacting the aggregated results.
+
+- **Undetected Persons**: If a person present in the ground truth is entirely undetected in the prediction, all keypoint distances for that person are set to the same distance fill value.
+
+Euclidean distance is the basis for the computation of the Percentage the PCK and RMSE metrics.
 
 ### Percentage of Keypoints (PCK) {#sec-metrics-pck}
+The Percentage of Correct Keypoints (PCK) metric evaluates pose estimation accuracy by determining the proportion of predicted keypoints that fall within a specified threshold distance of their ground truth locations. 
+A keypoint is considered "correct" if its normalized Euclidean distance to the ground truth is less than the threshold.
+
+For each frame, PCK is calculated as:
+
+$$
+PCK = \frac{\text{number of keypoints with distance < threshold}}{\text{total number of valid keypoints}}
+$$
+
+The metric produces a value between 0 and 1, where 1 indicates perfect prediction (all keypoints within the threshold) and 0 indicates complete failure (no keypoints within the threshold). 
+PCK is particularly useful for understanding the overall reliability of pose predictions at a given precision level defined by the threshold.
 
 ### Root Mean Square Error (RMSE) {#sec-metrics-rmse}
+The Root Mean Square Error (RMSE) provides a single aggregate measure of pose estimation accuracy by computing the root mean square of normalized Euclidean distances across all keypoints and persons in a frame.
+RMSE is calculated as:
+
+$$
+RMSE = \sqrt{\frac{1}{N} \sum_{i=1}^{N} d_i^2}
+$$
+
+where $N$ is the total number of valid keypoints in the frame and $d_i$ is the normalized Euclidean distance for keypoint $i$. 
+RMSE penalizes larger errors more heavily due to the squared term, making it particularly sensitive to outliers. 
+
+## Kinematic Metrics
+Velocity, acceleration and jerk are kinematic metrics that are useful for identifying unnatural or jittery movements in pose estimations, as they highlight rapid changes in motion.
 
 ### Velocity {#sec-metrics-velocity}
+The velocity metric calculates the rate of change in keypoint positions between consecutive frames. 
+For each keypoint of a person, it measures how quickly that keypoint moves in pixels per frame, giving insights into the smoothness and consistency of the pose estimation across frames.
+
+The calculation of velocity follows a three-step process:
+
+1. First, person indices are matched between consecutive frames as described in @sec-architecture-evaluation-metric to ensure we track the same person across frames.
+
+2. The velocity is then computed with $v_t = p_{t+1} - p_t$ as the difference between keypoint positions in consecutive frames, where $p_t$ represents the keypoint position at frame $t$ and $v_t$ is the resulting velocity vector.
+
+3. Finally, the metric can be configured to report velocities in either pixels per frame or pixels per second. For the latter, the frame-based velocity is divided by the time delta between frames (1/fps).
+
+Several edge cases are handled specifically:
+
+- For videos with fewer than 2 frames, the metric returns `NaN` values as velocity cannot be computed.
+- When a keypoint is missing in either of two consecutive frames (masked or invalid), the velocity for that keypoint is set to NaN.
+- The result will have one less frame than the input video, because the velocity metric produces one metric value for any consecutive pair of frames.
+- The output contains a coordinate axis (for x and y) to represent the velocity as a vector and to serve as a basis for the acceleration and jerk metrics. For evaluation and visualization, the metric result should therefore be aggregated with the method `vector_magnitude` along the coordinate axis to obtain a scalar velocity value.
 
 ### Acceleration {#sec-metrics-acceleration}
+The acceleration metric measures the rate of change in velocity over time, representing how quickly the movement speed of keypoints changes. 
+It is computed by $a_t = v_{t+1} - v_t$, where $a_t$ is the acceleration at time $t$, $v_t$ represents the velocity, and $p_t$ the keypoint position. 
+Similar to the velocity metric, the acceleration can be reported in either pixels per frame squared or pixels per second squared, with the latter requiring division by the squared time delta between frames (1/fps²).
+
 
 ### Jerk {#sec-metrics-jerk}
+The jerk metric, which measures the rate of change in acceleration, provides insights into the smoothness of motion by quantifying how abruptly the acceleration changes.
+It is calculated with $j_t = a_{t+1} - a_t$ as the difference between consecutive acceleration values, where $j_t$ is the jerk at time $t$ and $a_t$ represents the acceleration. 
+The metric can be configured to output values in pixels per frame cubed or pixels per second cubed. For the latter, the frame-based jerk is divided by the cubed time delta between frames (1/fps³).
+
+# Experimental Setup {#sec-experiments}
 
 
+## TED Kid Video {#sec-experiments-ted-kid}
 
-## Experimental Setup {#sec-experiments}
-(Tim - 3.)
+## TED Talks {#sec-experiments-ted-talks}
 
-### TED Kid Video {#sec-experiments-ted-kid}
+## Tragic Talkers {#sec-experiments-tragic-talkers}
 
-### TED Talks {#sec-experiments-ted-talks}
-
-### Tragic Talkers {#sec-experiments-tragic-talkers}
-
-### Inference on Raw vs. Masked Videos {#sec-experiments-inference-raw-masked}
+## Inference on Raw vs. Masked Videos {#sec-experiments-inference-raw-masked}
 
 
 
@@ -307,19 +425,464 @@ No preprocessing was required for the Tragic Talkers dataset, as the videos were
 (Tim - 4.)
 
 ## TED Kid Video {#sec-results-ted-kid}
+::: {#tbl-results-ted-kid}
+```{=html}
+<table class="results"><thead>
+  <tr>
+    <th>Pose Estimator</th>
+    <th>Velocity</th>
+    <th>Acceleration</th>
+    <th>Jerk</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td>YoloPose</td>
+    <td>2.81</td>
+    <td>2.95</td>
+    <td>5.04</td>
+  </tr>
+  <tr>
+    <td>MediaPipePose</td>
+    <td>3.36</td>
+    <td>4.10</td>
+    <td>7.18</td>
+  </tr>
+  <tr>
+    <td>OpenPose</td>
+    <td>2.71</td>
+    <td>3.20</td>
+    <td>5.56</td>
+  </tr>
+  <tr class="maskanyone-api border-top">
+    <td>MaskAnyoneAPI-MediaPipe</td>
+    <td class="second">2.00</td>
+    <td class="second">1.21</td>
+    <td class="best">1.87</td>
+  </tr>
+  <tr class="maskanyone-api border-bottom">
+    <td>MaskAnyoneAPI-OpenPose</td>
+    <td>2.73</td>
+    <td>2.46</td>
+    <td>3.53</td>
+  </tr>
+  <tr class="maskanyone-ui border-top">
+    <td>MaskAnyoneUI-MediaPipe</td>
+    <td class="best">1.97</td>
+    <td class="best">1.20</td>
+    <td class="second">1.89</td>
+  </tr>
+  <tr class="maskanyone-ui border-bottom">
+    <td>MaskAnyoneUI-OpenPose</td>
+    <td>2.62</td>
+    <td>2.09</td>
+    <td>2.75</td>
+  </tr>
+</tbody>
+</table>
+```
+Average metric results for different pose estimators on the TED-kid video.
+:::
 
-## TED Kid Video {#sec-results-ted-talks}
+::: {#tbl-results-ted-kid-videos}
+```{=html}
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">Raw Video</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_YoloPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">YOLOPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MediaPipePose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MediaPipe Pose</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">OpenPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-MediaPipe</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-OpenPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-MediaPipe</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-OpenPose</div>
+        </td>
+    </tr>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.ted-kid-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+</script>
+```
+Rendered result videos of different pose estimators on the TED-kid video.
+:::
+
+## TED Talks {#sec-results-ted-talks}
+::: {#tbl-results-ted-talks}
+```{=html}
+<table class="results"><thead>
+  <tr>
+    <th>Pose Estimator</th>
+    <th>Velocity</th>
+    <th>Acceleration</th>
+    <th>Jerk</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td>YoloPose</td>
+    <td class="second">1.35</td>
+    <td>1.46</td>
+    <td>2.44</td>
+  </tr>
+  <tr>
+    <td>MediaPipePose</td>
+    <td>3.29</td>
+    <td>4.52</td>
+    <td>7.94</td>
+  </tr>
+  <tr>
+    <td>OpenPose</td>
+    <td>1.58</td>
+    <td>2.22</td>
+    <td>3.44</td>
+  </tr>
+  <tr class="maskanyone-api border-top">
+    <td>MaskAnyoneAPI-MediaPipe</td>
+    <td>1.44</td>
+    <td class="second">1.25</td>
+    <td class="second">2.04</td>
+  </tr>
+  <tr class="maskanyone-api border-bottom">
+    <td>MaskAnyoneAPI-OpenPose</td>
+    <td>2.30</td>
+    <td>2.42</td>
+    <td>4.07</td>
+  </tr>
+  <tr class="maskanyone-ui border-top">
+    <td>MaskAnyoneUI-MediaPipe</td>
+    <td class="best">1.25</td>
+    <td class="best">1.08</td>
+    <td class="best">1.83</td>
+  </tr>
+  <tr class="maskanyone-ui border-bottom">
+    <td>MaskAnyoneUI-OpenPose</td>
+    <td>2.07</td>
+    <td>2.29</td>
+    <td>3.72</td>
+  </tr>
+</tbody>
+</table>
+```
+Average metric results for different pose estimators aggregated over all TED talk videos.
+:::
 
 ## Tragic Talkers {#sec-results-tragic-talkers}
+::: {#tbl-results-tragic-talkers}
+```{=html}
+<table class="results"><thead>
+  <tr>
+    <th>Pose Estimator</th>
+    <th>RMSE</th>
+    <th>PCK</th>
+    <th>Velocity</th>
+    <th>Acceleration</th>
+    <th>Jerk</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td>YoloPose</td>
+    <td class="second">0.11</td>
+    <td class="best">0.96</td>
+    <td>4.36</td>
+    <td>3.27</td>
+    <td>5.57</td>
+  </tr>
+  <tr>
+    <td>MediaPipePose</td>
+    <td>0.47</td>
+    <td>0.69</td>
+    <td>6.48</td>
+    <td>9.80</td>
+    <td>17.58</td>
+  </tr>
+  <tr>
+    <td>OpenPose</td>
+    <td>0.33</td>
+    <td class="second">0.87</td>
+    <td>4.63</td>
+    <td>6.38</td>
+    <td>10.00</td>
+  </tr>
+  <tr class="maskanyone-api border-top">
+    <td>MaskAnyoneAPI-MediaPipe</td>
+    <td>0.12</td>
+    <td>0.78</td>
+    <td class="second">3.46</td>
+    <td class="best">2.86</td>
+    <td class="best">5.01</td>
+  </tr>
+  <tr class="maskanyone-api border-bottom">
+    <td>MaskAnyoneAPI-OpenPose</td>
+    <td>0.36</td>
+    <td>0.85</td>
+    <td>5.69</td>
+    <td>6.08</td>
+    <td>10.22</td>
+  </tr>
+  <tr class="maskanyone-ui border-top">
+    <td>MaskAnyoneUI-MediaPipe</td>
+    <td class="best">0.07</td>
+    <td>0.83</td>
+    <td class="best">3.26</td>
+    <td class="second">2.91</td>
+    <td class="second">5.10</td>
+  </tr>
+  <tr class="maskanyone-ui border-bottom">
+    <td>MaskAnyoneUI-OpenPose</td>
+    <td>0.36</td>
+    <td>0.85</td>
+    <td>5.53</td>
+    <td>5.12</td>
+    <td>9.06</td>
+  </tr>
+</tbody>
+</table>
+```
+Average metric results for different pose estimators aggregated over four camera angles of five Tragic Talkers sequences with pseudo-ground truth.
+:::
+
 
 ## Inference on Raw vs. Masked Videos {#sec-results-inference-raw-masked}
+::: {#tbl-pck-raw-masked}
+```{=html}
+<table class="results raw-masked-table">
+  <thead>
+    <tr>
+      <th>Pose Estimator</th>
+      <th>Blurring</th>
+      <th>Pixelation</th>
+      <th>Contours</th>
+      <th>Inpainting</th>
+      <th>Average</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>YoloPose</td>
+      <td class="best">0.95</td>
+      <td>0.09</td>
+      <td class="best">0.93</td>
+      <td class="second">0.32</td>
+      <td class="second">0.57</td>
+    </tr>
+    <tr>
+      <td>MediaPipePose</td>
+      <td class="best">0.95</td>
+      <td class="best">0.81</td>
+      <td>0.56</td>
+      <td class="best">0.34</td>
+      <td class="best">0.67</td>
+    </tr>
+    <tr>
+      <td>OpenPose</td>
+      <td class="second">0.88</td>
+      <td>0.10</td>
+      <td class="second">0.62</td>
+      <td>0.01</td>
+      <td>0.40</td>
+    </tr>
+    <tr class="maskanyone-api border-top">
+      <td>MaskAnyoneAPI-MediaPipe</td>
+      <td>0.85</td>
+      <td>0.30</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.29</td>
+    </tr>
+    <tr class="maskanyone-api border-bottom">
+      <td>MaskAnyoneAPI-OpenPose</td>
+      <td>0.75</td>
+      <td>0.00</td>
+      <td>0.36</td>
+      <td>0.00</td>
+      <td>0.28</td>
+    </tr>
+    <tr class="maskanyone-ui border-top">
+      <td>MaskAnyoneUI-MediaPipe</td>
+      <td class="best">0.95</td>
+      <td class="second">0.63</td>
+      <td>0.00</td>
+      <td>0.07</td>
+      <td>0.41</td>
+    </tr>
+    <tr class="maskanyone-ui border-bottom">
+      <td>MaskAnyoneUI-OpenPose</td>
+      <td>0.87</td>
+      <td>0.03</td>
+      <td>0.58</td>
+      <td>0.00</td>
+      <td>0.37</td>
+    </tr>
+  </tbody>
+</table>
+```
+Percentage of correct keypoints (PCK) for different pose estimators on videos masked by different hiding strategies.
+:::
 
+
+::: {#tbl-rmse-raw-masked}
+```{=html}
+<table class="results raw-masked-table">
+  <thead>
+    <tr>
+      <th>Pose Estimator</th>
+      <th>Blurring</th>
+      <th>Pixelation</th>
+      <th>Contours</th>
+      <th>Inpainting</th>
+      <th>Average</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>YoloPose</td>
+      <td class="best">0.12</td>
+      <td>0.92</td>
+      <td class="best">0.13</td>
+      <td class="second">0.74</td>
+      <td class="second">0.48</td>
+    </tr>
+    <tr>
+      <td>MediaPipePose</td>
+      <td class="best">0.12</td>
+      <td class="best">0.26</td>
+      <td>0.49</td>
+      <td class="best">0.64</td>
+      <td class="best">0.38</td>
+    </tr>
+    <tr>
+      <td>OpenPose</td>
+      <td class="second">0.25</td>
+      <td>0.94</td>
+      <td class="second">0.47</td>
+      <td>1.0</td>
+      <td>0.67</td>
+    </tr>
+    <tr class="maskanyone-api border-top">
+      <td>MaskAnyoneAPI-MediaPipe</td>
+      <td>0.27</td>
+      <td>0.74</td>
+      <td>1.00</td>
+      <td>0.99</td>
+      <td>0.75</td>
+    </tr>
+    <tr class="maskanyone-api border-bottom">
+      <td>MaskAnyoneAPI-OpenPose</td>
+      <td>0.43</td>
+      <td>0.99</td>
+      <td>0.75</td>
+      <td>1.00</td>
+      <td>0.79</td>
+    </tr>
+    <tr class="maskanyone-ui border-top">
+      <td>MaskAnyoneUI-MediaPipe</td>
+      <td class="best">0.07</td>
+      <td class="second">0.41</td>
+      <td>1.00</td>
+      <td>0.94</td>
+      <td>0.60</td>
+    </tr>
+    <tr class="maskanyone-ui border-bottom">
+      <td>MaskAnyoneUI-OpenPose</td>
+      <td>0.24</td>
+      <td>0.98</td>
+      <td>0.52</td>
+      <td>1.00</td>
+      <td>0.69</td>
+    </tr>
+  </tbody>
+</table>
+```
+Root mean square error (RMSE) for different pose estimators on videos masked by different hiding strategies.
+:::
 
 
 
 # Future Work & Limitations {#sec-future-work}
 (Zainab - 4.)
 (Tim - 5.)
+
+Implement head and torso normalization. This requires knowing the index of the head and torso keypoints. Care should be taken to not restraint the whole application from working on a specific keypoint set (like COCO) but still maintain flexibility in supporting various keypoint formats.
 
 
 
