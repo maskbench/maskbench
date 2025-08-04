@@ -376,7 +376,7 @@ Average metric results for different pose estimators on the TED-kid video.
     <tr>
         <td>
             <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom" autoplay loop muted playsinline>
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
                     <source src="videos/TED-kid/TED-kid.mp4" type="video/mp4">
                 </video>
             </div>
@@ -384,7 +384,7 @@ Average metric results for different pose estimators on the TED-kid video.
         </td>
         <td>
             <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom" autoplay loop muted playsinline>
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
                     <source src="videos/TED-kid/TED-kid_YoloPose.mp4" type="video/mp4">
                 </video>
             </div>
@@ -394,7 +394,7 @@ Average metric results for different pose estimators on the TED-kid video.
     <tr>
         <td>
             <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom" autoplay loop muted playsinline>
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
                     <source src="videos/TED-kid/TED-kid_MediaPipePose.mp4" type="video/mp4">
                 </video>
             </div>
@@ -402,7 +402,7 @@ Average metric results for different pose estimators on the TED-kid video.
         </td>
         <td>
             <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom" autoplay loop muted playsinline>
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
                     <source src="videos/TED-kid/TED-kid_OpenPose.mp4" type="video/mp4">
                 </video>
             </div>
@@ -412,7 +412,7 @@ Average metric results for different pose estimators on the TED-kid video.
     <tr>
         <td>
             <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom" autoplay loop muted playsinline>
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
                     <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-MediaPipe.mp4" type="video/mp4">
                 </video>
             </div>
@@ -420,7 +420,7 @@ Average metric results for different pose estimators on the TED-kid video.
         </td>
         <td>
             <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom" autoplay loop muted playsinline>
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
                     <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-OpenPose.mp4" type="video/mp4">
                 </video>
             </div>
@@ -430,7 +430,7 @@ Average metric results for different pose estimators on the TED-kid video.
     <tr>
         <td>
             <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom" autoplay loop muted playsinline>
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
                     <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
                 </video>
             </div>
@@ -438,7 +438,7 @@ Average metric results for different pose estimators on the TED-kid video.
         </td>
         <td>
             <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom" autoplay loop muted playsinline>
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
                     <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-OpenPose.mp4" type="video/mp4">
                 </video>
             </div>
@@ -446,6 +446,30 @@ Average metric results for different pose estimators on the TED-kid video.
         </td>
     </tr>
 </table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.ted-kid-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+</script>
 ```
 Rendered result videos of different pose estimators on the TED-kid video.
 :::
