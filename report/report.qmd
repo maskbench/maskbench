@@ -332,9 +332,41 @@ where $N$ is the total number of valid keypoints in the frame and $d_i$ is the n
 
 ### Velocity {#sec-metrics-velocity}
 
+The velocity metric calculates the rate of change in keypoint positions between consecutive frames. For each keypoint of a person, it measures how quickly that keypoint moves in pixels per frame, giving insights into the smoothness and consistency of the pose estimation across frames.
+
+The calculation of velocity follows a three-step process:
+
+1. First, person indices are matched between consecutive frames as described in @sec-architecture-evaluation-metric to ensure we track the same person across frames.
+
+2. The velocity is then computed with $v_t = p_{t+1} - p_t$ as the difference between keypoint positions in consecutive frames, where $p_t$ represents the keypoint position at frame $t$ and $v_t$ is the resulting velocity vector.
+
+3. Finally, the metric can be configured to report velocities in either pixels per frame or pixels per second. For the latter, the frame-based velocity is divided by the time delta between frames (1/fps).
+
+Several edge cases are handled specifically:
+
+- For videos with fewer than 2 frames, the metric returns `NaN` values as velocity cannot be computed.
+- When a keypoint is missing in either of two consecutive frames (masked or invalid), the velocity for that keypoint is set to NaN.
+- The result will have one less frame than the input video, because the velocity metric produces one metric value for any consecutive pair of frames.
+- The output contains a coordinate axis (for x and y) to represent the velocity as a vector and to serve as a basis for the acceleration and jerk metrics. For evaluation and visualization, the metric result should therefore be aggregated with the method `vector_magnitude` along the coordinate axis to obtain a scalar velocity value.
+
 ### Acceleration {#sec-metrics-acceleration}
 
+The acceleration metric measures the rate of change in velocity over time, representing how quickly the movement speed of keypoints changes. It is computed by applying the same difference calculation as the velocity metric, but to the velocity values instead of positions:
+
+$a_t = v_{t+1} - v_t = (p_{t+2} - p_{t+1}) - (p_{t+1} - p_t)$
+
+where $a_t$ is the acceleration at time $t$, $v_t$ represents the velocity, and $p_t$ the keypoint position. Similar to the velocity metric, the acceleration can be reported in either pixels per frame squared or pixels per second squared, with the latter requiring division by the squared time delta between frames (1/fps²).
+
+
 ### Jerk {#sec-metrics-jerk}
+
+The jerk metric, which measures the rate of change in acceleration, provides insights into the smoothness of motion by quantifying how abruptly the acceleration changes. It is calculated as the difference between consecutive acceleration values:
+
+$j_t = a_{t+1} - a_t = (v_{t+2} - v_{t+1}) - (v_{t+1} - v_t)$
+
+where $j_t$ is the jerk at time $t$ and $a_t$ represents the acceleration. The metric can be configured to output values in pixels per frame cubed or pixels per second cubed. For the latter, the frame-based jerk is divided by the cubed time delta between frames (1/fps³).
+
+Both acceleration and jerk metrics are particularly useful for identifying unnatural or jittery movements in pose estimations, as they highlight rapid changes in motion.
 
 
 
