@@ -451,9 +451,24 @@ We used the PCK and RMSE metrics to evaluate the accuracy of the pose estimation
 
 
 # Results {#sec-results}
-(Tim - 4.)
+In the following sections, we present the results of the experiments.
+In order to increase readability, we will not append the unit to the kinematic metric values in the textual description of the results.
+Velocity is measured in pixels/frame, acceleration in pixels/frame² and jerk in pixels/frame³.
+Our evaluation will focus mostly on the acceleration and jerk metrics, as they are most suited to detect jittery movements and instability in pose estimation.
+
 
 ## TED Kid Video {#sec-results-ted-kid}
+@tbl-results-ted-kid shows the average velocity, acceleration and jerk metric results for different pose estimators on the TED-kid video.
+Standard pose estimation models like YoloPose, MediaPipePose and OpenPose exhibit relatively high values across all metrics, indicating more eratic and less stable pose estimations.
+MediaPipePose has the highest values for velocity (3.36), acceleration (4.10) and jerk (5.56).
+In contrast, all evaluated MaskAnyone pose estimators achieve consistently lower values for acceleration and jerk, with MaskAnyoneUI-MediaPipe achieving the best overall results (velocity: 1.97, acceleration: 1.20, jerk: 1.89).
+These results suggest that the mixture-of-expert-model approach of MaskAnyone substantially enhances temporal smoothness and stability in pose estimation.
+Notably, the automated MaskAnyoneAPI variants also outperform the standard pose estimators but are slightly less effective than the UI-based counterparts, highlighting the added benefit of a human-in-the-loop approach.
+Lastly, it is also observable that MediaPipePose benefits a lot more from the MaskAnyone approach than OpenPose.
+While MaskAnyone decreases the average acceleration value of MediaPipe by 2.9 from 4.10 to 1.20 and jerk by 5.31, the average acceleration value of OpenPose is only decreased by 1.11 and jerk by 2.81.
+
+
+
 ::: {#tbl-results-ted-kid}
 ```{=html}
 <table class="results"><thead>
@@ -512,6 +527,24 @@ We used the PCK and RMSE metrics to evaluate the accuracy of the pose estimation
 Average metric results for different pose estimators on the TED-kid video.
 :::
 
+@fig-ted-kid-acceleration-distribution and @fig-ted-kid-jerk-distribution show the distribution of the acceleration and jerk metrics for the different pose estimators.
+These plots show the percentage of keypoints within fixed value ranges for the acceleration and jerk metrics over all frames.
+The ideal curve for a stable pose estimation follows an exponential decay curve, having many kinematic values close to zero and only a few large values.
+Both plots confirm the results from @tbl-results-ted-kid, showing that the MaskAnyone pose estimators have a very high concentration of low acceleration and jerk values.
+Both the UI and API variant of MaskAnyone-MediaPipe most closely resemble the ideal curve, having more than 80% of keypoints with an acceleration value of less than 1 pixels/frame².
+MaskAnyone-OpenPose pose estimators rank third and fourth achieving around 57% of of these low acceleration values.
+According to both the chart and table, YoloPose ranks fifth after the MaskAnyone pose estimators (52%), followed by OpenPose (40%).
+Lastly, the chart also indicates that MediaPipePose is the most unstable pose estimator, with only 30% of keypoints having a low acceleration value of less than 1 pixels/frame² and the curve having a relatively flat slope.
+Similar patterns can be observed for the jerk distribution.
+
+@fig-ted-kid-acceleration-per-keypoint shows the median acceleration per keypoint for the different pose estimators.
+Each keypoint contains a set of seven bars, one for each pose estimator, indicating the median acceleration value for that keypoint and pose estimator.
+The first observation is, that keypoints like the wrist, elbow, hip and ankle have consistently higher median acceleration values than other body parts like the eyes, ears and nose.
+This is expected, as these body parts are more likely to move and change their position more frequently.
+The second observation is, that MaskAnyoneAPI-MediaPipe and MaskAnyoneUI-MediaPipe consistently achieve the lowest acceleration values for all keypoints.
+Furthermore, both MaskAnyoneUI-MediaPipe and MaskAnyoneUI-OpenPose improve their respective default pose estimators MediaPipePose and OpenPose across all keypoints.
+The most significant improvement occurs for the hips, knees and ankles, where MaskAnyoneUI-MediaPipe reduces the median acceleration of MediaPipePose from four to six pixels/frame² to less than one pixels/frame².
+
 ::: {#fig-ted-kid-plots layout="[[1,1], [1]]"}
 
 ![Acceleration Distribution](plots/TED-kid/acceleration_distribution.png){#fig-ted-kid-acceleration-distribution}
@@ -525,6 +558,18 @@ Average metric results for different pose estimators on the TED-kid video.
 A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
 (c) Median acceleration per keypoint, indicating stability across individual body parts. Keypoints like the wrist, elbow and ankle are expected to have a higher median acceleration than other body parts, which tend to be more stable during movements, like eyes, ears and nose.
 :::
+
+Last but not least, it is important to not only analytically evaluate the pose estimation results, but also to visually inspect the quality of the poses.
+@tbl-results-ted-kid-videos shows the rendered videos for the seven pose estimators on the TED-kid video.
+
+Looking at the rendered video of MediaPipePose, one can observe that the pose estimation is very unstable, with many jittery movements and sudden changes in the pose.
+In the beginning of the video, the model fails to detect the right elbow joint, which all other pose estimators detect correctly.
+Furthermore, especially the hip joints, ankles and elbows exhibit a lot of rapid, jerky movements.
+Comparing the rendered videos of MaskAnyoneUI-MediaPipe and MaskAnyoneAPI-MediaPipe, one can observe that both variants are much more stable and less jittery than pure MediaPipe.
+Except for the normal movement of the person, all keypoints stay in a fixed and stable position.
+When closely observing the other pose estimators, it becomes apparent, that they are not as stable as MaskAnyoneUI-MediaPipe, but still more stable than pure MediaPipePose.
+This observation confirms the results from table @tbl-results-ted-kid and @fig-ted-kid-plots, and validates that our approach of measuring the kinematic metrics is a good indicator for assessing the stability of the pose estimation.
+
 
 ::: {#tbl-results-ted-kid-videos}
 ```{=html}
