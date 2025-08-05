@@ -157,11 +157,13 @@ conducted a detailed empirical comparison between YOLOv7 Pose and MediaPipe Pose
 This benchmark-focused blog compares YOLOv7 Pose and MediaPipe on a variety of video scenarios such as sports, dance, crowd scenes, and occlusions. The comparison is qualitative and highlights where each model performs better. MediaPipe excels in handling low-resolution input, achieves faster CPU inference, and is well-suited for detecting distant individuals. However, it is limited to single-person detection. YOLOv7 performs better in occlusion-heavy scenarios, supports multi-person estimation, and handles fast motion more accurately, especially with high-resolution input and GPU support. The study underscores that MediaPipe is better for lightweight, real-time single-user applications, while YOLOv7 is better suited for more complex, high-performance environments.
 
 # MaskBench Architecture {#sec-architecture}
-Figure of architecture & workflow (Zainab - 2.)
+![MaskBench Architecture](./images/maskbench-workflow.jpg){#fig-architecture}
 
-The general workflow of MaskBench is to first load the dataset, pose estimators and evaluation metrics.
+The general workflow of MaskBench is depicted in figure @fig-architecture.
+It starts with loading the dataset, pose estimators and evaluation metrics.
 The application creates a checkpoint folder in the specified `/output` directory, named after the dataset and a timestamp (e.g. `/output/TedTalks-20250724-121127`).
 Thereafter, inference is performed on all videos of the dataset using the pose estimators specified in the configuration file. 
+The user is required to annotate the videos semi-automatically for the `MaskAnyoneUI` pose estimators, using MaskAnyone.
 A `poses` folder is created within the checkpoint, with a subfolder for each pose estimator and a single json file for each video.
 Thereafter, the application evaluates all the specified metrics and visualizes them in plots, which are stored in the `plots` folder in the checkpoint.
 Lastly, for each video, the application creates a multiple rendered video, one for each pose estimator, which are stored in the `renderings` folder in the checkpoint.
