@@ -18,7 +18,7 @@ contact:
     - name: Zainab Zafari
       email: zainab.zafari@student.hpi.de
     - name: Babajide Alamu Owoyele
-      email: babajide.owoyele@student.hpi.de
+      email: babajide.owoyele@.hpi.de
     - name: Wim Pouw
       email: w.pouw@tilburguniversity.edu
 bibliography: dependencies/refs.bib
@@ -510,6 +510,20 @@ We used the PCK and RMSE metrics to evaluate the accuracy of the pose estimation
 Average metric results for different pose estimators on the TED-kid video.
 :::
 
+::: {#fig-ted-kid-plots layout="[[1,1], [1]]"}
+
+![Acceleration Distribution](plots/TED-kid/acceleration_distribution.png){#fig-ted-kid-acceleration-distribution}
+
+![Jerk Distribution](plots/TED-kid/jerk_distribution.png){#fig-ted-kid-jerk-distribution}
+
+![Median Acceleration per Keypoint](plots/TED-kid/keypoint_plot_acceleration.png){#fig-ted-kid-acceleration-per-keypoint}
+
+**Comparison of pose estimation models on the TED-kid video.**
+(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value ranges. 
+A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
+(c) Median acceleration per keypoint, indicating stability across individual body parts. Keypoints like the wrist, elbow and ankle are expected to have a higher median acceleration than other body parts, which tend to be more stable during movements, like eyes, ears and nose.
+:::
+
 ::: {#tbl-results-ted-kid-videos}
 ```{=html}
 <table class="video-table">
@@ -614,6 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
 Rendered result videos of different pose estimators on the TED-kid video.
 :::
 
+
 ## TED Talks {#sec-results-ted-talks}
 ::: {#tbl-results-ted-talks}
 ```{=html}
@@ -671,6 +686,20 @@ Rendered result videos of different pose estimators on the TED-kid video.
 </table>
 ```
 Average metric results for different pose estimators aggregated over all TED talk videos.
+:::
+
+::: {#fig-ted-talks-plots layout="[[1,1], [1]]"}
+
+![Acceleration Distribution](plots/TED-talks/acceleration_distribution.png){#fig-ted-talks-acceleration-distribution}
+
+![Jerk Distribution](plots/TED-talks/jerk_distribution.png){#fig-ted-talks-jerk-distribution}
+
+![Median Acceleration per Keypoint](plots/TED-talks/keypoint_plot_acceleration.png){#fig-ted-kid-acceleration-per-keypoint}
+
+**Comparison of pose estimation models on the TED talks dataset.**
+(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value ranges. 
+A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
+(c) Median acceleration per keypoint, indicating stability across individual body parts.
 :::
 
 ## Tragic Talkers {#sec-results-tragic-talkers}
@@ -746,6 +775,20 @@ Average metric results for different pose estimators aggregated over all TED tal
 </table>
 ```
 Average metric results for different pose estimators aggregated over four camera angles of five Tragic Talkers sequences with pseudo-ground truth.
+:::
+
+::: {#fig-tragic-talkers-plots layout="[[1,1], [1]]"}
+
+![Acceleration Distribution](plots/TragicTalkers/acceleration_distribution.png){#fig-tragic-talkers-acceleration-distribution}
+
+![Jerk Distribution](plots/TragicTalkers/jerk_distribution.png){#fig-tragic-talkers-jerk-distribution}
+
+![Median Acceleration per Keypoint](plots/TragicTalkers/keypoint_plot_Acceleration.png){#fig-tragic-talkers-acceleration-per-keypoint}
+
+**Comparison of pose estimation models on the Tragic Talkers dataset.**
+(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value ranges. 
+A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
+(c) Median acceleration per keypoint, indicating stability across individual body parts.
 :::
 
 
