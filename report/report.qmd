@@ -314,7 +314,7 @@ The masked video dataset is a colllection of three videos.
 It contains the TED kid video, a chunk from the TED talk "Let curiosity lead" [@ted-curiosity] and the video "interactive1_t1-cam06" from the Tragic Talkers dataset.
 The purpose of this dataset is to evaluate the performance of pose estimators when inference is performed on masked videos.
 
-For the creation of this dataset, we used MaskAnyoneUI to manually mask the persons of interest with four different hiding strategies (blurring, pixelation, contours and inpainting) in each of the three videos.
+For the creation of this dataset, we used MaskAnyoneUI to manually mask the persons of interest with four different hiding strategies (blurring, pixelation, contours and solid fill) in each of the three videos.
 We therefore obtained a total of 15 videos, including the original videos.
 
 
@@ -1002,7 +1002,7 @@ The most stable pose estimators on the Tragic Talkers "interactive4_t3-cam08" se
       <th>Blurring</th>
       <th>Pixelation</th>
       <th>Contours</th>
-      <th>Inpainting</th>
+      <th>Solid Fill</th>
       <th>Average</th>
     </tr>
   </thead>
@@ -1063,6 +1063,14 @@ The most stable pose estimators on the Tragic Talkers "interactive4_t3-cam08" se
       <td>0.00</td>
       <td>0.37</td>
     </tr>
+    <tr>
+      <td>Average</td>
+      <td>0.86</td>
+      <td>0.23</td>
+      <td>0.44</td>
+      <td>0.11</td>
+      <td>/</td>
+    </tr> 
   </tbody>
 </table>
 ```
@@ -1079,14 +1087,14 @@ Percentage of correct keypoints (PCK) for different pose estimators on videos ma
       <th>Blurring</th>
       <th>Pixelation</th>
       <th>Contours</th>
-      <th>Inpainting</th>
+      <th>Solid Fill</th>
       <th>Average</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td>YoloPose</td>
-      <td class="best">0.12</td>
+      <td class="second">0.12</td>
       <td>0.92</td>
       <td class="best">0.13</td>
       <td class="second">0.74</td>
@@ -1094,7 +1102,7 @@ Percentage of correct keypoints (PCK) for different pose estimators on videos ma
     </tr>
     <tr>
       <td>MediaPipePose</td>
-      <td class="best">0.12</td>
+      <td class="second">0.12</td>
       <td class="best">0.26</td>
       <td>0.49</td>
       <td class="best">0.64</td>
@@ -1102,7 +1110,7 @@ Percentage of correct keypoints (PCK) for different pose estimators on videos ma
     </tr>
     <tr>
       <td>OpenPose</td>
-      <td class="second">0.25</td>
+      <td>0.25</td>
       <td>0.94</td>
       <td class="second">0.47</td>
       <td>1.0</td>
@@ -1140,10 +1148,215 @@ Percentage of correct keypoints (PCK) for different pose estimators on videos ma
       <td>1.00</td>
       <td>0.69</td>
     </tr>
+    <tr>
+      <td>Average</td>
+      <td>0.21</td>
+      <td>0.78</td>
+      <td>0.62</td>
+      <td>0.90</td>
+      <td>/</td>
+    </tr> 
   </tbody>
 </table>
 ```
 Root mean square error (RMSE) for different pose estimators on videos masked by different hiding strategies.
+:::
+
+As described in @sec-datasets-masked-video, we masked three different videos with four hiding strategies.
+@tbl-pck-raw-masked and @tbl-rmse-raw-masked show the percentage of correct keypoints (PCK) and the root mean square error (RMSE) for different pose estimators on the masked videos compared to the original videos.
+
+**Comparison of pose estimators**
+
+MediaPipePose achieves the highest average PCK of 67% and the lowest average RMSE of 0.38, indicating robustness across all hiding strategies.
+YoloPose also performs well with an average PCK of 57%, especially on the blurring and contours hiding strategies, where it detects 95% and 93% of the keypoints from the original videos.
+In contrast, the performance of OpenPose is weaker, resulting in an average PCK of only 40% and a high RMSE of 0.67.
+
+Among the MaskAnyone variants, the UI-based models generally outperformed API-based ones, especially MaskAnyoneUI-MediaPipe, which reached a moderate PCK of 41% and RMSE of 0.6. 
+The API-variants of MaskAnyone perform poor, with an average PCK of 28% and 29%, suggesting that human input is required to improve the performance on masked videos.
+However, contrary to the other datasets,the UI-variants of MaskAnyone do not enhance the performance of the pure AI-models, but rather degrade it.
+A possible reason for this is that MaskAnyone uses a higher confidence threshold for keypoints than the pure AI-models we implemented, leading to the keypoints not being detected.
+Furhthermore, we hypothesize that if the first stage of MaskAnyone (where YoloPose detects the person) performs poorly, the second stage (using SAM to segment the person and crop it) will also perform poorly, leading to low quality input to the third stage, where the pose estimator is applied.
+
+
+**Comparison of hiding strategies**
+
+Last but not least, we want to compare the hiding strategies with regards to balancing privacy and performance of pose estimators on masked videos.
+
+Blurring achieved the highest average PCK over all pose estimators, with a value of 86%.
+This indicates, that models are able to detect the person in the video very well, although it is obstructed by blurring.
+This observation provides interesting insights into the working principles of pose estimation AI models.
+Although not all joints or face keypoints are visible any more, the models still makes predictions for the keypoints, which is an indicator that not the visibility of individual body parts, but the overall body structure and context plays a central role in pose estimation. 
+The models likely infer joint positions by leveraging spatial relationships and body priors learned during training, such as limb proportions, symmetry, and typical human postures.
+For instance, even when the eyes or hands are blurred or occluded, as seen in the contour and blur examples, the surrounding geometry (e.g., head, shoulders or arm direction) provides enough contextual cues for the models to estimate keypoints.
+This suggests that the pose estimators rely heavily on learned pose patterns rather than pixel-level detail.
+
+The results for other hiding strategies are more mixed.
+While YoloPose achieves an astonishing 93% PCK on videos masked with contours, indicating that it leverages edge and shape information of different body parts rather than detailed texture and color information, the other pose estimators perform poorly on this hiding strategy.
+Both MaskAnyone-API variants detect nothing, while the remaining pose estimators achieve a PCK of 36% to 62%.
+
+For pixelation, only MediaPipePose is able to detect the persons reasonably well, with a PCK of 81%.
+YoloPose, OpenPose and both MaskAnyone-OpenPose variants detect less than 10% of the keypoints.
+This signals, that the used level of pixelation greatly reduces the amount of information available to the pose estimators and that the current implementation is not suitable for pose estimation.
+
+The solid fill hiding strategy is the most challenging one, because it removes all information about the person, except for the outline.
+Consequently the average PCK is the lowest of all hiding strategies, with a value of 11%.
+The best model, MediaPipePose, achieves a PCK of 34% on this hiding strategy.
+
+As a conclusion, we can say that blurring provides the best compromise between privacy and performance of pose estimators on masked videos.
+Although it might not completely de-identify the person, it provides enough information for the pose estimators to make reasonable predictions.
+The contours hiding strategy can be used, if even more privacy is desired, at the expense of pose estimation accuracy, except for YoloPose.
+
+@tbl-results-raw-masked-rendered shows the qualitative results of the best performing pose estimators on the masked videos of the TED sequence "Let curiosity lead" and the Tragic Talkers "interactive1_t1-cam06" sequence.
+
+
+::: {#tbl-results-raw-masked-rendered}
+```{=html}
+<style>
+/* Style for raw-masked videos table */
+.video-table {
+    border-collapse: collapse; /* Remove spacing between cells */
+}
+.video-table td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 4px; /* Minimal padding around cells */
+}
+.video-table .video-zoom-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.video-table .video-zoom-wrapper video {
+    height: 200px; /* Fixed height for all videos in this table */
+    width: auto;   /* Maintain aspect ratio */
+}
+</style>
+
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom ted-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Blurring-TED-curiosity-chunk_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Blurring-TT-interactive1_t1-cam06_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom ted-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Pixelation-TED-curiosity-chunk_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">MaskAnyoneUI-MediaPipe</div> -->
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Pixelation-TT-interactive1_t1-cam06_MediaPipePose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">MediaPipePose</div> -->
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom ted-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Contours-TED-curiosity-chunk_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Contours-TT-interactive1_t1-cam06_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom ted-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/SolidFill-TED-curiosity-chunk_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/SolidFill-TT-interactive1_t1-cam06_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">MaskAnyoneUI-MediaPipe</div> -->
+            </div>
+        </td>
+    </tr>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.ted-raw-masked-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.tt-raw-masked-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+</script>
+```
+The qualitatively best performing pose estimators on the masked videos of the TED sequence "Let curiosity lead" and the Tragic Talkers "interactive1_t1-cam06" sequence.
+The rows contain videos masked with different hiding strategies in the following order: Blurring, Pixelation, Contours, Solid Fill.
+The pose estimators shown for the TED sequence (first column) are YoloPose, MaskAnyoneUI-MediaPipe, YoloPose and YoloPose.
+The pose estimators shown for the Tragic Talkers sequence (second column) are YoloPose, MediaPipePose, YoloPose and MaskAnyoneUI-MediaPipe.
 :::
 
 
@@ -1154,6 +1367,8 @@ Root mean square error (RMSE) for different pose estimators on videos masked by 
 
 Implement head and torso normalization. This requires knowing the index of the head and torso keypoints. Care should be taken to not restraint the whole application from working on a specific keypoint set (like COCO) but still maintain flexibility in supporting various keypoint formats.
 
+
+## MaskBench Outlook
 
 
 
