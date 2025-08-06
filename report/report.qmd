@@ -677,6 +677,12 @@ Rendered result videos of different pose estimators on the TED-kid video.
 
 
 ## TED Talks {#sec-results-ted-talks}
+The results on 10 full TED-Talk videos are very similar to the results on the single TED-kid video  as detailed in @tbl-results-ted-talks.
+Among the evaluated pose estimators, MaskAnyoneUI-MediaPipe consistently demonstrated superior stability, achieving the lowest average velocity, acceleration, and jerk values of 1.25, 1.08, and 1.83 respectively.
+MaskAnyoneAPI-MediaPipe followed, exhibiting the second-best performance in acceleration and jerk, closely trailed by YoloPose. OpenPose ranked next, and both MaskAnyone-OpenPose variants show an even higher instability than the pure OpenPose model.
+Consistent with previous findings, MediaPipePose was identified as the most unstable pose estimator, registering the highest values across all metrics: 3.29 for velocity, 4.52 for acceleration, and 7.94 for jerk.
+An additional observation is the clear trend that MediaPipe-based MaskAnyone variants generally outperform OpenPose-based variants in terms of stability, as indicated by their consistently lower velocity, acceleration, and jerk values.
+
 ::: {#tbl-results-ted-talks}
 ```{=html}
 <table class="results"><thead>
@@ -748,6 +754,110 @@ Average metric results for different pose estimators aggregated over all TED tal
 A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
 (c) Median acceleration per keypoint, indicating stability across individual body parts.
 :::
+
+@fig-ted-talks-acceleration-distribution and @fig-ted-talks-jerk-distribution show high acceleration and jerk values are more common in the TED talks than in the TED-kid video.
+This is likely due to the fact, that each TED-talk contains camera movements, scene changes, parts where no person is visible or views of the audience, which are not present in the TED-kid video.
+We included two particularly challenging chunks in @tbl-results-ted-videos.
+In the first column, we present the performance of the qualitatively worst pose estimator, MediaPipePose, while the second column shows the result of the best performing pose estimator, MaskAnyoneUI-MediaPipe.
+
+The woman in the first row [@ted-tarana] is wearing a long dress, the video contains many scene changes, views of the audience with the speaker in the background and also a part, where the speaking person is not visible.
+MaskAnyone greatly improves the stability and visual accuracy of the pose estimation in all these cases.
+
+In the second row [@ted-song], the main challenges are the rapidly changing camera views and the close-up shots of the singing woman.
+Both MaskAnyoneUI-MediaPipe and raw MediaPipe struggle with close up shots of the hips and arms of the woman.
+The model tries to fit an entire human pose into the small space of an arm or hip, which leads to an incorrect pose estimation and a lot of jitter.
+It appears as if as soon as the model detects one joint of a human pose, it tries to detect the remaining parts as well.
+This is a drawback, which we saw mostly for MediaPipe models (incl. MaskAnyone-MediaPipe variants) during our experiments and not for other pose estimators.
+Nonetheless, MaskAnyoneUI-MediaPipe still achieves a more stable and accurate pose estimation than MediaPipePose for most frames in this video.
+
+::: {#tbl-results-ted-videos}
+```{=html}
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tarana-sync" autoplay muted playsinline>
+                    <source src="videos/ted-talks/tarana_chunk17_MediaPipePose.mp4" type="video/mp4">
+                </video>
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tarana-sync" autoplay muted playsinline>
+                    <source src="videos/ted-talks/tarana_chunk17_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom song-sync" autoplay muted playsinline>
+                    <source src="videos/ted-talks/song_chunk1_MediaPipePose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MediaPipePose</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom song-sync" autoplay muted playsinline>
+                    <source src="videos/ted-talks/song_chunk1_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-MediaPipe</div>
+        </td>
+    </tr>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.tarana-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.song-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+</script>
+```
+Two TED-talk chunks overlayed with MediaPipePose and MaskAnyoneUI-MediaPipe poses on two challenging chunks with scene changes, camera movements and parts where no person is visible.
+The first row contains a chunk from the TED talk "Me Too is a movement, not a moment" [@ted-tarana] and the second row contains a chunk from the TED talk "Universe / Statues / Liberation" [@ted-song].
+:::
+
 
 ## Tragic Talkers {#sec-results-tragic-talkers}
 @tbl-results-tragic-talkers shows the average metric results for different pose estimators on the Tragic Talkers dataset.
