@@ -145,11 +145,22 @@ All results — including plots, pose files, and renderings — will be saved in
 
 Human pose estimation is a core task in computer vision, concerned with identifying the spatial positions of body joints—such as shoulders, elbows, and knees—from images or video sequences. Existing approaches are typically classified into two broad strategies: top-down and bottom-up. Top-down methods begin by detecting individual persons within an image, after which a separate pose estimation model is applied to each detected instance. In contrast, bottom-up approaches first detect all keypoints across the image and then group them to form full-body poses for each individual [@saiwa2025openpose; @kaim2024comparison].
 
-Among widely used frameworks, **OpenPose** [@openpose-3] is a prominent example of a bottom-up pose estimation method. It first identifies keypoints across the entire image and then assembles them into person-wise skeletons using Part Affinity Fields (PAFs). OpenPose supports multiple configurations, including 18- and 25-keypoint body models, and offers full-body tracking, hand and facial landmark estimation. The framework is optimized for GPU execution and is widely used in applications requiring multi-person pose estimation.
+Among widely used frameworks, **OpenPose** [@openpose-3] is a prominent example of a bottom-up pose estimation method. It first identifies keypoints across the entire image and then assembles them into person-wise skeletons using Part Affinity Fields (PAFs). OpenPose supports multiple configurations, including 18- and 25-keypoint body models @fig-openpose, and offers full-body tracking, hand and facial landmark estimation. The framework is optimized for GPU execution and is widely used in applications requiring multi-person pose estimation.
 
-**YOLO11** [@yolo11_ultralytics], on the other hand, follows a top-down approach. It extends the YOLO family of real-time object detectors by incorporating pose estimation capabilities. After detecting bounding boxes for each person, YOLO11 predicts 17 body keypoints per individual, using a topology aligned with the COCO keypoint format. It is designed for high-performance scenarios and is optimized for GPU usage, making it suitable for real-time, multi-person tracking in high-resolution video streams.
+**YOLO11** [@yolo11_ultralytics], on the other hand, follows a top-down approach. It extends the YOLO family of real-time object detectors by incorporating pose estimation capabilities. After detecting bounding boxes for each person, YOLO11 predicts 17 body keypoints @fig-yolo per individual, using a topology aligned with the COCO keypoint format. It is designed for high-performance scenarios and is optimized for GPU usage, making it suitable for real-time, multi-person tracking in high-resolution video streams.
 
-**MediaPipe Pose** [@mediapipe] is a lightweight, top-down framework designed specifically for real-time pose estimation on CPU-only devices. Built upon BlazePose, it employs a 33-landmark skeleton that extends the standard COCO format with additional joints to improve anatomical precision. The pipeline consists of an initial detection and tracking stage, followed by landmark prediction and overlay. MediaPipe is particularly suited for single-person applications in mobile and browser environments, where computational efficiency and low latency are critical.
+**MediaPipe Pose** [@mediapipe] is a lightweight, top-down framework designed specifically for real-time pose estimation on CPU-only devices. Built upon BlazePose, it employs a 33-landmark skeleton @fig-mediapipe that extends the standard COCO format with additional joints to improve anatomical precision. The pipeline consists of an initial detection and tracking stage, followed by landmark prediction and overlay. MediaPipe is particularly suited for single-person applications in mobile and browser environments, where computational efficiency and low latency are critical.
+
+::: {#fig-keypoints layout-ncol=3}
+
+![OpenPose](images/openpose-keypointbody25.png){#fig-openpose height=200px}
+
+![YOLO](images/yolo-keypoints.png){#fig-yolo height=200px}
+
+![MediaPipe](images/mediapipe-landmarks.png){#fig-mediapipe height=200px}
+
+Some of the most common pose models and their keypoints. **YOLOv11** uses the COCO format with 17 keypoints. **OpenPose** supports COCO (18) and BODY-25 (25). **MediaPipe** uses a 33-landmark skeleton.
+:::
 
 Several studies have benchmarked popular pose estimation models across different datasets, conditions, and use cases. The following works are particularly relevant to our benchmarking framework:
 
@@ -359,7 +370,7 @@ Special care was taken to ensure that the color of pose estimators is consistent
 
 
 # Datasets {#sec-datasets}
-This study uses three video-based datasets, each representing a different level of complexity, from simple, controlled settings to more dynamic and interactive scenarios. To capture this range, we selected three distinct datasets: TED Kid Video, TED Talks, and Tragic Talkers. Each dataset was chosen based on specific conditions to evaluate pose estimation models under varying degrees of difficulty.
+This study uses three video-based datasets, each representing a different level of complexity, from simple, controlled settings to more dynamic and interactive scenarios. To capture this range, we selected three distinct datasets: TED Kid Video, TED Talks [@ted], and Tragic Talkers [@tragic-talkers]. Each dataset was chosen based on specific conditions to evaluate pose estimation models under varying degrees of difficulty.
 
 ## TED Kid Video {#sec-datasets-ted-kid}
 The TED Kid Video is a short, 10-second clip featuring a child in a well-lit environment with high video quality. Throughout the sequence, all body parts remain clearly visible, and there is no occlusion or obstruction of the subject. This video serves as a controlled scenario to evaluate pose estimation methods under ideal conditions, providing a baseline for comparison with more complex datasets. 
@@ -966,6 +977,126 @@ Root mean square error (RMSE) for different pose estimators on videos masked by 
 
 # Future Work & Limitations {#sec-future-work}
 (Zainab - 4.)
+
+## Maskanyone-cli and Maskanyone-UI Limitations
+
+Both MaskAnyone-CLI and MaskAnyone-UI (also referred to as MaskAnyone-Production) have introduced improvements in detection accuracy and user interaction. However, they still exhibit notable limitations in complex video scenarios such as TED Talks, which often feature background noise, occlusions, scene transitions, and unrelated visual elements. One major challenge lies in handling abrupt scene changes or shifts in camera perspective. For example, when a video cuts from a close-up to a full-body shot (or vice versa), MaskAnyone may fail to maintain consistent detection and tracking, resulting in missed detections or inaccurate pose estimation. MaskAnyone-UI addresses this issue through a human-in-the-loop mechanism that allows users to manually select key frames, ensuring more reliable tracking throughout the video.
+
+These limitations are further amplified when the subject is very small in the frame, partially visible, or occluded. Additional challenges occur when joints are close together due to body rotation, when the person is viewed from the side, or when the skin tone closely resembles the clothing or background. In such cases, both the CLI and UI versions are prone to false positives or unstable tracking.
+
+A specific limitation arises with MaskAnyone-OpenPose. While OpenPose performs well when the full body is clearly visible and motion is relatively slow, it struggles significantly when only part of the body appears in the frame. In these cases, the output tends to jitter and lacks temporal stability. MaskAnyone-MediaPipe, in contrast, is more stable in partially visible scenarios but struggles with sudden transitions between full-body and partial-body views. It tends to display predefined joint landmarks immediately upon detecting a person, especially with complex movement like the one in video4, which may not align accurately with the human figure in the initial frames, leading to delays in correct joint estimation.
+
+Another issue, observed primarily in MaskAnyone-CLI with MediaPipe, is the double overlaying of pose skeletons on the same person. This results in duplicate or misaligned pose renderings. This problem has not been observed in the UI version, as manual frame selection allows users to avoid such misdetections.
+
+MaskAnyone-OpenPose also struggles in scenarios where the human is wearing long clothing. Even when the full body is visible, with no occlusion or rapid movement, the model often fails to estimate the pose accurately. In particular, it jitter when attempting to locate lower body landmarks, such as feet.
+
+Finally, false positive predictions remain a common problem in the CLI version. In scenes where no human is present, the system occasionally interprets non-human objects—such as building, cigerate, images, or background textures—as people. While less frequent, similar errors can still occur in the UI variant, although the manual intervention step usually helps prevent them.
+
+::: {#tbl-results-ted-kid-videos}
+
+```{=html}
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-tlak-videos">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">Raw Video</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_YoloPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">YOLOPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MediaPipePose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MediaPipe Pose</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">OpenPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-MediaPipe</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-OpenPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-MediaPipe</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-OpenPose</div>
+        </td>
+    </tr>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.ted-kid-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+</script>
+```
+Rendered result videos of different pose estimators on the TED-kid video.
+:::
+
 (Tim - 5.)
 
 Implement head and torso normalization. This requires knowing the index of the head and torso keypoints. Care should be taken to not restraint the whole application from working on a specific keypoint set (like COCO) but still maintain flexibility in supporting various keypoint formats.
