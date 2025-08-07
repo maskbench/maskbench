@@ -312,7 +312,7 @@ These scenarios were chosen to reflect a variety of real-world human interaction
 ## Masked Video Dataset {#sec-datasets-masked-video}
 The masked video dataset is a colllection of three videos.
 It contains the TED kid video, a chunk from the TED talk "Let curiosity lead" [@ted-curiosity] and the video "interactive1_t1-cam06" from the Tragic Talkers dataset.
-The purpose of this dataset is to evaluate the performance of pose estimators when inference is performed on masked videos.
+The purpose of this dataset is to evaluate the performance of pose estimators when inference is performed on masked videos, to adress the challenge of distributing datasets between researchers, which contain sensitive information that 
 
 For the creation of this dataset, we used MaskAnyoneUI to manually mask the persons of interest with four different hiding strategies (blurring, pixelation, contours and solid fill) in each of the three videos.
 We therefore obtained a total of 15 videos, including the original videos.
@@ -448,6 +448,9 @@ For the masked video dataset, we first performed inference on the raw videos wit
 Thereafter, for each hiding strategy, the pose estimators were executed again on the masked videos.
 The results were then compared to the baseline to evaluate the impact of the different hiding strategies on the pose estimation performance.
 We used the PCK and RMSE metrics to evaluate the accuracy of the pose estimation compared to the pose result on the raw videos.
+
+It is important to note, that such a pipeline run is not yet natively implemented in MaskBench and is rather preliminary implementation in a script to serve as a proof of concept.
+We plan to extend MaskBench to support this workflow in the future, see section @sec-future-work-pipelining.
 
 
 # Results {#sec-results}
@@ -1475,12 +1478,60 @@ The pose estimators shown for the Tragic Talkers sequence (second column) are Yo
 (Zainab - 4.)
 (Tim - 5.)
 
-Implement head and torso normalization. This requires knowing the index of the head and torso keypoints. Care should be taken to not restraint the whole application from working on a specific keypoint set (like COCO) but still maintain flexibility in supporting various keypoint formats.
+Implement head and torso normalization. 
 
 
 ## MaskBench Outlook
+With our promising results, we are laying the foundation for a more feature-rich benchmarking framework for pose estimation on masked videos.
+There are several aspects and directions in which we want to extend our work.
 
+### Pipelining {#sec-future-work-pipelining}
+Currently, MaskBench supports only one workflow, which is to perform inference on a set of videos, evaluate them with metrics, visualize the results and render the videos with the poses.
+As shown with the experiment on the masked video dataset, there are many more sets of pipelines, which could be executed.
+Our idea is to add an extensible and customizable pipeline class to MaskBench, which defines a certain workflow (i.e. our current workflow, the masked video dataset workflow, or other, yet to be defined workflows), that would chain the components of MaskBench together in a certain way, reusing the existing components and adding new ones as needed.
 
+Specifically for the masked video dataset workflow, the pipeline could look like this:
+
+1. Perform inference on the raw videos with all pose estimators.
+2. Evaluate the results with metrics.
+3. Visualize the results of the pose estimators on the raw videos in plots or tables.
+4. Render the raw videos with the poses.
+5. Reuse the SAM2 masks provided by MaskAnyone to mask the videos with different hiding strategies. The masking parameters can be configured by the user to evaluate not only different hiding strategies, but also different levels of masking, giving more insights into which degree of which hiding strategy balances privacy and performance of the pose estimators the best.
+6. For each pose estimator, execute it on all videos of all hiding strategies.
+7. Evaluate the results with metrics.
+8. Visualize the results of the pose estimators on the masked videos in plots or tables.
+9. Render the masked videos with the poses.
+
+### Evaluation of downstream tasks {#sec-future-work-downstream-tasks}
+Estimating the pose of a person can be a preliminary step for many downstream tasks, like gesture recognition, 3D human reconstruction, action classification and many more.
+MaskBench could be extended to support the evaluation of different models on downstream tasks for raw or masked videos, giving researchers more insights into which up-stream pose estimator to use for a specific downstream task.
+In general, researchers could use MaskBench to mask their datasets, obstructing the identity of the person in the videos, and provide the pose outputs from the raw videos in addition to the masked videos to other researchers.
+These could use the pose outputs along with the masked videos for their downstream tasks.
+MaskBench should support an evaluation framework to assess the potential performance loss of downstream tasks when using masked videos.
+
+### User interface
+Adding a user interface to MaskBench in the form of a web application would allow for a more user-friendly experience.
+The current workflow requires technical knowledge to run docker containers, set environment variables and edit the configuration files.
+The aim of the user interface would be to provide a simple and intuitive way to configure and run the pipeline, visualize the results and see the rendered videos.
+
+### Additional improvements
+In this section, we want to list some minor improvements, which can be implemented in the future:
+
+- Currently, the Euclidean distance metric only supports normalization by bounding box.
+Implementing head and torso normalization would allow for a more accurate evaluation of pose estimators, resolving the shorter-limb problem described in @sec-metrics-euclidean-distance.
+This requires knowing the index of the head and torso keypoints.
+Care should be taken to not restraint the whole application from working on a specific keypoint set (like COCO) but still maintain flexibility in supporting various keypoint formats.
+- Adding a logger to MaskBench would allow for a cleaner and more consistent terminal output for the user.
+For debugging purposes, it would be helpful to add an option to also show all output of the other docker containers to pin down errors during development.
+- Currently, MaskBench does not support face and hand keypoints.
+Introducing this feature would allow to evaluate a greater set of downstream tasks.
+- Adding more metrics and plots, especially for the evaluation of ground-truth independent aspects of pose estimation can help to better understand the performance of pose estimators.
+Such metrics could, for example, measure, whether an estimated pose is physically plausible, given the constraints of the human body.
+This would be a step towards evaluating the plausibility of poses rather than their pure quality in terms of acceleration, jerk and jitter.
+- As a long-term goal, MaskBench could also support either 3D human pose estimation or the projection of 3D ground truth pose keypoints onto a 2D image plane using camera calibration parameters.
+This would alleviate the issue of evaluating pose estimators on pseudo-ground truth data or 2D ground truth data from human annotators.
+Instead, marker-based motion capture data could be used to assess the quality of marker-less pose estimators on real-world data, which promises to be more accurate than 2D ground truth data.
+An example for such a dataset is the BioCV dataset published by the University of Barth [@bio-cv].
 
 # Conclusion {#sec-conclusion}
 (Tim - 7.)
