@@ -36,6 +36,7 @@ format:
         number-sections: true
         code-fold: true
         code-tools: true
+        output-file: index.html
         grid:
             margin-width: 100px
 filters:
