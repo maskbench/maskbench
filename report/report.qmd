@@ -1,5 +1,5 @@
 ---
-title: "MaskBench - A Comprehensive Benchmark Framework for Video De-Identification"
+title: "MaskBench - A Comprehensive Benchmark Framework for 2D Pose Estimation and Video De-Identification"
 date: "2025 08 08"
 author:
     - name: Tim Riedel
@@ -45,7 +45,17 @@ jupyter: python3
 ---
 
 # Abstract / Overview {#sec-abstract}
-(Tim - 6.)
+Pose estimation plays a critical role in numerous computer vision applications but remains challenging in scenarios involving privacy-sensitive data and in real-world, unconstrained videos like TED Talks, that are not recorded under controlled laboratory conditions.
+To address the issue of sharing datasets across academic institutions without compromising privacy, we explore how masking strategies like blurring, pixelation, contour overlays, and solid fills impact pose estimation performance.
+We introduce MaskBench, a modular and extensible benchmarking framework designed to evaluate pose estimators under varying conditions, including masked video inputs.
+MaskBench integrates a total of seven pose estimators, including YoloPose, MediaPipePose, OpenPose, and both automated and human-in-the-loop variants of MaskAnyone, a multi-stage pipeline combining segmentation and pose estimation through a mixture-of-expert approach.
+Our evaluation was done on four datasets with increasing scene complexity, and uses both kinematic metrics like velocity, acceleration, and jerk as well as accuracy-based metrics like Percentage of Correct Keypoints (PCK) and Root Mean Square Error (RMSE).
+Results show that MaskAnyone variants significantly improve the visual quality of the pose estimation by reducing jitter and improving keypoint stability, especially the human-in-the-loop variants of MaskAnyone-MediaPipe.
+These visual results are supported by quantitative metrics, with the aforementioned models achieving the lowest acceleration and jerk values across all datasets.
+YoloPose consistently ranks as the most robust standalone model.
+Regarding masking techniques, preliminary results suggest that blurring offers a promising balance between privacy and pose estimation quality.
+However, since this experiment was conducted on a limited set of videos, further investigation is needed to draw general conclusions.
+These findings highlight the potential of pipelines like MaskAnyone and the extensibility of MaskBench for future research on pose estimation under privacy-preserving constraints.
 
 
 
