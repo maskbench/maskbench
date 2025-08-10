@@ -139,9 +139,14 @@ All results — including plots, pose files, and renderings — will be saved in
 
 
 # Introduction {#sec-introduction}
-(Zainab - 5.)
 
+Human pose estimation is an important area of computer vision that focuses on detecting and tracking the positions of key points on the human body in images or videos. It is widely used in fields such as sports analysis, healthcare, and human–computer interaction. In recent years, many pose estimation models have been developed, each with its own strengths, limitations, and preferred use cases.
 
+MaskBench is a comprehensive benchmarking framework designed to evaluate pose estimation models under consistent and reproducible conditions. It supports both top-down and bottom-up approaches, integrates automated and human-in-the-loop pipelines, and offers a range of metrics for measuring accuracy. To reflect real-world constraints, MaskBench also includes experiments on de-identified videos, enabling researchers to assess the impact of privacy-preserving transformations on model performance.
+
+By combining diverse datasets, multiple pose estimation methods, and standardized evaluation tools, MaskBench provides a unified environment for fair comparison and in-depth analysis. This work presents the framework’s design, experimental setup, and key findings, offering practical insights into the strengths and weaknesses of different models.
+
+In addition, we examine the limitations of MaskAnyone and outline planned improvements for MaskBench. These include expanding supported workflows, adding more evaluation metrics, and improving user interaction. Overall, the report aims to give a clear view of the current state of pose estimation models and highlight directions for future work.
 
 # Related Work {#sec-related-work}
 
