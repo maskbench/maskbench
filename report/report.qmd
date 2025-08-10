@@ -376,7 +376,7 @@ Special care was taken to ensure that the color of pose estimators is consistent
 
 
 # Datasets {#sec-datasets}
-This study uses four video-based datasets, each representing a different level of complexity, from simple, controlled settings to more dynamic and interactive scenarios. To capture this range, we selected or created four distinct datasets: TED Kid Video, TED Talks [@ted], Tragic Talkers [@tragic-talkers] and a masked video dataset. Each dataset was chosen based on specific conditions to evaluate pose estimation models under varying degrees of difficulty.
+This study uses four video-based datasets, each representing a different level of complexity, from simple, controlled settings to more dynamic and interactive scenarios. To capture this range, we selected or created four distinct datasets: TED Kid Video, TED Talks [@ted], Tragic Talkers [@tragic-talkers] and a masked video dataset which we created from original TED Talks, TED Kid, and Tragic Tlakers. Each dataset was chosen based on specific conditions to evaluate pose estimation models under varying degrees of difficulty.
 
 ## TED Kid Video {#sec-datasets-ted-kid}
 The TED Kid Video is a short, 10-second clip featuring a child in a well-lit environment with high video quality. Throughout the sequence, all body parts remain clearly visible, and there is no occlusion or obstruction of the subject. This video serves as a controlled scenario to evaluate pose estimation methods under ideal conditions, providing a baseline for comparison with more complex datasets. 
@@ -420,7 +420,7 @@ TED Talks also showed some inconsistency in structure. Some videos were straight
 
 For these more complex videos, we carefully selected segment boundaries to ensure that each chunk started with frames where a human was clearly visible. When necessary, we manually trimmed the beginning of chunks to avoid starting with empty or unrelated frames. This step was critical because if a video starts with non-human content, MaskAnyone may incorrectly classify objects in the first frame as humans and then continue misdetecting them in subsequent frames.
 
-After preprocessing, the chunks from each TED Talk were merged back into a single video file. This allowed all pose estimation models to be evaluated on the same content and ensured consistency across results.
+After preprocessing, we run MaskAnyone-UI on chunks, then the processed chunks from each TED Talk and the masks from MaskAnyone-UI were merged back into a single video file and single SAM2 masks file for evaluation and running other models that support long videos. This allowed all pose estimation models to be evaluated on the same content and ensured consistency across results.
 
 No preprocessing was required for the Tragic Talkers dataset, as the videos were already clean and free of noise or unrelated visual content.
 
@@ -1567,134 +1567,20 @@ The pose estimators shown for the TED sequence (first column) are YoloPose, Mask
 The pose estimators shown for the Tragic Talkers sequence (second column) are YoloPose, MediaPipePose, YoloPose and MaskAnyoneUI-MediaPipe.
 :::
 
-
-
 # Future Work & Limitations {#sec-future-work}
-(Zainab - 4.)
+This section presents the current limitations of MaskAnyone-API and MaskAnyone-UI. While both MaskAnyone tools have improved detection accuracy and user interaction, challenges remain in handling long videos, abrupt scene changes, and certain detection errors. We also discuss opportunities to enhance MaskBench in future work. We propose several extensions to MaskBench, including more flexible pipelines, downstream task evaluation, an accessible user interface, and technical improvements to advance its capabilities for privacy-preserving pose estimation research.
 
 ## Maskanyone-cli and Maskanyone-UI Limitations
 
-Both MaskAnyone-CLI and MaskAnyone-UI (also referred to as MaskAnyone-Production) have introduced improvements in detection accuracy and user interaction. However, they still exhibit notable limitations in complex video scenarios such as TED Talks, which often feature background noise, occlusions, scene transitions, and unrelated visual elements. One major challenge lies in handling abrupt scene changes or shifts in camera perspective. For example, when a video cuts from a close-up to a full-body shot (or vice versa), MaskAnyone may fail to maintain consistent detection and tracking, resulting in missed detections or inaccurate pose estimation. MaskAnyone-UI addresses this issue through a human-in-the-loop mechanism that allows users to manually select key frames, ensuring more reliable tracking throughout the video.
+Both MaskAnyone-CLI and MaskAnyone-UI (also referred to as MaskAnyone-Production) have introduced improvements in detection accuracy and user interaction. However, they still exhibit notable limitations in complex and long video scenarios such as TED Talks, which often feature background noise, occlusions, scene transitions, and unrelated visual elements. 
 
-These limitations are further amplified when the subject is very small in the frame, partially visible, or occluded. Additional challenges occur when joints are close together due to body rotation, when the person is viewed from the side, or when the skin tone closely resembles the clothing or background. In such cases, both the CLI and UI versions are prone to false positives or unstable tracking.
+The first and most important challenge of MaskAnyone-API and MaskAnyone-UI is that it does not support long videos, such as TED Talks. It requires manual chunking of the video; however, chunking introduces another issue. After chunking, some videos start with frames where no human is visible. When a video begins with such frames, MaskAnyone falsely predicts objects in the scene as humans and then continues to the end of the video with that false prediction. For better detection and pose estimation, we would need to remove the start of chunks without visible humans, but this results in a loss of content.
 
-A specific limitation arises with MaskAnyone-OpenPose. While OpenPose performs well when the full body is clearly visible and motion is relatively slow, it struggles significantly when only part of the body appears in the frame. In these cases, the output tends to jitter and lacks temporal stability. MaskAnyone-MediaPipe, in contrast, is more stable in partially visible scenarios but struggles with sudden transitions between full-body and partial-body views. It tends to display predefined joint landmarks immediately upon detecting a person, especially with complex movement like the one in video4, which may not align accurately with the human figure in the initial frames, leading to delays in correct joint estimation.
+Another major challenge lies in handling abrupt scene changes or shifts in camera perspective. For example, when a video cuts from a close-up to a full-body shot (or vice versa), MaskAnyone fails to maintain consistent detection and tracking, resulting in missed detections or inaccurate pose estimation. MaskAnyone-UI addresses this issue through a human-in-the-loop mechanism that allows users to manually select key frames, ensuring more reliable tracking throughout the video.
 
-Another issue, observed primarily in MaskAnyone-CLI with MediaPipe, is the double overlaying of pose skeletons on the same person. This results in duplicate or misaligned pose renderings. This problem has not been observed in the UI version, as manual frame selection allows users to avoid such misdetections.
+Another issue, observed primarily in MaskAnyone-API, is the double overlaying of pose skeletons on the same person. This results in duplicate or misaligned pose renderings. This problem has not been observed in the UI version, as manual frame selection allows users to avoid such misdetections.
 
-MaskAnyone-OpenPose also struggles in scenarios where the human is wearing long clothing. Even when the full body is visible, with no occlusion or rapid movement, the model often fails to estimate the pose accurately. In particular, it jitter when attempting to locate lower body landmarks, such as feet.
-
-Finally, false positive predictions remain a common problem in the CLI version. In scenes where no human is present, the system occasionally interprets non-human objects—such as building, cigerate, images, or background textures—as people. While less frequent, similar errors can still occur in the UI variant, although the manual intervention step usually helps prevent them.
-
-::: {#tbl-results-ted-kid-videos}
-
-```{=html}
-<table class="video-table">
-    <tr>
-        <td>
-            <div class="video-zoom-wrapper ted-tlak-videos">
-                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
-                    <source src="videos/TED-kid/TED-kid.mp4" type="video/mp4">
-                </video>
-            </div>
-            <div class="video-caption">Raw Video</div>
-        </td>
-        <td>
-            <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
-                    <source src="videos/TED-kid/TED-kid_YoloPose.mp4" type="video/mp4">
-                </video>
-            </div>
-            <div class="video-caption">YOLOPose</div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
-                    <source src="videos/TED-kid/TED-kid_MediaPipePose.mp4" type="video/mp4">
-                </video>
-            </div>
-            <div class="video-caption">MediaPipe Pose</div>
-        </td>
-        <td>
-            <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
-                    <source src="videos/TED-kid/TED-kid_OpenPose.mp4" type="video/mp4">
-                </video>
-            </div>
-            <div class="video-caption">OpenPose</div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
-                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-MediaPipe.mp4" type="video/mp4">
-                </video>
-            </div>
-            <div class="video-caption">MaskAnyoneAPI-MediaPipe</div>
-        </td>
-        <td>
-            <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
-                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-OpenPose.mp4" type="video/mp4">
-                </video>
-            </div>
-            <div class="video-caption">MaskAnyoneAPI-OpenPose</div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
-                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
-                </video>
-            </div>
-            <div class="video-caption">MaskAnyoneUI-MediaPipe</div>
-        </td>
-        <td>
-            <div class="video-zoom-wrapper ted-kid-video">
-                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
-                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-OpenPose.mp4" type="video/mp4">
-                </video>
-            </div>
-            <div class="video-caption">MaskAnyoneUI-OpenPose</div>
-        </td>
-    </tr>
-</table>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const videos = document.querySelectorAll('.ted-kid-sync');
-    let endedCount = 0;
-
-    function restartAllVideos() {
-        videos.forEach(video => {
-            video.currentTime = 0;
-            video.play();
-        });
-        endedCount = 0;
-    }
-
-    videos.forEach(video => {
-        video.addEventListener('ended', () => {
-            endedCount++;
-            if (endedCount === videos.length) {
-                restartAllVideos();
-            }
-        });
-    });
-});
-</script>
-```
-Rendered result videos of different pose estimators on the TED-kid video.
-:::
-
-(Tim - 5.)
-
-Implement head and torso normalization. 
-
+Finally, false positive predictions remain a common problem in MaskAnyone-API. Not only in scenes where no human is present, where the system interprets non-human objects such as buildings, cigarettes, or images as people, but it also occurs in scenarios where a human is actually present, yet MaskAnyone-API segments the background instead of the person. False positive predictions occur in MaskAnyone-UI as well, but only on rare occasions. 
 
 ## MaskBench Outlook
 With our promising results, we are laying the foundation for a more feature-rich benchmarking framework for pose estimation on masked videos.
