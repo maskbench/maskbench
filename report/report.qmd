@@ -60,93 +60,174 @@ These findings highlight the potential of pipelines like MaskAnyone and the exte
 
 
 
-# Getting Started {#sec-installation}
+# 🚀 Getting Started {#sec-installation}
 
-## Installation / Setup {#sec-installation-setup}
+## 🛠️ Installation {#sec-installation-setup}
 Follow the instructions below to install and run experiments with MaskBench:
-MaskBench uses pre-built Docker images. To use and experiment with MaskBench:
 
-1. Install Docker on your machine and make sure the Docker daemon is running.
+1. **Install Docker** and ensure the daemon is running.
+2. **Clone this repo**:
+   ```bash
+   git clone https://github.com/maskbench/maskbench.git
+   ```
+3. **Setup the folder structure**. You can store the datasets, outputs or weights in any location you want (for example, if your dataset is large and stored on a separate disk), however, to minimize setup overhead, we suggest the following folder structure:
 
-2. Open a terminal on your local machine and clone the repository using `git clone https://github.com/maskbench/maskbench.git` Then switch to the cloned directory and run the following commands.
+    ```bash
+    maskbench/
+    ├── src
+    └── config/
+        └── your-experiment-config.yml
+    
+    maskbench_assets/
+    ├── weights
+    ├── output
+    └── datasets/
+        └── your-dataset/
+            ├── videos/
+            │   └── video_name1.mp4
+            ├── labels/
+            │   └── video_name1.json
+            ├── maskanyone_ui_mediapipe/
+            │   └── video_name1.json
+            └── maskanyone_ui_openpose/
+                └── video_name1.json
+    ```
+4. **Switch to the git repository**
 
-3. Copy the .env file using:
+    ```bash
+    cd maskbench
+    ```
+5. **Create the environment file**. This file is used to tell MaskBench about your dataset, output and weights directory, as well as the configuration file to use for an experiment. Copy the .env file using:
 
-    * On Linux/macOS: cp .env.dist .env
-
-    * On Windows: copy .env.dist .env
-
-4. Open the .env file using vim .env or nano .env. In this file, specify the absolute paths for the following variables according to your setup:
-
-    * `MASKBENCH_DATASET_DIR:` The directory where video files are located. MaskBench supports video files with .mp4 and .avi extensions
-    * `MASKBENCH_OUTPUT_DIR:` The directory where experiment results will be saved.
-    * `MASKBENCH_WEIGHTS_DIR:` Directory for storing model weights (e.g., MediaPipe, YOLOv11, OpenPose).
-
+    ```bash
+    cp .env.dist .env
+    ```
+6. **Edit the .env file**. Open it using `vim .env` or `nano .env.`. Adjust the following variables:
+    * `MASKBENCH_GPU_ID:` If you are on a multi-GPU setup, tell MaskBench which GPU to use. Either specify a number (0, 1, ...) or "all" in which case all available GPUs on the system are used. Currently, MaskBench only supports inference on a single GPU or on all GPUs.
     * `MASKBENCH_CONFIG_FILE:` The configuration file used to define your experiment setup.
 
-If you don’t already have datasets/output folders, you can create them with:
-mkdir datasets && mkdir output
-Then add their absolute paths to the .env file.
+    The following variables only need to be adjusted, if you use a different folder structure than the one proposed above:
+    * `MASKBENCH_DATASET_DIR:` The directory where video files are located. MaskBench supports video files with .mp4 and .avi extensions.
+    * `MASKBENCH_OUTPUT_DIR:` The directory where experiment results will be saved.
+    * `MASKBENCH_WEIGHTS_DIR:` Directory for storing model weights (e.g., MediaPipe, YOLOv11, OpenPose).
+7. **Run the MaskBench Docker container**.
 
-5. Build the Docker container with:
-`docker compose -f docker-compose.yml build`
+    ```bash
+    docker compose up
+    ```
+    If multiple users run MaskBench simultaneously, use `docker compose -p $USER up`.
 
-6. Run the Docker container with:
-docker compose -f docker-compose.yml up
+## 📋 Usage {#sec-installation-usage}
+The following paragraphs describe how to structure your dataset, configure the application, and understand the output of MaskBench. Following these guidelines ensures the application runs smoothly and recognizes your data correctly.
 
-## Usage {#sec-installation-usage}
-To run experiments, we recommend organizing your datasets using the following folder structure for consistency:
-`datasets/<name-of-dataset>/videos`
-For maskanyone-UI,there should be two folders inside datasets folder as follow:
+### 📂 Dataset structure
 
-* maskanyone_ui_mediapipe/raw/video_name.json
+1. **Videos**: Place all videos you want to evaluate in the `videos` folder.
 
-* maskanyone_ui_openpose/raw/video_name.json
+    ```bash
+    your-dataset/
+    ├── videos/
+    │    ├── video_name1.mp4
+    │    ├── video_name2.mp4
+    ```
 
-The videos folder contains the list of video files, and each video_name.json file is a corresponding pose file generated by MaskAnyone-UI for the video. The video file and its pose file must have the same name.
+2. **Labels** (Optional): If you provide labels, there must be exactly one label file for each video, with the same file name. Example:
 
-For configuration, set the `MASKBENCH_CONFIG_FILE` to one of the following files depending on your experiment:
+    ```bash
+    your-dataset/
+    ├── videos/
+    │    └── video_name1.mp4
+    ├── labels/
+    │    └── video_name2.json
+    ```
 
-* raw-masked-experiment.yml
+3. **MaskAnyoneUI Output**: If you use MaskAnyoneUI, run the application, download the resulting pose file, store it in either the  `maskanyone_ui_openpose` or `maskanyone_ui_mediapipe` folder and once again name it exactly like the corresponding video file.
 
-* ted-kid.yml
+### ⚙️ Configuration Files
 
-* ted-talks.yml
+We provide four sample configuration files from our experiments. Feel free to copy and adapt them to your needs. The following note explains some parameters in more detail.
 
-* tragic-talkers.yml
+::: {.callout-note collapse="true"}
+## Explanation of config parameters
+```{.yaml}
+# A directory name (MaskBench run name) inside the output directory from which to load existing results.
+# If set, inference is skipped and results are loaded. To run inference from scratch, comment out or set to "None".
+inference_checkpoint_name: None
+execute_evaluation: true                    # Set to false to skip calculating evaluation metrics and plotting.
+execute_rendering: true                     # Set to false to skip rendering the videos.
 
-You can copy and modify any of these configuration files to suit your experiment.
+dataset:
+  name: TragicTalkers                       # User-definable name of the dataset
+  module: datasets.tragic_talkers_dataset
+  class: TragicTalkersDataset
+  dataset_folder: /datasets/tragic-talkers  # Location of the dataset folder
+  config:
+    video_folder: videos
+    ground_truth_folder: labels
+    convert_gt_keypoints_to_coco: true
 
-**Model Weights**
-You can manually download and place pretrained models or weights in the weights folder, if you already do not have do folder you can create it and place the full path inside .env file. However, this is optional — MaskBench can automatically download the required weights if they are not present. These include:
 
-* MediaPipe models:
+pose_estimators:                            # List of pose estimators (specificy as many as needed)
+  - name: YoloPose                          # User-definable name of the pose estimator. 
+    enabled: true                           # Enable or disable this pose estimator.
+    module: models.yolo_pose_estimator
+    class: YoloPoseEstimator
+    config:                                 # Pose estimator specific configuration variables.
+      weights: yolo11l-pose.pt              # Weights file name inside the specified weights directory.
+      save_keypoints_in_coco_format: true   # Whether to store keypoints in COCO format (18 keypoints) or not)
+      confidence_threshold: 0.3             # Confidence threshold below which keyopints are considered undetected.
 
-* mediapipe-model/pose_landmarker_lite.task
+  - name: MaskAnyoneUI-MediaPipe
+    enabled: true
+    module: models.maskanyone_ui_pose_estimator
+    class: MaskAnyoneUiPoseEstimator  
+    config:
+      dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_mediapipe # Folder of MaskAnyone poses
+      overlay_strategy: mp_pose             # Mediapipe: mp_pose, OpenPose: openpose, openpose_body25b
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0               # Confidence thresholds not supported by MaskAnyone
 
-* mediapipe-model/pose_landmarker_full.task
+metrics:                                    # List of metrics  (specificy as many as needed)
+  - name: PCK                               # User-definable name of the metric
+    module: evaluation.metrics.pck
+    class: PCKMetric
+    config:                                 # Metric specific configuration variables.
+      normalize_by: bbox
+      threshold: 0.2
 
-* mediapipe-model/pose_landmarker_heavy.task
+  - name: Velocity
+    module: evaluation.metrics.velocity
+    class: VelocityMetric
+    config:
+      time_unit: frame
+```
+:::
 
-* YOLOv11 variants: Yolo11n, Yolo11s, Yolo11m, Yolo11l, Yolo11x
 
-Once your configuration is correct, you can run: `docker compose run --rm runner main.py` This command will run the experiment on your specified dataset. It executes all seven models:
+### 🏋️ Model Variants and Weights
 
-* yolo11
+You only need to modify the weights if you are adding a new pose estimator to MaskBench.
+In that case, place your weights in the `weights/` folder.
+By default, MaskBench automatically downloads the following weights:
 
-* mediapipe
+* MediaPipe: `pose_landmarker_{lite, full, heavy}.task`
+* Yolo11: `yolo11{n, s, m, l, x}-pose`
+* OpenPose overlay_strategy: `BODY_25, BODY_25B, COCO`
+* MaskAnyone overlay_strategy: `mp_pose, openpose, openpose_body25b`
 
-* openpose
+### 📊 Output
 
-* maskanyone-api-mediapipe
+All results, including plots, pose files, inference times and renderings, will be saved in the output directory.
+For each run of MaskBench a folder is created with the name of the dataset and a timestamp. Example:
 
-* maskanyone-api-openpose
-
-* maskanyone-ui-mediapipe
-
-* maskanyone-ui-openpose
-
-All results — including plots, pose files, and renderings — will be saved in the output directory.
+```bash
+output/
+ ├── TedTalks_2025-08-11_15-42-10/
+ │    ├── plots/
+ │    ├── poses/
+ │    ├── renderings/
+ │    ├── inference_times.json
+```
 
 
 # Introduction {#sec-introduction}
