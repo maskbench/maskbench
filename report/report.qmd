@@ -45,7 +45,7 @@ filters:
 jupyter: python3
 ---
 
-# Abstract / Overview {#sec-abstract}
+# Abstract {#sec-abstract}
 Pose estimation plays a critical role in numerous computer vision applications but remains challenging in scenarios involving privacy-sensitive data and in real-world, unconstrained videos like TED Talks, that are not recorded under controlled laboratory conditions.
 To address the issue of sharing datasets across academic institutions without compromising privacy, we explore how masking strategies like blurring, pixelation, contour overlays, and solid fills impact pose estimation performance.
 We introduce MaskBench, a modular and extensible benchmarking framework designed to evaluate pose estimators under varying conditions, including masked video inputs.
@@ -1629,10 +1629,19 @@ Instead, marker-based motion capture data could be used to assess the quality of
 An example for such a dataset is the BioCV dataset published by the University of Barth [@bio-cv].
 
 # Conclusion {#sec-conclusion}
-(Tim - 7.)
+This work introduced MaskBench, a modular and extensible benchmarking framework for evaluating pose estimation models under diverse conditions, including privacy-preserving masking strategies.
+We evaluated four datasets of increasing complexity, including real-world TED Talk recordings to examine how models perform in unconstrained, natural scenarios rather than under controlled laboratory conditions.
+The study includes popular pose estimators such as YoloPose [@yolo], MediaPipe [@mediapipe], and OpenPose [@openpose-1], alongside the mixture-of-expert-model pipeline MaskAnyone [@schilling2023maskanyone], to assess their performance across these varied settings.
 
-- YoloPose is usually the most stable "pure" pose estimator, which does not leverage any pre-processing steps or mixture-of-experts approach.
-- MediPipePose benefits the most from the MaskAnyone approach.
+Our quantitative evaluation, using acceleration and jerk metrics to measure temporal stability, showed that the MaskAnyone pipeline, particularly the human-in-the-loop MediaPipe variant, substantially improves stability by reducing acceleration and jerk compared to standard models.
+YoloPose was the most robust standalone estimator, while MediaPipePose consistently exhibited the highest instability.
+Visual inspection of the output poses confirmed these findings, with noticeably smoother and more consistent motion in cases where the metrics indicated high stability.
+
+Our small study on masked videos revealed that blurring offers the best trade-off between privacy and accuracy, maintaining high PCK values across models, whereas pixelation and solid fills significantly degraded performance.
+Model-specific responses to masking strategies highlighted that pose estimation often relies more on overall body structure than on pixel-level detail.
+
+While results are promising, limitations remain, including reliance on pseudo-ground truth in some datasets and the preliminary implementation of masked-video workflows.
+Future work will focus on extending MaskBench with flexible pipelining, downstream task evaluation, and user-friendly interfaces, enabling systematic exploration of how privacy-preserving transformations affect pose estimation and subsequent applications.
 
 
 # References
