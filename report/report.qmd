@@ -441,7 +441,7 @@ where $s$ is a normalization factor.
 The normalization is crucial to make the metric scale-invariant and comparable across different person sizes. 
 The metric is set up to support three normalization strategies, out of which we only implemented the first one:
 
-1. **Bounding Box Size**: The distance is normalized by the maximum of width and height of the person's bounding box, which is computed from the ground truth keypoints. While this adapts to different person sizes, it has a notable drawback: shorter limbs naturally have smaller variations in joint positions, and even small errors can constitute a large fraction of their true length. Using a fixed normalization factor like the bounding box size doesn't account for this, leading to over-penalization of errors in shorter limbs.
+1. **Bounding Box Size**: The distance is normalized by the maximum of width and height of the person's bounding box, which is computed from the ground truth keypoints. While this adapts to different person sizes, it has the minor drawback of pose-dependent scaling variance.
 
 2. **Head Size**: Normalization by the head bone link size (not implemented).
 
