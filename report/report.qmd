@@ -229,12 +229,6 @@ output/
  │    ├── inference_times.json
 ```
 
-
-# Introduction {#sec-introduction}
-(Zainab - 5.)
-
-
-
 # Related Work {#sec-related-work}
 
 Human pose estimation is a core task in computer vision, concerned with identifying the spatial positions of body joints—such as shoulders, elbows, and knees—from images or video sequences. Existing approaches are typically classified into two broad strategies: top-down and bottom-up. Top-down methods begin by detecting individual persons within an image, after which a separate pose estimation model is applied to each detected instance. In contrast, bottom-up approaches first detect all keypoints across the image and then group them to form full-body poses for each individual [@saiwa2025openpose; @kaim2024comparison].
@@ -248,14 +242,12 @@ Among widely used frameworks, **OpenPose** [@openpose-3] is a prominent example 
 Several studies have benchmarked popular pose estimation models across different datasets, conditions, and use cases. The following works are particularly relevant to our benchmarking framework:
 
 * **Comparision Of ML Models For Posture** [@kaim2024comparison]
-Compared YOLOv7 Pose and MediaPipe Pose. YOLOv7 achieved a slightly higher accuracy score of 87.8\% versus MediaPipe’s 84.1\%. However, MediaPipe demonstrated superior real-time performance on CPU-only devices, achieving 16-18 frames per second (FPS) compared to YOLOv7’s 4-5 FPS. In low-light environments, MediaPipe maintained detection consistency, whereas YOLOv7 performed better in occluded scenarios, successfully recognizing hidden body parts. 
+    Compared YOLOv7 Pose and MediaPipe Pose. YOLOv7 achieved a slightly higher accuracy score of 87.8\% versus MediaPipe’s 84.1\%. However, MediaPipe demonstrated superior real-time performance on CPU-only devices, achieving 16-18 frames per second (FPS) compared to YOLOv7’s 4-5 FPS. In low-light environments, MediaPipe maintained detection consistency, whereas YOLOv7 performed better in occluded scenarios, successfully recognizing hidden body parts. 
 
 * **OpenPose vs MediaPipe: A Practical and Architectural Comparison** [@saiwa2025openpose]
-  A recent blog post by Saiwa presents a detailed comparison between OpenPose and MediaPipe, discussing their architectural differences, device compatibility, and practical applications. OpenPose uses a bottom-up approach with Part Affinity Fields and is optimized for multi-person full-body tracking, whereas MediaPipe follows a top-down strategy focusing on speed and cross-platform deployment.
+    A recent blog post by Saiwa presents a detailed comparison between OpenPose and MediaPipe, discussing their architectural differences, device compatibility, and practical applications. OpenPose uses a bottom-up approach with Part Affinity Fields and is optimized for multi-person full-body tracking, whereas MediaPipe follows a top-down strategy focusing on speed and cross-platform deployment.
 
-In addition to standalone pose estimation models, **MaskAnyone** [@maskanyone-github]  is a multi-stage framework developed at the Hasso Plattner Institute (HPI) that combines object detection, segmentation, de-identification, and pose estimation within a unified pipeline. The system begins by detecting human instances in a video using YOLO. For each detected bounding box, SAM2 [@sam2] is applied to segment the individual subject. Depending on the configuration, pose estimation is then performed using either OpenPose or MediaPipe. This approach enables targeted analysis of individuals in complex scenes and supports both automatic and configurable model selection.
-
-A complementary variant, known as MaskAnyone-UI (also referred to as MaskAnyone-Production)[@schilling2023maskanyone], incorporates a human-in-the-loop design. In this version, users manually select specific frames for segmentation. SAM2 is then applied to the selected frames, followed by pose estimation using the configured model. This interactive approach allows for finer control in scenarios where automatic segmentation may be insufficient or require correction.
+In addition to standalone pose estimation models, **MaskAnyone** [@maskanyone-github] [@schilling2023maskanyone] is a multi-stage framework developed at the Hasso Plattner Institute (HPI) that combines object detection, segmentation, de-identification, and pose estimation within a unified pipeline. The system begins by detecting human instances in a video using YOLO. For each detected bounding box, SAM2 [@sam2] is applied to segment the individual subject. Depending on the configuration, pose estimation is then performed using either OpenPose or MediaPipe. Last but not least, it produces a de-identified video using the SAM2 segmentation masks. The framework supports both fully automatic processing (we refer to it as MaskAnyoneAPI) and a human-in-the-loop approach (referred to as MaskAnyoneUI), where users can manually select specific frames, refine the segmentation output of SAM2 and thereafter start the pose estimation. This combination of automated and user-guided steps allows for finer control in scenarios where automatic segmentation may be insufficient or require correction.
 
 # MaskBench Architecture {#sec-architecture}
 ![MaskBench Architecture](./images/maskbench-workflow.jpg){#fig-architecture}
