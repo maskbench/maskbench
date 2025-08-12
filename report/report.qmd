@@ -60,7 +60,7 @@ These findings highlight the potential of pipelines like MaskAnyone and the exte
 
 
 
-# 🚀 Getting Started {#sec-installation}
+# Getting Started {#sec-installation}
 
 ## 🛠️ Installation {#sec-installation-setup}
 Follow the instructions below to install and run experiments with MaskBench:
@@ -117,7 +117,7 @@ Follow the instructions below to install and run experiments with MaskBench:
     ```
     If multiple users run MaskBench simultaneously, use `docker compose -p $USER up`.
 
-## 📋 Usage {#sec-installation-usage}
+## 🚀 Usage {#sec-installation-usage}
 The following paragraphs describe how to structure your dataset, configure the application, and understand the output of MaskBench. Following these guidelines ensures the application runs smoothly and recognizes your data correctly.
 
 ### 📂 Dataset structure
@@ -249,28 +249,31 @@ Several studies have benchmarked popular pose estimation models across different
 
 In addition to standalone pose estimation models, **MaskAnyone** [@maskanyone-github] [@schilling2023maskanyone] is a multi-stage framework developed at the Hasso Plattner Institute (HPI) that combines object detection, segmentation, de-identification, and pose estimation within a unified pipeline. The system begins by detecting human instances in a video using YOLO. For each detected bounding box, SAM2 [@sam2] is applied to segment the individual subject. Depending on the configuration, pose estimation is then performed using either OpenPose or MediaPipe. Last but not least, it produces a de-identified video using the SAM2 segmentation masks. The framework supports both fully automatic processing (we refer to it as MaskAnyoneAPI) and a human-in-the-loop approach (referred to as MaskAnyoneUI), where users can manually select specific frames, refine the segmentation output of SAM2 and thereafter start the pose estimation. This combination of automated and user-guided steps allows for finer control in scenarios where automatic segmentation may be insufficient or require correction.
 
+
 # MaskBench Architecture {#sec-architecture}
 ![MaskBench Architecture](./images/maskbench-workflow.jpg){#fig-architecture}
 
-The general workflow of MaskBench is depicted in figure @fig-architecture.
-It starts with loading the dataset, pose estimators and evaluation metrics.
-The application creates a checkpoint folder in the specified `/output` directory, named after the dataset and a timestamp (e.g. `/output/TedTalks-20250724-121127`).
-Thereafter, inference is performed on all videos of the dataset using the pose estimators specified in the configuration file. 
-The user is required to annotate the videos semi-automatically for the MaskAnyoneUI pose estimators, using MaskAnyone.
-A `poses` folder is created within the checkpoint, with a subfolder for each pose estimator and a single json file for each video.
-Thereafter, the application evaluates all the specified metrics and visualizes them in plots, which are stored in the `plots` folder in the checkpoint.
-Lastly, for each video, the application creates a multiple rendered video, one for each pose estimator, which are stored in the `renderings` folder in the checkpoint.
+The general workflow of MaskBench is shown in Figure @fig-architecture.
+It begins with loading the dataset, pose estimators, and evaluation metrics.
+The application then creates a checkpoint folder in the specified output directory, named according to the dataset and a timestamp (e.g., `/output/TedTalks-20250724-121127`).
+Subsequently, inference is performed on all videos in the dataset using the pose estimators specified in the configuration file.
+For the MaskAnyoneUI pose estimators, the user is required to perform semi-automatic annotation of the videos using MaskAnyone.
+A poses folder is created within the checkpoint, containing a subfolder for each pose estimator and a single JSON file for each video.
+The application then evaluates all specified metrics and generates plots, which are stored in the plots folder within the checkpoint.
+Finally, for each video, the application produces a set of rendered videos—one for each pose estimator—which are stored in the renderings folder in the checkpoint.
 
-Each component of MaskBench is implemented in a modular way, so that it can be easily extended and modified, which we will discuss in the following sections.
+Each component of MaskBench is implemented in a modular way, so it can be easily extended and modified.
+We will discuss this in the following sections.
 
 ## Dataset {#sec-architecture-dataset}
-The dataset provides the video data for the pose estimation and ground truth data for the evaluation, if available.
-When adding a new dataset, the user needs to create a new class that inherits from the `Dataset` class and overwrite the `_load_samples` method, which creates one `VideoSample` object for each video in the dataset.
-If the dataset provides ground truth data, the user additionally needs to overwrite the `get_gt_pose_results` and `get_gt_keypoint_pairs` methods.
+The dataset provides video data for pose estimation and, if available, ground truth data for evaluation.
+When adding a new dataset, the user must create a new class that inherits from the Dataset class and override the `_load_samples` method, which generates one VideoSample object for each video in the dataset.
+If the dataset provides ground truth data, the user must also override the `get_gt_pose_results` and `get_gt_keypoint_pairs` methods.
 For each video, the `get_gt_pose_results` method should return a `VideoPoseResult` object.
-The `get_gt_keypoint_pairs` method is used for rendering the ground truth keypoints and contains a list of tuples, where each tuple contains the index of two keypoints to be connected in the rendered video. We provide default keypoint pairs for YoloPose, MediaPipePose and various implementations of OpenPose models in the file `keypoint_pairs.py`.
+The `get_gt_keypoint_pairs` method is used to render the ground truth keypoints and contains a list of tuples, each specifying the indices of two keypoints to be connected in the rendered video.
+Default keypoint pairs for YoloPose, MediaPipePose, and various implementations of OpenPose models are provided in the `keypoint_pairs.py` file.
 
-Below is the code implementation for the abstract dataset class, for the very simple TED talks dataset (without ground truth) and the more complicated TragicTalkers dataset (with pseudo-ground truth data).
+Below is the code implementation for the abstract dataset class, the simple TED Talks dataset (without ground truth), and the more complex TragicTalkers dataset (with pseudo-ground truth data).
 
 ::: {.callout-note collapse="true"}
 ## Dataset Class
@@ -293,10 +296,10 @@ Below is the code implementation for the abstract dataset class, for the very si
 ## Inference {#sec-architecture-inference}
 
 ### Video Pose Result {#sec-architecture-video-pose-result}
-The `VideoPoseResult` object is the standardized output of a pose prediction model.
-It is a nested object that contains a `FramePoseResult` object for each frame in the video.
-Within each frame pose result, there is a list of `PersonPoseResult` objects, one for each person in the frame.
-Every result for a person contains a list of `PoseKeypoint` objects, one for each keypoint in the model output format, with the x and y coordinates and an optional confidence score.
+The VideoPoseResult object represents the standardized output of a pose prediction model.
+It is a nested structure containing a `FramePoseResult` object for each frame in the video.
+Each frame pose result includes a list of `PersonPoseResult` objects, one for each person detected in the frame.
+Every person’s result contains a list of `PoseKeypoint` objects, one for each keypoint in the model’s output format, providing x and y coordinates along with an optional confidence score.
 
 ::: {.callout-note collapse="true"}
 ## Video Pose Result Class
@@ -305,19 +308,19 @@ Every result for a person contains a list of `PoseKeypoint` objects, one for eac
 :::
 
 ### Pose Estimator {#sec-architecture-pose-estimators}
-The pose estimators are responsible for predicting the poses of the persons in the video and wrap the call to specific AI models or pose estimation pipelines.
+Pose estimators are responsible for predicting the poses of persons in a video by wrapping calls to specific AI models or pose estimation pipelines.
 Each model is implemented in a separate class that inherits from the abstract `PoseEstimator` class.
-It outputs a standardized `VideoPoseResult` object.
+The output of each estimator is a standardized `VideoPoseResult` object.
 
-If users want to add a new pose estimator, they need to implement the `estimate_pose` method and the `get_keypoint_pairs` method.
-Special care needs to be taken to ensure that the output is valid according to the following constraints:
+To add a new pose estimator, users must implement methods for pose estimation and for retrieving keypoint pairs.
+Special care must be taken to ensure that the output meets the following constraints:
 
-1. The number of frames in the frame results matches the number of frames in the video.
-2. If no persons were detected in a frame, the persons list should be empty.
-3. If a person was detected, but some keypoints are missing, the missing keypoints should have the values `x=0, y=0, confidence=None`.
-4. The number of keypoints for a person is constant across all frames.
-5. Low confidence keypoints should be masked out using the `confidence_threshold` config parameter of the pose estimator.
-6. Map the keypoints to COCO format if the `save_keypoints_in_coco_format` config parameter is set to true.
+1.	The number of frames in the pose results matches the number of frames in the video.
+2.	If no persons are detected in a frame, the persons list should be empty.
+3.	For detected persons with missing keypoints, those keypoints should have values `x=0, y=0, confidence=None`.
+4.	The number of keypoints per person remains constant across all frames.
+5.	Keypoints with low confidence should be masked out using the confidence_threshold configuration parameter.
+6.	Keypoints must be mapped to the COCO format if the `save_keypoints_in_coco_format` configuration parameter is set to true.
 
 
 As an example, we provide the implementation of the abstract pose estimator class and the implementation of the YOLO model.
@@ -334,24 +337,26 @@ As an example, we provide the implementation of the abstract pose estimator clas
 ```
 :::
 
-MaskBench supports a total of seven pose estimators, including pure AI models like YOLOv11-Pose, MediaPipePose and OpenPose.
-Furthermore, it uses MaskAnyone as a pose estimator, which is a mixture of expert models.
-We differentiate between the MaskAnyoneAPI pose estimator, which is executed fully automated at inference time, and the MaskAnyoneUI pose estimator, which is the human-in-the-loop approach, where the user can manually adjust the mask of the person of interest.
-The latter has to be executed manually by the user before running MaskBench and the resulting pose files need to be provided as one file per video.
+MaskBench supports seven pose estimators, including pure AI models such as YOLOv11-Pose, MediaPipePose, and OpenPose.
+Additionally, it incorporates MaskAnyone as a pose estimator, which combines multiple expert models.
+We distinguish between two variants of the MaskAnyone estimator: the MaskAnyoneAPI pose estimator, which runs fully automatically during inference, and the MaskAnyoneUI pose estimator, which employs a human-in-the-loop approach allowing manual adjustment of the mask for the persons of interest.
+The latter requires manual execution by the user prior to running MaskBench, with the resulting pose files provided as one file per video.
 
 ### Inference Engine {#sec-architecture-inference-engine}
-The inference engine is responsible for running the pose estimators on the videos and saving the results in the `poses` folder as json files.
-If a checkpoint name is provided in the configuration file, the inference engine will load the results from the checkpoint and skip inference for the videos that already have results.
-This allows to resume the inference process in case it fails or to skip the inference entirely and only evaluate the metrics.
-The inference engine returns a nested dictionary, mapping pose estimator names to video names and `VideoPoseResult` objects.
-Furthermore, it saves the inference times for each pose estimator and video in the checkpoint folder in a json file.
+The inference engine is responsible for running pose estimators on videos and saving the results as JSON files in the poses folder.
+If a checkpoint name is specified in the configuration file, the inference engine will load existing results from the checkpoint and skip inference for videos that already have corresponding outputs.
+This feature allows the user to resume an already started inference process or to bypass the time-consuming inference entirely and perform only metric evaluation and rendering.
+The inference engine returns a nested dictionary that maps pose estimator names to video names and their corresponding VideoPoseResult objects.
+Additionally, it records the inference times for each pose estimator and video, saving this information as a JSON file within the checkpoint folder.
 
 
 ## Evaluation {#sec-architecture-evaluation}
 
 ### Metric {#sec-architecture-evaluation-metric}
-Each metric inherits from the abstract `Metric` class and implements the `compute` method, which takes as input one predicted video pose result, a ground truth pose result, if available, and the name of the pose estimator.
-It outputs a `MetricResult` object, which contains the metric values for the video (see section @sec-architecture-evaluation-metric-result).
+Each metric inherits from the abstract Metric class and implements a computation method that takes as input a predicted video pose result, an optional ground truth pose result, and the name of the pose estimator.
+Metrics play a crucial role in quantitatively evaluating the accuracy and quality of pose predictions against ground truth data.
+We support a range of metrics, including Velocity, Acceleration, Jerk, Euclidean Distance, Percentage of Correct Keypoints (PCK), and Root Mean Square Error (RMSE).
+This method outputs a MetricResult object containing the metric values for the video (see section @sec-architecture-evaluation-metric-result).
 
 ::: {.callout-note collapse="true"}
 ## Metric Class 
@@ -359,53 +364,52 @@ It outputs a `MetricResult` object, which contains the metric values for the vid
 ```
 :::
 
-MaskBench currently implements ground truth-based metrics for Euclidean Distance, Percentage of Correct Keypoints (PCK) and Root Mean Square Error (RMSE).
-Furthermore, we provide kinematic metrics for velocity, acceleration and jerk.
+MaskBench currently implements ground truth-based metrics for Euclidean Distance, Percentage of Correct Keypoints (PCK), and Root Mean Square Error (RMSE).
+Furthermore, we provide kinematic metrics for velocity, acceleration, and jerk.
 Section @sec-metrics contains a more extensive description of the implemented metrics.
 
 **Matching Person Indices**
 
-For some metrics, it is crucial to ensure, that the order of persons in video pose results match between a prediction and a reference.
-The metric class provides a method called `match_person_indices`, which is used in ground-truth based metrics to ensure that person indices match between the ground truth and the prediction.
-Furthermore, kinematic metrics also make use of this method, as they can only be calculated if the person indices match between consecutive frames.
-The implementation uses the Hungarian algorithm and the mean of a person's keypoints to find the best match between all persons in the reference and predicted pose result.
+For some metrics, it is essential to ensure that the order of persons in the predicted video pose results matches that of the reference.
+The metric class provides a method called `match_person_indices` to align person indices between ground truth and predicted results.
+This method is used not only in ground-truth-based metrics but also in kinematic metrics, which require consistent person indices across consecutive frames to compute velocity, acceleration, and other temporal measures.
+The implementation employs the Hungarian algorithm, using the mean position of a person’s keypoints to find the optimal matching between all persons in the reference and predicted pose results.
 
-Let $N$ be the number of persons in the reference, $M$ be the number of persons in the predicted pose result, and $K$ be the number of keypoints per person.
-The output of the match person indices method is an array of shape $\text{max}(N, M) \times K \times 2$, where the first $N$ positions contain the persons in the same order as in the reference.
-The last $N$ to $M$ positions (in case $M > N$) contain the remaining persons, which are not present in the reference.
+Let $N$ denote the number of persons in the reference, $M$ the number in the prediction, and $K$ the number of keypoints per person.
+The output of the `match_person_indices` method is an array with shape $\text{max}(N, M) \times K \times 2$.
+The first $N$ entries correspond to persons ordered as in the reference, while the remaining $M - N$ entries (if $M > N$) represent additional persons present only in the prediction.
 
-Edge cases include, where the first of two persons appears in one frame, but not in the next.
-In this case, the second person is still assigned the second index in the output array, while the first index contains infinite values to signal that the person is not present.
-The same applies, if the prediction contains less persons than the reference ($M<N$).
-Each metric can then decide how to handle these infinite values, for example by setting them to `NaN` (kinematic metrics) or a pre-defined value (euclidean distance and ground truth-based metrics).
+Edge cases include situations where a person appears in one frame but not in the next.
+In such cases, the unmatched person is assigned an index with infinite values to indicate absence, while the other persons retain consistent indices.
+This also applies when the prediction contains fewer persons than the reference (M < N).
+Each metric can then handle these infinite values appropriately—for example, by converting them to NaN in kinematic metrics or assigning predefined values in Euclidean distance and ground truth–based metrics.
 
 **Unit Testing**
 
-It is good practice to implement unit tests for the various metric classes to ensure that the output is correct and as expected.
-We provide unit tests for all metrics in the `src/tests` folder, which can be run with the command `pytest`.
-Running these tests after a change to the metric classes ensures that no other functionality is compromised.
-
+Implementing unit tests for metric classes is essential to ensure that their outputs are accurate and consistent.
+We provide unit tests for all metrics in the `src/tests` folder, which can be executed using the `pytest` command.
+Running these tests after any modifications to the metric classes helps guarantee that existing functionality remains intact.
 
 ### Metric Result {#sec-architecture-evaluation-metric-result}
-The output of the metric's `compute` method is a `MetricResult` object.
-It contains the metric values in the form of a multi-dimensional array, where the axes are labeled with names, for example with a "frame", "person" and "keypoint" axis.
-The `aggregate` function of the class aggregates the values with a given method and along the specified axes only.
-Currently MaskBench supports mean, median, Root Mean Square Error, vector magnitude, sum, min and max as aggregation methods.
-The output of the aggregation method is once again a metric result, reduced in its dimensionality, having only the axes along which it was not aggregated.
+The output of a metric’s compute method is a MetricResult object.
+This object contains metric values stored in a multi-dimensional array, where each axis is labeled with descriptive names such as “frame,” “person,” and “keypoint.”
+The class provides an aggregate function that reduces these values using a specified method along selected axes only.
+Currently, MaskBench supports aggregation methods including mean, median, Root Mean Square Error (RMSE), vector magnitude, sum, minimum, and maximum.
+The result of the aggregation is another MetricResult object with reduced dimensionality, retaining only the axes that were not aggregated.
 
-This flexible approach of storing the results with their axes names and using the names in the aggregation method allows for the visualization of the results in a variety of ways, for example as a per keypoint plot, distribution plot or as a single scalar value. Furthermore, it allows extending the framework with new metrics (possibly containing different axis names) and also different visualizations.
+This flexible approach of storing the results with their axes names and using the names in the aggregation method allows for the visualization of the results in a variety of ways, for example, as a per-keypoint plot, distribution plot, or as a single scalar value. Furthermore, it allows extending the framework with new metrics (possibly containing different axis names) and also different visualizations.
 
 ### Evaluator {#sec-architecture-evaluation-evaluator}
-Given a list of metrics, the evaluator executes the configured metrics on the pose estimation results for all pose estimators and videos.
-It returns a nested dictionary, mapping metric names to pose estimator names to video names to `MetricResult` objects.
+Given a list of metrics, the evaluator executes each configured metric on the pose estimation results for all pose estimators and videos.
+It returns a nested dictionary that maps metric names to pose estimator names, then to video names, and finally to their corresponding `MetricResult` objects.
 It does not perform aggregation over the videos or pose estimators in order to allow for more flexibility in the visualization of the results.
 
 ## Visualization {#sec-architecture-visualization}
 After evaluation, the results are visualized in plots and tables.
 
 ### Visualizer
-An abstract `BaseVisualizer` class defines the interface for all visualizers.
-We defined a MaskBench specific visualizer class for the experiments we conducted, which can either be reused for other experiments or extended to support new visualizations.
+An abstract `BaseVisualizer` class defines the interface for all visualization components.
+We implemented a MaskBench-specific visualizer class tailored to our experiments, which can be reused for other studies or extended to accommodate new types of visualizations.
 
 ::: {.callout-note collapse="true"}
 ## MaskBench Visualizer
@@ -416,9 +420,9 @@ We defined a MaskBench specific visualizer class for the experiments we conducte
 The visualizer saves the plots and tables in the `plots` folder in the checkpoint.
 
 ### Plots
-Each plot inherits from the abstract `Plot` class and implements the `draw` method.
-The draw method can take various forms of input data, most commonly the results of the evaluator.
-Each plot can implement a specific way to aggregate and organize the data, for example by taking the median over all videos for a given pose estimator.
+Each plot inherits from the abstract Plot class and implements the draw method.
+This method accepts various forms of input data, most commonly the results produced by the evaluator.
+Each plot can define a specific approach to aggregating and organizing the data, such as computing the median over all videos for a given pose estimator.
 
 ::: {.callout-note collapse="true"}
 ## Plot Class
@@ -432,20 +436,19 @@ Each plot can implement a specific way to aggregate and organize the data, for e
 ```
 :::
 
-
 We provide the following plots and tables:
 
-- **Kinematic Distribution Plot**: Visualizes the distribution of the kinematic values for each pose estimator.
-- **Per Keypoint Plot**: Displays the median kinematic metric values or euclidean distance for each COCO keypoint. Requires keypoints to be stored in the COCO format.
-- **Inference Time Plot**: Visualizes the inference time for each pose estimator.
-- **Result Table**: Aggregates the results for each pose estimator over all videos per metric and outputs a table.
+- **Kinematic Distribution Plot**: Visualizes the distribution of kinematic values for each pose estimator.
+- **Per Keypoint Plot**:  Displays the median kinematic metric values or Euclidean distance for each COCO keypoint. This plot requires keypoints to be stored in COCO format.
+- **Inference Time Plot**: Visualizes the average inference time associated with each pose estimator.
+- **Result Table**: Aggregates results per metric and pose estimator across all videos, presenting the data in tabular form.
 
 
 ## Rendering {#sec-architecture-rendering}
-Rendering of videos is performed by the `Renderer` class.
-For each video in the dataset, it creates a new folder in the `renderings` folder in the checkpoint folder.
-Within each video folder, it creates one video with the rendered keypoints for each pose estimator.
-Special care was taken to ensure that the color of pose estimators is consistent across all videos and plots by using a pre-defined color palette for color-blind friendly plots.
+Video rendering is handled by the `Renderer` class.
+For each video in the dataset, the renderer creates a dedicated folder within the `renderings` directory of the checkpoint folder.
+Inside each video folder, it generates one video per pose estimator, displaying the rendered keypoints.
+Special attention was given to maintaining consistent colors for each pose estimator across all videos and plots, using a predefined, color-blind–friendly palette.
 
 
 # Datasets {#sec-datasets}
