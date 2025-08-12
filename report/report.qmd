@@ -622,23 +622,18 @@ We intend to integrate full support for this workflow in future MaskBench releas
 
 
 # Results {#sec-results}
-In the following sections, we present the results of the experiments.
-In order to increase readability, we will not append the unit to the kinematic metric values in the textual description of the results.
-Velocity is measured in pixels/frame, acceleration in pixels/frame² and jerk in pixels/frame³.
-Our evaluation will focus mostly on the acceleration and jerk metrics, as they are most suited to detect jittery movements and instability in pose estimation.
-
+We present the experimental results below.
+To improve readability, kinematic metrics are reported without units in the text: velocity is in pixels/frame, acceleration in pixels/frame², and jerk in pixels/frame³.
+Our analysis focuses primarily on acceleration and jerk, instead of velocity, as these metrics are more suited to detecting instability and unnatural motion in pose estimation.
 
 ## TED Kid Video {#sec-results-ted-kid}
-@tbl-results-ted-kid shows the average velocity, acceleration and jerk metric results for different pose estimators on the TED-kid video.
-Standard pose estimation models like YoloPose, MediaPipePose and OpenPose exhibit relatively high values across all metrics, indicating more eratic and less stable pose estimations.
-MediaPipePose has the highest values for velocity (3.36), acceleration (4.10) and jerk (5.56).
-In contrast, all evaluated MaskAnyone pose estimators achieve consistently lower values for acceleration and jerk, with MaskAnyoneUI-MediaPipe achieving the best overall results (velocity: 1.97, acceleration: 1.20, jerk: 1.89).
-These results suggest that the mixture-of-expert-model approach of MaskAnyone substantially enhances temporal smoothness and stability in pose estimation.
-Notably, the automated MaskAnyoneAPI variants also outperform the standard pose estimators but are slightly less effective than the UI-based counterparts, highlighting the added benefit of a human-in-the-loop approach.
-Lastly, it is also observable that MediaPipePose benefits a lot more from the MaskAnyone approach than OpenPose.
-While MaskAnyone decreases the average acceleration value of MediaPipe by 2.9 from 4.10 to 1.20 and jerk by 5.31, the average acceleration value of OpenPose is only decreased by 1.11 and jerk by 2.81.
+@tbl-results-ted-kid summarizes the average velocity, acceleration, and jerk for each pose estimator on the TED Kid video.
+Standard pose estimation models like YoloPose, MediaPipePose, and OpenPose exhibit relatively high values across all metrics, indicating more erratic and less stable pose estimations.
+MediaPipePose has the highest values for velocity (3.36), acceleration (4.10), and jerk (5.56).
 
-
+In contrast, all evaluated MaskAnyone pose estimators show consistently lower acceleration and jerk, with MaskAnyoneUI-MediaPipe achieving the best results (velocity: 1.97, acceleration: 1.20, jerk: 1.89), representing reductions of 40%, 70%, and 66% respectively, compared to pure MediaPipePose.
+This indicates substantially smoother and more stable pose tracking over time.
+The improvements are more pronounced for MediaPipePose than OpenPose: MaskAnyone reduces MediaPipePose’s acceleration and jerk by 2.9 and 5.31, while OpenPose sees smaller decreases of 1.11 and 2.81, demonstrating the greater effectiveness of MaskAnyone with MediaPipePose.
 
 ::: {#tbl-results-ted-kid}
 ```{=html}
@@ -700,21 +695,21 @@ Average metric results for different pose estimators on the TED-kid video.
 
 @fig-ted-kid-acceleration-distribution and @fig-ted-kid-jerk-distribution show the distribution of the acceleration and jerk metrics for the different pose estimators.
 These plots show the percentage of keypoints within fixed value ranges for the acceleration and jerk metrics over all frames.
-The ideal curve for a stable pose estimation follows an exponential decay curve, having many kinematic values close to zero and only a few large values.
+The ideal curve for a stable pose estimation follows an exponential decay curve, with most kinematic values near zero and a few large values.
 Both plots confirm the results from @tbl-results-ted-kid, showing that the MaskAnyone pose estimators have a very high concentration of low acceleration and jerk values.
-Both the UI and API variant of MaskAnyone-MediaPipe most closely resemble the ideal curve, having more than 80% of keypoints with an acceleration value of less than 1 pixels/frame².
-MaskAnyone-OpenPose pose estimators rank third and fourth achieving around 57% of of these low acceleration values.
-According to both the chart and table, YoloPose ranks fifth after the MaskAnyone pose estimators (52%), followed by OpenPose (40%).
-Lastly, the chart also indicates that MediaPipePose is the most unstable pose estimator, with only 30% of keypoints having a low acceleration value of less than 1 pixels/frame² and the curve having a relatively flat slope.
+The UI and API variants of MaskAnyone-MediaPipe most closely resemble the ideal curve, with over 80% of keypoints having acceleration below 1 pixel/frame².
+MaskAnyone-OpenPose estimators rank third and fourth, with around 57% of keypoints below this threshold.
+YoloPose ranks fifth with 52%, followed by OpenPose at 40%.
+MediaPipePose is the most unstable, with only 30% of keypoints below 1 pixel/frame² and a relatively flat distribution curve.
 Similar patterns can be observed for the jerk distribution.
 
 @fig-ted-kid-acceleration-per-keypoint shows the median acceleration per keypoint for the different pose estimators.
 Each keypoint contains a set of seven bars, one for each pose estimator, indicating the median acceleration value for that keypoint and pose estimator.
-The first observation is, that keypoints like the wrist, elbow, hip and ankle have consistently higher median acceleration values than other body parts like the eyes, ears and nose.
-This is expected, as these body parts are more likely to move and change their position more frequently.
-The second observation is, that MaskAnyoneAPI-MediaPipe and MaskAnyoneUI-MediaPipe consistently achieve the lowest acceleration values for all keypoints.
-Furthermore, both MaskAnyoneUI-MediaPipe and MaskAnyoneUI-OpenPose improve their respective default pose estimators MediaPipePose and OpenPose across all keypoints.
-The most significant improvement occurs for the hips, knees and ankles, where MaskAnyoneUI-MediaPipe reduces the median acceleration of MediaPipePose from four to six pixels/frame² to less than one pixels/frame².
+The first notable finding is that keypoints like the wrists, elbows, hips, and ankles exhibit consistently higher median acceleration compared to more stable points like the eyes, ears, and nose.
+This aligns with expectations since these joints undergo more frequent and pronounced movement.
+Secondly, MaskAnyoneAPI-MediaPipe and MaskAnyoneUI-MediaPipe consistently achieve the lowest acceleration values across all keypoints.
+Both MaskAnyoneUI variants improve upon their default counterparts, MediaPipePose and OpenPose, for every keypoint.
+The most pronounced gains appear at the hips, knees, and ankles, where MaskAnyoneUI-MediaPipe reduces median acceleration from about six pixels/frame² down to less than one.
 
 ::: {#fig-ted-kid-plots layout="[[1,1], [1]]"}
 
@@ -725,22 +720,24 @@ The most significant improvement occurs for the hips, knees and ankles, where Ma
 ![Median Acceleration per Keypoint](plots/TED-kid/keypoint_plot_acceleration.png){#fig-ted-kid-acceleration-per-keypoint}
 
 **Comparison of pose estimation models on the TED-kid video.**
-(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value ranges. 
+(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value range. 
 A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
-(c) Median acceleration per keypoint, indicating stability across individual body parts. Keypoints like the wrist, elbow and ankle are expected to have a higher median acceleration than other body parts, which tend to be more stable during movements, like eyes, ears and nose.
+(c) Median acceleration per keypoint, indicating stability across individual body parts. Keypoints like the wrist, elbow, and ankle are expected to have a higher median acceleration than other body parts, which tend to be more stable during movements, like the eyes, ears, and nose.
 :::
 
-Last but not least, it is important to not only analytically evaluate the pose estimation results, but also to visually inspect the quality of the poses.
-@tbl-results-ted-kid-videos shows the rendered videos for the seven pose estimators on the TED-kid video.
+Last but not least, it is important to not only evaluate pose estimation results analytically but also to visually inspect pose quality.
+@tbl-results-ted-kid-videos shows rendered videos for the seven pose estimators on the TED Kid video.
 
-Looking at the rendered video of MediaPipePose, one can observe that the pose estimation is very unstable, with many jittery movements and sudden changes in the pose.
-In the beginning of the video, the model fails to detect the right elbow joint, which all other pose estimators detect correctly.
-Furthermore, especially the hip joints, ankles and elbows exhibit a lot of rapid, jerky movements.
-Comparing the rendered videos of MaskAnyoneUI-MediaPipe and MaskAnyoneAPI-MediaPipe, one can observe that both variants are much more stable and less jittery than pure MediaPipe.
-Except for the normal movement of the person, all keypoints stay in a fixed and stable position.
-When closely observing the other pose estimators, it becomes apparent, that they are not as stable as MaskAnyoneUI-MediaPipe, but still more stable than pure MediaPipePose.
-This observation confirms the results from table @tbl-results-ted-kid and @fig-ted-kid-plots, and validates that our approach of measuring the kinematic metrics is a good indicator for assessing the stability of the pose estimation.
+In the MediaPipePose video, the pose estimation appears unstable, showing more jitter and sudden pose changes.
+At the beginning, the model fails to detect the right elbow joint, which all other estimators detect correctly.
+Additionally, the hips, ankles, and elbows display rapid, jerky movements throughout the video.
 
+Comparing MaskAnyoneUI-MediaPipe and MaskAnyoneAPI-MediaPipe rendered videos reveals that both are considerably more stable and smoother than pure MediaPipePose.
+Aside from the person’s natural movement, key points generally remain fixed and steady.
+
+Observing the other pose estimators shows that none are as stable as MaskAnyoneUI-MediaPipe, but most outperform pure MediaPipePose in stability.
+This visual evidence supports the quantitative results in @tbl-results-ted-kid and @fig-ted-kid-plots.
+It also confirms that our kinematic metrics effectively indicate pose estimation stability.
 
 ::: {#tbl-results-ted-kid-videos}
 ```{=html}
@@ -846,13 +843,13 @@ document.addEventListener('DOMContentLoaded', function() {
 Rendered result videos of different pose estimators on the TED-kid video.
 :::
 
-
 ## TED Talks {#sec-results-ted-talks}
-The results on 10 full TED-Talk videos are very similar to the results on the single TED-kid video  as detailed in @tbl-results-ted-talks.
-Among the evaluated pose estimators, MaskAnyoneUI-MediaPipe consistently demonstrated superior stability, achieving the lowest average velocity, acceleration, and jerk values of 1.25, 1.08, and 1.83 respectively.
-MaskAnyoneAPI-MediaPipe followed, exhibiting the second-best performance in acceleration and jerk, closely trailed by YoloPose. OpenPose ranked next, and both MaskAnyone-OpenPose variants show an even higher instability than the pure OpenPose model.
-Consistent with previous findings, MediaPipePose was identified as the most unstable pose estimator, registering the highest values across all metrics: 3.29 for velocity, 4.52 for acceleration, and 7.94 for jerk.
-An additional observation is the clear trend that MediaPipe-based MaskAnyone variants generally outperform OpenPose-based variants in terms of stability, as indicated by their consistently lower velocity, acceleration, and jerk values.
+The results on ten full TED Talks closely mirror those on the single TED Kid video, as shown in @tbl-results-ted-talks.
+Among the evaluated pose estimators, MaskAnyoneUI-MediaPipe consistently achieved the best stability, with the lowest average velocity, acceleration, and jerk values of 1.25, 1.08, and 1.83, respectively.
+MaskAnyoneAPI-MediaPipe followed, showing the second-best performance in acceleration and jerk, closely trailed by YoloPose.
+OpenPose ranked next, while both MaskAnyone-OpenPose variants exhibited greater instability than the pure OpenPose model.
+Consistent with earlier findings, MediaPipePose was the least stable estimator, with the highest values across all metrics: 3.29 for velocity, 4.52 for acceleration, and 7.94 for jerk.
+An additional observation is the clear trend that MediaPipe-based MaskAnyone variants generally outperform OpenPose-based ones in stability, as reflected by their consistently lower velocity, acceleration, and jerk values.
 
 ::: {#tbl-results-ted-talks}
 ```{=html}
@@ -921,25 +918,25 @@ Average metric results for different pose estimators aggregated over all TED tal
 ![Median Acceleration per Keypoint](plots/TED-talks/keypoint_plot_acceleration.png){#fig-ted-kid-acceleration-per-keypoint}
 
 **Comparison of pose estimation models on the TED talks dataset.**
-(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value ranges. 
+(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value range. 
 A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
 (c) Median acceleration per keypoint, indicating stability across individual body parts.
 :::
 
-@fig-ted-talks-acceleration-distribution and @fig-ted-talks-jerk-distribution show high acceleration and jerk values are more common in the TED talks than in the TED-kid video.
-This is likely due to the fact, that each TED-talk contains camera movements, scene changes, parts where no person is visible or views of the audience, which are not present in the TED-kid video.
-We included two particularly challenging chunks in @tbl-results-ted-videos.
-In the first column, we present the performance of the qualitatively worst pose estimator, MediaPipePose, while the second column shows the result of the best performing pose estimator, MaskAnyoneUI-MediaPipe.
+@fig-ted-talks-acceleration-distribution and @fig-ted-talks-jerk-distribution show that high acceleration and jerk values occur more frequently in TED Talks than in the TED Kid video.
+This is likely because TED Talks include camera movements, scene changes, segments without visible people, and audience views, none of which appear in the TED Kid video.
+We included two particularly challenging video chunks in @tbl-results-ted-videos.
+The first column shows results for the qualitatively worst-performing pose estimator, MediaPipePose, while the second column presents the best performer, MaskAnyoneUI-MediaPipe.
 
-The woman in the first row [@ted-tarana] is wearing a long dress, the video contains many scene changes, views of the audience with the speaker in the background and also a part, where the speaking person is not visible.
-MaskAnyone greatly improves the stability and visual accuracy of the pose estimation in all these cases.
+In the first scene [@ted-tarana], the woman wears a long dress, and the video contains multiple scene changes, audience views with the speaker in the background, and parts where the speaker is not visible.
+MaskAnyone substantially improves the stability and visual accuracy of pose estimation in all these scenarios.
 
-In the second row [@ted-song], the main challenges are the rapidly changing camera views and the close-up shots of the singing woman.
-Both MaskAnyoneUI-MediaPipe and raw MediaPipe struggle with close up shots of the hips and arms of the woman.
-The model tries to fit an entire human pose into the small space of an arm or hip, which leads to an incorrect pose estimation and a lot of jitter.
-It appears as if as soon as the model detects one joint of a human pose, it tries to detect the remaining parts as well.
-This is a drawback, which we saw mostly for MediaPipe models (incl. MaskAnyone-MediaPipe variants) during our experiments and not for other pose estimators.
-Nonetheless, MaskAnyoneUI-MediaPipe still achieves a more stable and accurate pose estimation than MediaPipePose for most frames in this video.
+In the second row [@ted-song], the main challenges are rapid camera view changes and close-up shots of the singing woman.
+Both MaskAnyoneUI-MediaPipe and raw MediaPipe struggle with close-ups of the hips and arms.
+The model attempts to fit a full human pose into the small visible area of an arm or hip, leading to incorrect pose estimation and unstable motion.
+It appears that once the model detects one joint, it tries to estimate the entire pose, which can cause errors in these conditions.
+This issue was primarily observed with MediaPipe models, including MaskAnyone-MediaPipe variants, and not with other pose estimators.
+Despite this, MaskAnyoneUI-MediaPipe still provides more stable and accurate pose estimations than MediaPipePose for most frames in this video.
 
 ::: {#tbl-results-ted-videos}
 ```{=html}
@@ -1025,26 +1022,23 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 ```
-Two TED-talk chunks overlayed with MediaPipePose and MaskAnyoneUI-MediaPipe poses on two challenging chunks with scene changes, camera movements and parts where no person is visible.
-The first row contains a chunk from the TED talk "Me Too is a movement, not a moment" [@ted-tarana] and the second row contains a chunk from the TED talk "Universe / Statues / Liberation" [@ted-song].
+Two TED Talk chunks overlaid with pose estimations from MediaPipePose and MaskAnyoneUI-MediaPipe, featuring challenging segments with scene changes, camera movements, and periods without visible persons.
+The first row shows a clip from the TED talk “Me Too is a Movement, Not a Moment” [@ted-tarana].
+The second row shows a clip from the TED talk “Universe / Statues / Liberation” [@ted-song].
 :::
 
-
 ## Tragic Talkers {#sec-results-tragic-talkers}
-@tbl-results-tragic-talkers shows the average metric results for different pose estimators on the Tragic Talkers dataset.
+@tbl-results-tragic-talkers presents the average metric results of various pose estimators on the Tragic Talkers dataset.
+Regarding accuracy against the pseudo-ground truth, YoloPose achieves the highest PCK at 96%, followed by OpenPose at 87%.
+All pose estimators except MediaPipePose exceed a PCK of 83%, with MediaPipePose detecting only 69% of keypoints correctly.
+However, these PCK and RMSE values should be interpreted cautiously, as the pseudo-ground truth was generated by an AI model rather than human annotators, making it inherently imperfect.
+Thus, the results reflect how closely each pose estimator matches the OpenPose output, rather than absolute pose estimation quality.
 
-With respect to the accuracy of the pose estimation compared to the pseudo-ground truth, YoloPose achieves the best result with a PCK of 96%, followed by OpenPose with 87%.
-Except for MediaPipePose, which detects only 69% of the keypoints correctly, all pose estimators achieve a PCK of more than 83%.
-
-However, the PCK and RMSE accuracy of the pose estimation is misleading, as the pseudo-ground truth poses were generated by an AI model instead of human annotators, and are therefore imperfect.
-One should therefore interpret our results as how closely the pose estimators can estimate the OpenPose output, rather than the quality of the pose estimation itself.
-Because it is neither outlined by @tragic-talkers, which variant of OpenPose was used, nor the exact parameters of the pose estimation or any post-processing steps, we consider a PCK accuracy of more than 80% as a good result, indicating that the poses are generally well estimated.
-
-The results are clearer for the kinematic metrics, especially acceleration and jerk. 
-MaskAnyoneAPI-MediaPipe performs the best, achieving the lowest acceleration and jerk values with 2.86 pixels/frame² and 5.01 pixels/frame³ respectively.
-MaskAnyoneUI-MediaPipe achieves the second best results (3.26 pixels/frame² for acceleration and 5.10 pixels/frame³ for jerk), followed by YoloPose with an acceleration value of 3.27 and jerk of 5.57.
-The MaskAnyone-OpenPose variants still exhibit less acceleration and jerk than standard OpenPose, but can already be considered quite jerky with acceleration values between 5.12 and 6.08 and jerk values of 9.06 to 10.22.
-Pure MediaPipePose is once again the most unstable pose estimator, achieving an average acceleration of 9.80 pixels/frame² and a jerk of 17.58 pixels/frame³.
+The kinematic metrics, especially acceleration and jerk, provide clearer differentiation.
+MaskAnyoneAPI-MediaPipe performs best, with the lowest acceleration and jerk values of approximately 2.9 and 5.0, respectively.
+MaskAnyoneUI-MediaPipe follows closely behind MaskAnyoneAPI-MediaPipe with slightly increased acceleration and jerk, while YoloPose shows similar acceleration but a somewhat higher jerk.
+Although MaskAnyone-OpenPose variants outperform standard OpenPose, they still exhibit noticeably greater acceleration and jerk, reflecting less smooth motion.
+Pure MediaPipePose remains the least stable estimator, with average acceleration and jerk values of approximately 9.8 and 17.6, respectively.
 
 ::: {#tbl-results-tragic-talkers}
 ```{=html}
@@ -1121,11 +1115,11 @@ Average metric results for different pose estimators aggregated over four camera
 :::
 
 @fig-tragic-talkers-acceleration-distribution and @fig-tragic-talkers-jerk-distribution confirm the results from @tbl-results-tragic-talkers.
-Both plots show that the MaskAnyone-MediaPipe pose estimators achieve the highest proportion of low acceleration and jerk values, followed by YoloPose, the MaskAnyone-OpenPose pose estimators and OpenPose.
+Both plots show that the MaskAnyone-MediaPipe pose estimators achieve the highest proportion of low acceleration and jerk values, followed by YoloPose, the MaskAnyone-OpenPose pose estimators, and OpenPose.
 MediaPipePose once again has a very flat curve, indicating a lot of large acceleration and jerk values.
 
-@fig-tragic-talkers-acceleration-per-keypoint shows, that MediaPipePose is among the pose estimators with the highest median acceleration values for all keypoints.
-YoloPose, MaskAnyoneAPI-MediaPipe and MaskAnyoneUI-MediaPipe achieve consistently low median acceleration values for all keypoints.
+@fig-tragic-talkers-acceleration-per-keypoint shows that MediaPipePose is among the pose estimators with the highest median acceleration values for all keypoints.
+YoloPose, MaskAnyoneAPI-MediaPipe, and MaskAnyoneUI-MediaPipe achieve consistently low median acceleration values for all keypoints.
 
 ::: {#fig-tragic-talkers-plots layout="[[1,1], [1]]"}
 
@@ -1136,14 +1130,14 @@ YoloPose, MaskAnyoneAPI-MediaPipe and MaskAnyoneUI-MediaPipe achieve consistentl
 ![Median Acceleration per Keypoint](plots/TragicTalkers/keypoint_plot_Acceleration.png){#fig-tragic-talkers-acceleration-per-keypoint}
 
 **Comparison of pose estimation models on the Tragic Talkers dataset.**
-(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value ranges. 
+(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value range. 
 A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
 (c) Median acceleration per keypoint, indicating stability across individual body parts.
 :::
 
-Interestingly, although the MaskAnyone-OpenPose pose estimators achieve lower acceleration values for nose, eye, ear, shoulder and ankle keypoints than pure OpenPose, they perform worse for the elbow, hip and knee keypoints.
-A potential reason for this could be that MaskAnyone uses a higher confidence threshold for keypoints than our OpenPose implementation, which leads to the elbow, hip and knee keypoints not being detected nor rendered.
-As an example, consider @tbl-results-tragic-talkers-bad-legs, which shows the first seconds of the rendered video for OpenPose, MaskAnyoneAPI-OpenPose and MaskAnyoneUI-OpenPose for the "conversation1_t3-cam08" sequence.
+Interestingly, although the MaskAnyone-OpenPose pose estimators achieve lower acceleration values for nose, eye, ear, shoulder, and ankle keypoints than pure OpenPose, they perform worse for the elbow, hip, and knee keypoints.
+A potential reason for this could be that MaskAnyone uses a higher confidence threshold for keypoints than our OpenPose implementation, which leads to the elbow, hip, and knee keypoints not being detected or rendered.
+As an example, consider @tbl-results-tragic-talkers-bad-legs, which shows the first seconds of the rendered video for OpenPose, MaskAnyoneAPI-OpenPose, and MaskAnyoneUI-OpenPose for the “conversation1_t3-cam08” sequence.
 
 ::: {#tbl-results-tragic-talkers-bad-legs}
 ```{=html}
@@ -1200,17 +1194,19 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 ```
-First 10 seconds of the rendered Tragic Talkers videos for OpenPose, MaskAnyoneAPI-OpenPose and MaskAnyoneUI-OpenPose for the "conversation1_t3-cam08" sequence.
+First 10 seconds of the rendered Tragic Talkers videos for OpenPose, MaskAnyoneAPI-OpenPose, and MaskAnyoneUI-OpenPose for the "conversation1_t3-cam08" sequence.
 :::
 
-Last but not least, we want to qualitatively compare MaskAnyoneAPI-MediaPipe, MaskAnyoneUI-MediaPipe and YoloPose on the "interactive4_t3-cam08" sequence (@tbl-results-tragic-talkers-best-models).
-These three pose estimators have the lowest overall average acceleration values, according to @tbl-results-tragic-talkers.
-We noticed two important aspects:
+Last but not least, we qualitatively compare MaskAnyoneAPI-MediaPipe, MaskAnyoneUI-MediaPipe, and YoloPose on the “interactive4_t3-cam08” sequence (@tbl-results-tragic-talkers-best-models).
+These three pose estimators have the lowest overall average acceleration values, as shown in @tbl-results-tragic-talkers.
+Two important observations were made:
 
-1. YoloPose is the only pose estimator that correctly identifies the woman, when she is turning around, facing with her back to the camera. Both MaskAnyone pose estimators fail to do so. 
-2. Directly at the start of the sequence, where both actors stand with their hands stretched out, only YoloPose correctly identifies the lower part of the woman's body. Both MaskAnyone pose estimators show a completely incorrect pose in the upper part of the woman's body. As soon as she is taking her arms down towards the hanging position, the pose adapts until it "locks on" to the correct position.
+1.	YoloPose is the only estimator that correctly identifies the woman when she turns around, facing away from the camera.
+Both MaskAnyone variants fail in this scenario.
+2.	At the start of the sequence, where both actors stand with hands stretched out, only YoloPose correctly captures the lower part of the woman’s body.
+Both MaskAnyone estimators produce an incorrect upper-body pose initially, which improves as the woman lowers her arms, eventually stabilizing in the correct position.
 
-Qualitatively, this makes YoloPose the best pose estimator for this sequence.
+Qualitatively, YoloPose performs best on this sequence.
 
 
 ::: {#tbl-results-tragic-talkers-best-models}
@@ -1270,8 +1266,6 @@ document.addEventListener('DOMContentLoaded', function() {
 ```
 The most stable pose estimators on the Tragic Talkers "interactive4_t3-cam08" sequence.
 :::
-
-
 
 ## Inference on Raw vs. Masked Videos {#sec-results-inference-raw-masked}
 ::: {#tbl-pck-raw-masked}
@@ -1443,51 +1437,56 @@ Percentage of correct keypoints (PCK) for different pose estimators on videos ma
 Root mean square error (RMSE) for different pose estimators on videos masked by different hiding strategies.
 :::
 
-As described in @sec-datasets-masked-video, we masked three different videos with four hiding strategies.
-@tbl-pck-raw-masked and @tbl-rmse-raw-masked show the percentage of correct keypoints (PCK) and the root mean square error (RMSE) for different pose estimators on the masked videos compared to the original videos.
+As described in @sec-datasets-masked-video, three videos were masked using four different hiding strategies.
+@tbl-pck-raw-masked and @tbl-rmse-raw-masked present the percentage of correct keypoints (PCK) and root mean square error (RMSE) for various pose estimators on the masked videos, compared to the original videos.
 
 **Comparison of pose estimators**
 
 MediaPipePose achieves the highest average PCK of 67% and the lowest average RMSE of 0.38, indicating robustness across all hiding strategies.
-YoloPose also performs well with an average PCK of 57%, especially on the blurring and contours hiding strategies, where it detects 95% and 93% of the keypoints from the original videos.
-In contrast, the performance of OpenPose is weaker, resulting in an average PCK of only 40% and a high RMSE of 0.67.
+YoloPose also performs well with an average PCK of 57%, particularly on the blurring and contours strategies, where it detects 95% and 93% of the original keypoints, respectively.
+In contrast, OpenPose performs weaker, with an average PCK of only 40% and a high RMSE of 0.67.
 
-Among the MaskAnyone variants, the UI-based models generally outperformed API-based ones, especially MaskAnyoneUI-MediaPipe, which reached a moderate PCK of 41% and RMSE of 0.6. 
-The API-variants of MaskAnyone perform poor, with an average PCK of 28% and 29%, suggesting that human input is required to improve the performance on masked videos.
-However, contrary to the other datasets,the UI-variants of MaskAnyone do not enhance the performance of the pure AI-models, but rather degrade it.
-A possible reason for this is that MaskAnyone uses a higher confidence threshold for keypoints than the pure AI-models we implemented, leading to the keypoints not being detected.
-Furhthermore, we hypothesize that if the first stage of MaskAnyone (where YoloPose detects the person) performs poorly, the second stage (using SAM2 [@sam2] to segment the person and crop it) will also perform poorly, leading to low quality input to the third stage, where the pose estimator is applied.
+Among the MaskAnyone variants, UI-based models generally outperform API-based ones.
+MaskAnyoneUI-MediaPipe achieves a moderate PCK of 41% and RMSE of 0.6.
+The API variants perform poorly, with average PCKs around 28% to 29%, indicating that human input improves performance on masked videos.
+
+However, unlike in other datasets, MaskAnyone UI variants do not improve but rather degrade performance compared to the pure AI models.
+Masking the videos makes keypoint detection more challenging, often lowering the confidence scores assigned by the models.
+Because MaskAnyone applies higher confidence thresholds than the base AI models, many keypoints with reduced confidence may be discarded, leading to more undetected keypoints.
+Additionally, if the first stage of MaskAnyone, where YoloPose detects the person, performs poorly, the second stage, which uses SAM2 [@sam2] to segment and crop the person, also suffers.
+This cascades to low-quality input for the final pose estimation stage, degrading overall performance.
 
 
 **Comparison of hiding strategies**
 
-Last but not least, we want to compare the hiding strategies with regards to balancing privacy and performance of pose estimators on masked videos.
+Last, we compare the hiding strategies in terms of balancing privacy and pose estimation performance on masked videos.
 
-Blurring achieved the highest average PCK over all pose estimators, with a value of 86%.
-This indicates, that models are able to detect the person in the video very well, although it is obstructed by blurring.
-This observation provides interesting insights into the working principles of pose estimation AI models.
-Although not all joints or face keypoints are visible any more, the models still makes predictions for the keypoints, which is an indicator that not the visibility of individual body parts, but the overall body structure and context plays a central role in pose estimation. 
-The models likely infer joint positions by leveraging spatial relationships and body priors learned during training, such as limb proportions, symmetry, and typical human postures.
-For instance, even when the eyes or hands are blurred or occluded, as seen in the contour and blur examples, the surrounding geometry (e.g., head, shoulders or arm direction) provides enough contextual cues for the models to estimate keypoints.
-This suggests that the pose estimators rely heavily on learned pose patterns rather than pixel-level detail.
+Blurring produced the highest average PCK of 86% across all pose estimators.
+This shows that models can still recognize and track people accurately, even when the image is partially obscured.
+The result highlights that pose estimation does not depend solely on the visibility of individual joints.
+Instead, the models appear to rely on the overall shape and structure of the body, using contextual cues to fill in missing details.
+They likely infer joint positions by applying spatial relationships and body priors learned during training, such as limb proportions, symmetry, and common human poses.
+For instance, even when specific features like eyes or hands are hidden, the surrounding geometry, such as head position, shoulder width, or arm direction, provides sufficient context for pose estimation.
+This suggests that these models depend more on learned pose patterns than on fine-grained pixel information.
 
 The results for other hiding strategies are more mixed.
-While YoloPose achieves an astonishing 93% PCK on videos masked with contours, indicating that it leverages edge and shape information of different body parts rather than detailed texture and color information, the other pose estimators perform poorly on this hiding strategy.
-Both MaskAnyone-API variants detect nothing, while the remaining pose estimators achieve a PCK of 36% to 62%.
+YoloPose achieves an impressive 93% PCK on videos masked with contours, indicating its ability to utilize edge and shape information rather than texture or color.
+In contrast, other pose estimators perform poorly on this strategy.
+Both MaskAnyone API variants detect almost no keypoints, and the remaining models achieve between 36% and 62% PCK.
 
-For pixelation, only MediaPipePose is able to detect the persons reasonably well, with a PCK of 81%.
-YoloPose, OpenPose and both MaskAnyone-OpenPose variants detect less than 10% of the keypoints.
-This signals, that the used level of pixelation greatly reduces the amount of information available to the pose estimators and that the current implementation is not suitable for pose estimation.
+For pixelation, only MediaPipePose detects persons reasonably well, with 81% PCK.
+YoloPose, OpenPose, and both MaskAnyone-OpenPose variants detect fewer than 10% of keypoints.
+This suggests that the pixelation level used drastically reduces usable information for pose estimation and that this method is currently unsuitable for such tasks.
 
-The solid fill hiding strategy is the most challenging one, because it removes all information about the person, except for the outline.
-Consequently the average PCK is the lowest of all hiding strategies, with a value of 11%.
-The best model, MediaPipePose, achieves a PCK of 34% on this hiding strategy.
+The solid fill hiding strategy is the most challenging, removing nearly all information about the person except the outline.
+As a result, it yields the lowest average PCK of 11%.
+MediaPipePose performs best here but reaches only 34% PCK.
 
-As a conclusion, we can say that blurring provides the best compromise between privacy and performance of pose estimators on masked videos.
-Although it might not completely de-identify the person, it provides enough information for the pose estimators to make reasonable predictions.
-The contours hiding strategy can be used, if even more privacy is desired, at the expense of pose estimation accuracy, except for YoloPose.
+In conclusion, blurring offers the best trade-off between privacy and pose estimation performance on masked videos.
+While it may not fully de-identify individuals, it retains sufficient information for accurate pose predictions.
+The contour hiding strategy can be considered when stronger privacy is required, though it reduces accuracy for all but YoloPose.
 
-@tbl-results-raw-masked-rendered shows the qualitative results of the best performing pose estimators on the masked videos of the TED sequence "Let curiosity lead" and the Tragic Talkers "interactive1_t1-cam06" sequence.
+@tbl-results-raw-masked-rendered presents qualitative results of the best-performing pose estimators on masked videos from the TED talk “Let curiosity lead” and the Tragic Talkers sequence “interactive1_t1-cam06.”
 
 
 ::: {#tbl-results-raw-masked-rendered}
@@ -1634,10 +1633,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 ```
-The qualitatively best performing pose estimators on the masked videos of the TED sequence "Let curiosity lead" and the Tragic Talkers "interactive1_t1-cam06" sequence.
-The rows contain videos masked with different hiding strategies in the following order: Blurring, Pixelation, Contours, Solid Fill.
-The pose estimators shown for the TED sequence (first column) are YoloPose, MaskAnyoneUI-MediaPipe, YoloPose and YoloPose.
-The pose estimators shown for the Tragic Talkers sequence (second column) are YoloPose, MediaPipePose, YoloPose and MaskAnyoneUI-MediaPipe.
+The best-performing pose estimators on the masked videos are shown for the TED sequence “Let curiosity lead” and the Tragic Talkers sequence “interactive1_t1-cam06”.
+Each row corresponds to a different hiding strategy, in the order: Blurring, Pixelation, Contours, and Solid Fill.
+For the TED sequence (first column), the pose estimators are YoloPose, MaskAnyoneUI-MediaPipe, YoloPose, and YoloPose.
+For the Tragic Talkers sequence (second column), the pose estimators are YoloPose, MediaPipePose, YoloPose, and MaskAnyoneUI-MediaPipe.
 :::
 
 
@@ -1645,9 +1644,6 @@ The pose estimators shown for the Tragic Talkers sequence (second column) are Yo
 # Future Work & Limitations {#sec-future-work}
 (Zainab - 4.)
 (Tim - 5.)
-
-Implement head and torso normalization. 
-
 
 ## MaskBench Outlook
 With our promising results, we are laying the foundation for a more feature-rich benchmarking framework for pose estimation on masked videos.
