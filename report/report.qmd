@@ -202,8 +202,6 @@ metrics:                                    # List of metrics  (specificy as man
 ```
 :::
 
-Human pose estimation is an important area of computer vision that focuses on detecting and tracking the positions of key points on the human body in images or videos. It is widely used in fields such as sports analysis, healthcare, and human–computer interaction. In recent years, many pose estimation models have been developed, each with its own strengths, limitations, and preferred use cases.
-
 ### 🏋️ Model Variants and Weights
 
 You only need to modify the weights if you are adding a new pose estimator to MaskBench.
@@ -262,7 +260,7 @@ In addition to standalone pose estimation models, **MaskAnyone** [@maskanyone-gi
 
 
 # MaskBench Architecture {#sec-architecture}
-![MaskBench Architecture](./images/maskbench-workflow.jpg){#fig-architecture}
+![MaskBench Architecture](./images/maskbench-workflow.png){#fig-architecture}
 
 The general workflow of MaskBench is shown in Figure @fig-architecture.
 It begins with loading the dataset, pose estimators, and evaluation metrics.
