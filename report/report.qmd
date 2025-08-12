@@ -595,33 +595,30 @@ Jerk measures the rate of change of acceleration, offering insights into the smo
 It is calculated with $j_t = a_{t+1} - a_t$ as the difference between consecutive acceleration values, where $j_t$ is the jerk at time $t$ and $a_t$ represents the acceleration. 
 The metric supports reporting in pixels per frame cubed or pixels per second cubed, with the latter normalized by the cubed time delta between frames (1/fps³).
 
+
 # Experimental Setup {#sec-experiments}
-In this section, we outline the experimental setup for the evaluation of the pose estimators on the four datasets.
+In this section, we describe the experimental setup used to evaluate pose estimators across four datasets.
 
 ## General Setup
-We executed a total of seven pose estimators on the four datasets (TED kid video, TED talks, Tragic Talkers and masked video dataset).
-The pose estimators are: YoloPose (v11-l), MediaPipePose (pose_landmarker_heavy), OpenPose (body_25), MaskAnyoneAPI-MediaPipe, MaskAnyoneAPI-OpenPose, MaskAnyoneUI-MediaPipe and MaskAnyoneUI-OpenPose.
-We set a confidence threshold of 0.3 for YoloPose and MediaPipePose, and 0.15 for OpenPose, for filtering out low-confidence detections.
-A confidence threshold of zero is used for all MaskAnyone pose estimators, as the output of MaskAnyone does not contain a confidence score.
-All keypoints are stored in the COCO format to allow for a per-keypoint comparison of the results.
+We evaluated seven pose estimators on the four datasets: TED Kid Video, TED Talks, Tragic Talkers, and the Masked Video Dataset.
+The pose estimators are: YoloPose (v11-l), MediaPipePose (pose_landmarker_heavy), OpenPose (body_25), MaskAnyoneAPI-MediaPipe, MaskAnyoneAPI-OpenPose, MaskAnyoneUI-MediaPipe, and MaskAnyoneUI-OpenPose.
+Confidence thresholds were visually determined on a subset of videos and set to 0.3 for YoloPose and MediaPipePose, and 0.15 for OpenPose. Since MaskAnyone-based estimators do not output confidence scores, a threshold of zero was used for them.
+All keypoints were stored in COCO format to enable per-keypoint comparisons across models.
 
 ## TED Kid Video and TED Talks {#sec-experiments-ted-kid-talks}
-For the TED kid video and the TED talks, we evaluated the metrics velocity, acceleration and jerk for each pose estimator.
-Because no ground truth is available for the TED talks, we cannot evaluate the accuracy of the pose estimation.
+For both datasets, we evaluated the kinematic metrics velocity, acceleration, and jerk for each pose estimator.
+Due to the absence of ground truth annotations for TED Talks, accuracy metrics could not be computed.
 
 ## Tragic Talkers {#sec-experiments-tragic-talkers}
-For the Tragic Talkers dataset, we evaluated metrics based on ground-truth like Euclidean distance, PCK and RMSE, and also kinematic metrics like velocity, acceleration and jerk for each pose estimator.
-Important to note is, that the Tragic Talkers dataset contains only "pseudo-ground truth" annotations, which were created by the AI model OpenPose.
-Unfortunately, it is not noted in the dataset nor paper, which OpenPose model was used to create the pose results, which limits the comparability of the results.
+For the Tragic Talkers dataset, we evaluated both accuracy metrics (Euclidean distance, PCK, RMSE) and kinematic metrics (velocity, acceleration, jerk) for each pose estimator.
 
 ## Inference on Raw vs. Masked Videos {#sec-experiments-inference-raw-masked}
-For the masked video dataset, we first performed inference on the raw videos with all seven pose estimators to establish a baseline without any masking.
-Thereafter, for each hiding strategy, the pose estimators were executed again on the masked videos.
-The results were then compared to the baseline to evaluate the impact of the different hiding strategies on the pose estimation performance.
-We used the PCK and RMSE metrics to evaluate the accuracy of the pose estimation compared to the pose result on the raw videos.
+For the Masked Video dataset, inference was first performed on the raw videos with all pose estimators to establish a baseline.
+Subsequently, inference was repeated on videos masked with different hiding strategies.
+Performance was compared against the baseline to assess the impact of masking, using PCK and RMSE metrics to quantify accuracy relative to raw videos.
 
-It is important to note, that such a pipeline run is not yet natively implemented in MaskBench and is rather preliminary implementation in a script to serve as a proof of concept.
-We plan to extend MaskBench to support this workflow in the future, see section @sec-future-work-pipelining.
+Note that this masking evaluation pipeline is a preliminary implementation outside of MaskBench’s native capabilities, serving as a proof of concept.
+We intend to integrate full support for this workflow in future MaskBench releases (see section @sec-future-work-pipelining).
 
 
 # Results {#sec-results}
