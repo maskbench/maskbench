@@ -77,7 +77,7 @@ Follow the instructions below to install and run experiments with MaskBench:
    ```bash
    git clone https://github.com/maskbench/maskbench.git
    ```
-3. **Setup the folder structure**. Place your dataset with videos into the `assets/datasets` folder. For storing datasets, output or weights in different locations, see "Editing the .env file". Labels, maskanyone_ui_mediapipe and mask_anyone_ui_openpose folders are optional and not required for a quick start.
+3. **Setup the folder structure**. Place your dataset into the `assets/datasets/` folder. For storing datasets, output or weights in different locations, see "Editing the .env file". Labels, maskanyone_ui_mediapipe and mask_anyone_ui_openpose folders are optional and not required for a quick start. The structure of a dataset is outlined below and also detailed in the "Usage - Dataset Structure" section:
 
     ```bash
     maskbench/
@@ -113,10 +113,11 @@ Follow the instructions below to install and run experiments with MaskBench:
     * `MASKBENCH_GPU_ID:` If you are on a multi-GPU setup, tell MaskBench which GPU to use. Either specify a number (0, 1, ...) or "all" in which case all available GPUs on the system are used. Currently, MaskBench only supports inference on a single GPU or on all GPUs.
 
     The following variables only need to be adjusted, if you use a different asset folder structure than the one proposed above (for example, if your dataset is large and you want to store it on a separate disk):
-    * `MASKBENCH_DATASET_DIR:` The directory where video files are located. MaskBench supports video files with .mp4 and .avi extensions.
+    * `MASKBENCH_DATASET_DIR:` The directory where entire datasets are located. MaskBench supports video files with .mp4 and .avi extensions.
     * `MASKBENCH_OUTPUT_DIR:` The directory where experiment results will be saved.
     * `MASKBENCH_WEIGHTS_DIR:` Directory for storing model weights user-specific weights for custom pose estimators.
-7. **Build and run the MaskBench Docker container**.
+7. **Edit the configuration file** to use your dataset. See section "Usage - Configruation Files" for more details.
+8. **Build and run the MaskBench Docker container**.
 
     ```bash
     docker compose build
@@ -126,7 +127,7 @@ Follow the instructions below to install and run experiments with MaskBench:
     docker compose up
     ```
     If multiple users run MaskBench simultaneously, use `docker compose -p $USER up`.
-8. **Install MaskAnyone**. If you plan on using the UI version of MaskAnyone to create smooth poses, masked videos and improve raw pose estimation models, follow the installation instructions [here](https://github.com/MaskAnyone/MaskAnyone).
+9. **Install MaskAnyone**. If you plan on using the UI version of MaskAnyone to create smooth poses, masked videos and improve raw pose estimation models, follow the installation instructions [here](https://github.com/MaskAnyone/MaskAnyone).
 
 ## 🚀 Usage {#sec-installation-usage}
 The following paragraphs describe how to structure your dataset, configure the application, and understand the output of MaskBench. Following these guidelines ensures the application runs smoothly and recognizes your data correctly.
@@ -168,20 +169,17 @@ execute_evaluation: true                    # Set to false to skip calculating e
 execute_rendering: true                     # Set to false to skip rendering the videos.
 
 dataset:
-  name: TragicTalkers                       # User-definable name of the dataset
-  module: datasets.tragic_talkers_dataset
-  class: TragicTalkersDataset
-  dataset_folder: /datasets/tragic-talkers  # Location of the dataset folder (always starts with /datasets, because this refers to the mounted folder in the docker container). You only need to adjust the name of the folder.
+  name: TragicTalkers                                               # User-definable name of the dataset
+  code_file: datasets.tragic_talkers_dataset.TragicTalkersDataset   # Module and class name of the dataset to instantiate
+  video_folder: /datasets/tragic-talkers/videos                     # Location of the dataset videos folder (always starts with /datasets, because this refers to the mounted folder in the docker container). You only need to adjust the name of the dataset folder.
+  gt_folder: /datasets/tragic-talkers/labels                        # Path to the ground truth poses folder
   config:
-    video_folder: videos
-    ground_truth_folder: labels
-    convert_gt_keypoints_to_coco: true
+    convert_gt_keypoints_to_coco: true                              # Whether to convert the ground truth keypoints to COCO format
 
 pose_estimators:                            # List of pose estimators (specificy as many as needed)
   - name: YoloPose                          # User-definable name of the pose estimator. 
     enabled: true                           # Enable or disable this pose estimator.
-    module: models.yolo_pose_estimator
-    class: YoloPoseEstimator
+    code_file: models.yolo_pose_estimator.YoloPoseEstimator # Module and class name of the pose estimator to instantiate
     config:                                 # Pose estimator specific configuration variables.
       weights: yolo11l-pose.pt              # Weights file name inside the specified weights directory.
       save_keypoints_in_coco_format: true   # Whether to store keypoints in COCO format (18 keypoints) or not)
@@ -189,25 +187,22 @@ pose_estimators:                            # List of pose estimators (specificy
 
   - name: MaskAnyoneUI-MediaPipe
     enabled: true
-    module: models.maskanyone_ui_pose_estimator
-    class: MaskAnyoneUiPoseEstimator  
+    code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator
     config:
-      dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_mediapipe # Folder of MaskAnyone poses
-      overlay_strategy: mp_pose             # Mediapipe: mp_pose, OpenPose: openpose, openpose_body25b
+      dataset_poses_folder: /datasets/tragic-talkers/maskanyone_ui_mediapipe # Folder of MaskAnyone poses
+      overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0               # Confidence thresholds not supported by MaskAnyone
 
 metrics:                                    # List of metrics  (specificy as many as needed)
   - name: PCK                               # User-definable name of the metric
-    module: evaluation.metrics.pck
-    class: PCKMetric
+    code_file: evaluation.metrics.pck.PCKMetric
     config:                                 # Metric specific configuration variables.
       normalize_by: bbox
       threshold: 0.2
 
   - name: Velocity
-    module: evaluation.metrics.velocity
-    class: VelocityMetric
+    code_file: evaluation.metrics.velocity.VelocityMetric
     config:
       time_unit: frame
 ```
@@ -287,23 +282,19 @@ We will discuss this in the following sections.
 
 ## Dataset {#sec-architecture-dataset}
 The dataset provides video data for pose estimation and, if available, ground truth data for evaluation.
-When adding a new dataset, the user must create a new class that inherits from the Dataset class and override the `_load_samples` method, which generates one VideoSample object for each video in the dataset.
-If the dataset provides ground truth data, the user must also override the `get_gt_pose_results` and `get_gt_keypoint_pairs` methods.
+The user can choose to either use the generic dataset class, which requires a video folder, that contains all video files, and an optional labels folder, which contains one ground truth JSON pose file per video.
+The alternative is to implement a custom class, that inherits from the Dataset class and overrides the `load_videos` method, which generates one VideoSample object for each video in the dataset.
+This is useful, if the dataset has a more complex structure with nested subfolder of videos or ground truth data.
+If the dataset provides ground truth, the user must also override the `get_gt_pose_results` and `get_gt_keypoint_pairs` methods.
 For each video, the `get_gt_pose_results` method should return a `VideoPoseResult` object.
 The `get_gt_keypoint_pairs` method is used to render the ground truth keypoints and contains a list of tuples, each specifying the indices of two keypoints to be connected in the rendered video.
 Default keypoint pairs for YoloPose, MediaPipePose, and various implementations of OpenPose models are provided in the `keypoint_pairs.py` file.
 
-Below is the code implementation for the abstract dataset class, the simple TED Talks dataset (without ground truth), and the more complex TragicTalkers dataset (with pseudo-ground truth data).
+Below is the code implementation for the generic dataset class, and the more complex TragicTalkers dataset (with custom pseudo-ground truth data loading).
 
 ::: {.callout-note collapse="true"}
 ## Dataset Class
 ```{.python include="../src/datasets/dataset.py" code-line-numbers="true" filename="src/datasets/dataset.py"}
-```
-:::
-
-::: {.callout-note collapse="true"}
-## TED Talks Dataset
-```{.python include="../src/datasets/ted_dataset.py" code-line-numbers="true" filename="src/datasets/ted_dataset.py"}
 ```
 :::
 

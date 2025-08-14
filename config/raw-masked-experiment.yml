@@ -4,12 +4,12 @@ execute_rendering: true         # set to false to skip rendering the videos
 
 dataset:
   name: RawMaskedExperiment
-  code_file: datasets.ted_dataset.TedDataset
-  dataset_folder: /datasets/raw-masked-experiment/videos/raw
-  # dataset_folder: /datasets/raw-masked-experiment/videos/blurring
-  # dataset_folder: /datasets/raw-masked-experiment/videos/pixelation
-  # dataset_folder: /datasets/raw-masked-experiment/videos/contours
-  # dataset_folder: /datasets/raw-masked-experiment/videos/solid_fill
+  code_file: datasets.dataset.Dataset
+  video_folder: /datasets/raw-masked-experiment/videos/raw
+  # video_folder: /datasets/raw-masked-experiment/videos/blurring
+  # video_folder: /datasets/raw-masked-experiment/videos/pixelation
+  # video_folder: /datasets/raw-masked-experiment/videos/contours
+  # video_folder: /datasets/raw-masked-experiment/videos/solid_fill
 
 
 pose_estimators:
@@ -58,11 +58,11 @@ pose_estimators:
     enabled: true
     code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/raw
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/blurring
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/pixelation
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/contours
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/solid_fill
+      dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/raw
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/blurring
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/pixelation
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/contours
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/solid_fill
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
@@ -71,11 +71,11 @@ pose_estimators:
     enabled: true
     code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/raw
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/blurring
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/pixelation
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/contours
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/solid_fill
+      dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/raw
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/blurring
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/pixelation
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/contours
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/solid_fill
       overlay_strategy: openpose_body25b
       save_keypoints_in_coco_format: true
       confidence_threshold: 0

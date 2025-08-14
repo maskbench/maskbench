@@ -5,10 +5,9 @@ execute_rendering: true         # set to false to skip rendering the videos
 dataset:
   name: TragicTalkers
   code_file: datasets.tragic_talkers_dataset.TragicTalkersDataset
-  dataset_folder: /datasets/tragic-talkers
+  video_folder: /datasets/tragic-talkers/videos
+  gt_folder: /datasets/tragic-talkers/labels
   config:
-    video_folder: videos
-    ground_truth_folder: labels
     convert_gt_keypoints_to_coco: true
 
 pose_estimators:
@@ -57,7 +56,7 @@ pose_estimators:
     enabled: true
     code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_mediapipe
+      dataset_poses_folder: /datasets/tragic-talkers/maskanyone_ui_mediapipe
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
@@ -66,7 +65,7 @@ pose_estimators:
     enabled: true
     code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_openpose
+      dataset_poses_folder: /datasets/tragic-talkers/maskanyone_ui_openpose
       overlay_strategy: openpose # uses BODY_25 model
       save_keypoints_in_coco_format: true
       confidence_threshold: 0

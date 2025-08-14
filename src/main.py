@@ -88,15 +88,19 @@ def load_config() -> dict:
 
 
 def load_dataset(dataset_specification: dict) -> Dataset:
-    dataset_folder = dataset_specification.get("dataset_folder", "/datasets")
+    video_folder = dataset_specification.get("video_folder")
+    gt_folder = dataset_specification.get("gt_folder", None)  # Optional - can be None
     config = dataset_specification.get("config", {})
+
+    if video_folder is None:
+        raise ValueError("Dataset configuration must specify video_folder")
 
     try:
         dataset_name = dataset_specification.get("name")
         module_path, class_name = parse_code_file(dataset_specification.get("code_file"))
         dataset_module = importlib.import_module(module_path)
         dataset_class = getattr(dataset_module, class_name)
-        dataset = dataset_class(dataset_name, dataset_folder, config)  # initialize dataset
+        dataset = dataset_class(dataset_name, video_folder=video_folder, gt_folder=gt_folder, config=config)
     except (ImportError, AttributeError, TypeError) as e:
         print(f"Error instantiating dataset {dataset_specification.get('name')}: {e}")
         raise e

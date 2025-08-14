@@ -4,8 +4,8 @@ execute_rendering: true         # set to false to skip rendering the videos
 
 dataset:
   name: TED-kid
-  code_file: datasets.ted_dataset.TedDataset
-  dataset_folder: /datasets/TED-kid/videos
+  code_file: datasets.dataset.Dataset
+  video_folder: /datasets/TED-kid/videos
 
 pose_estimators:
   - name: YoloPose
@@ -53,7 +53,7 @@ pose_estimators:
     enabled: true
     code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/TED-kid/maskanyone_ui_mediapipe/raw
+      dataset_poses_folder: /datasets/TED-kid/maskanyone_ui_mediapipe
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
@@ -62,7 +62,7 @@ pose_estimators:
     enabled: true
     code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/TED-kid/maskanyone_ui_openpose/raw
+      dataset_poses_folder: /datasets/TED-kid/maskanyone_ui_openpose
       overlay_strategy: openpose_body25b
       save_keypoints_in_coco_format: true
       confidence_threshold: 0

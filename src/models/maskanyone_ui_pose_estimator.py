@@ -10,7 +10,7 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         Initialize the MaskAnyoneUiPoseEstimator with a name and configuration.
         """
         super().__init__(name, config)
-        self.dataset_folder_path = self.config.get("dataset_folder_path")
+        self.dataset_poses_folder = self.config.get("dataset_poses_folder")
         self.options = utils.maskanyone_get_config(self.config)
         self.model_keypoint_pairs = {"mp_pose": MEDIAPIPE_KEYPOINT_PAIRS, "openpose_body25b": OPENPOSE_BODY25B_KEYPOINT_PAIRS, "openpose": OPENPOSE_BODY25_KEYPOINT_PAIRS}
         self.model_to_coco_mapping = {"mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_OPENPOSE_BODY25B, "openpose": COCO_TO_OPENPOSE_BODY25}
@@ -33,8 +33,8 @@ class MaskAnyoneUiPoseEstimator(PoseEstimator):
         _, video_metadata = utils.get_video_metadata(video_path)
 
         video_name = os.path.splitext(os.path.basename(video_path))[0]
-        dir_path = os.path.join(self.dataset_folder_path, video_name)
-        json_path = os.path.join(self.dataset_folder_path, f"{video_name}.json")
+        dir_path = os.path.join(self.dataset_poses_folder, video_name)
+        json_path = os.path.join(self.dataset_poses_folder, f"{video_name}.json")
         
         if not os.path.exists(dir_path) and not os.path.exists(json_path):
             raise FileNotFoundError(f"Neither {dir_path} nor {json_path} was found in Mask Anyone Ui Dataset Folder Path")

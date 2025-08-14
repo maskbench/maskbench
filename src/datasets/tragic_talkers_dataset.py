@@ -2,7 +2,6 @@ import os
 import json
 import glob
 from typing import Dict, List
-from dataclasses import asdict
 
 from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from keypoint_pairs import COCO_KEYPOINT_PAIRS, COCO_TO_OPENPOSE_BODY25, OPENPOSE_BODY25_KEYPOINT_PAIRS
@@ -11,14 +10,11 @@ from .dataset import Dataset
 from .video_sample import VideoSample
 
 class TragicTalkersDataset(Dataset):
-    def __init__(self, name: str, dataset_folder: str, config: dict = None):
-        super().__init__(name, dataset_folder, config)
-        self.convert_gt_keypoints_to_coco = config.get("convert_gt_keypoints_to_coco", False)
+    def __init__(self, name: str, video_folder: str, gt_folder: str = None, config: dict = None):
+        super().__init__(name, video_folder, gt_folder, config)
+        self.convert_gt_keypoints_to_coco = config.get("convert_gt_keypoints_to_coco", False) if config else False
     
-    def _load_samples(self) -> List[VideoSample]:
-        self.video_folder = os.path.join(self.dataset_folder, self.config.get("video_folder")) # adjust according to folder structure
-        self.gt_folder = os.path.join(self.dataset_folder, self.config.get("ground_truth_folder")) # adjust according to folder structure
-
+    def load_videos(self) -> List[VideoSample]:
         samples = []
         video_extensions = (".avi", ".mp4")
         list_of_videos = glob.glob(os.path.join(self.video_folder, "*", "*"))

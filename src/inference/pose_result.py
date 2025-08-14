@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass
+import json
 from typing import List, Optional
 import numpy as np
 import numpy.ma as ma
@@ -109,6 +110,46 @@ class VideoPoseResult:
             "frames": [asdict(frame) for frame in self.frames],
             "video_name": self.video_name,
         }
+
+    @classmethod
+    def from_json(cls, json_path: str, video_name: str = None) -> 'VideoPoseResult':
+        """
+        Create a VideoPoseResult instance from a JSON file.
+        
+        Args:
+            json_path (str): Path to the JSON file containing the pose result data
+            video_name (str, optional): Video name to use. If not provided, uses the one from data.
+            
+        Returns:
+            VideoPoseResult: A new instance created from the JSON data
+        """
+        with open(json_path, "r") as f:
+            data = json.load(f)
+            frames = data.get("frames", [])
+            frame_pose_results = []
+            
+            for frame_index, frame in enumerate(frames):
+                persons = frame.get("persons", [])
+                person_pose_results = []
+                for person in persons:
+                    keypoints = person.get("keypoints", [])
+                    pose_keypoints = [
+                        PoseKeypoint(
+                            x=k["x"], 
+                            y=k["y"], 
+                            confidence=k.get("confidence", None)
+                        ) for k in keypoints
+                    ]
+                    person_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
+                frame_pose_results.append(FramePoseResult(persons=person_pose_results, frame_idx=frame_index))
+            
+            return cls(
+                fps=data.get("fps", None),
+                frame_width=data.get("frame_width", None),
+                frame_height=data.get("frame_height", None),
+                video_name=video_name or data.get("video_name"),
+                frames=frame_pose_results
+            )
 
     def __str__(self):
         array = self.to_numpy_ma()
