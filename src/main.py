@@ -63,6 +63,17 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
         pose_renderer.render_all_videos(pose_results)
 
 
+def parse_code_file(code_file: str) -> tuple[str, str]:
+    if not code_file or '.' not in code_file:
+        raise ValueError(f"Invalid code_file format: {code_file}. Expected format: 'module.path.ClassName'")
+    
+    parts = code_file.split('.')
+    class_name = parts[-1]
+    module_path = '.'.join(parts[:-1])
+    
+    return module_path, class_name
+
+
 def load_config() -> dict:
     config_file_name = os.getenv("MASKBENCH_CONFIG_FILE")
     config_file_path = os.path.join("/config", config_file_name)
@@ -82,8 +93,9 @@ def load_dataset(dataset_specification: dict) -> Dataset:
 
     try:
         dataset_name = dataset_specification.get("name")
-        dataset_module = importlib.import_module(dataset_specification.get("module"))
-        dataset_class = getattr(dataset_module, dataset_specification.get("class"))
+        module_path, class_name = parse_code_file(dataset_specification.get("code_file"))
+        dataset_module = importlib.import_module(module_path)
+        dataset_class = getattr(dataset_module, class_name)
         dataset = dataset_class(dataset_name, dataset_folder, config)  # initialize dataset
     except (ImportError, AttributeError, TypeError) as e:
         print(f"Error instantiating dataset {dataset_specification.get('name')}: {e}")
@@ -103,8 +115,9 @@ def load_pose_estimators(pose_estimator_specifications: dict) -> List[PoseEstima
             continue
 
         try:
-            estimator_module = importlib.import_module(spec.get("module"))
-            estimator_class = getattr(estimator_module, spec.get("class"))
+            module_path, class_name = parse_code_file(spec.get("code_file"))
+            estimator_module = importlib.import_module(module_path)
+            estimator_class = getattr(estimator_module, class_name)
             pose_estimator = estimator_class(estimator_name, estimator_config)
             pose_estimators.append(pose_estimator)
         except (ImportError, AttributeError, TypeError) as e:
@@ -120,8 +133,9 @@ def load_metrics(metric_specifications: List[dict]) -> List[Metric]:
         metric_config = spec.get("config", {})
 
         try:
-            metric_module = importlib.import_module(spec.get("module"))
-            metric_class = getattr(metric_module, spec.get("class"))
+            module_path, class_name = parse_code_file(spec.get("code_file"))
+            metric_module = importlib.import_module(module_path)
+            metric_class = getattr(metric_module, class_name)
             metric = metric_class(config=metric_config)
             metrics.append(metric)
         except (ImportError, AttributeError, TypeError) as e:

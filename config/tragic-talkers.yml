@@ -4,8 +4,7 @@ execute_rendering: true         # set to false to skip rendering the videos
 
 dataset:
   name: TragicTalkers
-  module: datasets.tragic_talkers_dataset
-  class: TragicTalkersDataset
+  code_file: datasets.tragic_talkers_dataset.TragicTalkersDataset
   dataset_folder: /datasets/tragic-talkers
   config:
     video_folder: videos
@@ -15,8 +14,7 @@ dataset:
 pose_estimators:
   - name: YoloPose
     enabled: true
-    module: models.yolo_pose_estimator
-    class: YoloPoseEstimator
+    code_file: models.yolo_pose_estimator.YoloPoseEstimator
     config:
       weights: yolo11l-pose.pt
       save_keypoints_in_coco_format: true
@@ -24,8 +22,7 @@ pose_estimators:
 
   - name: MediaPipePose
     enabled: true
-    module: models.mediapipe_pose_estimator
-    class: MediaPipePoseEstimator
+    code_file: models.mediapipe_pose_estimator.MediaPipePoseEstimator
     config:
       weights: pose_landmarker_heavy.task
       max_num_poses: 3
@@ -34,8 +31,7 @@ pose_estimators:
 
   - name: OpenPose
     enabled: true
-    module: models.open_pose_estimator
-    class: OpenPoseEstimator
+    code_file: models.open_pose_estimator.OpenPoseEstimator
     config:
       save_keypoints_in_coco_format: true
       overlay_strategy: BODY_25
@@ -43,8 +39,7 @@ pose_estimators:
   
   - name: MaskAnyoneAPI-MediaPipe
     enabled: true
-    module: models.maskanyone_api_pose_estimator
-    class: MaskAnyoneApiPoseEstimator
+    code_file: models.maskanyone_api_pose_estimator.MaskAnyoneApiPoseEstimator
     config:
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
@@ -52,8 +47,7 @@ pose_estimators:
 
   - name: MaskAnyoneAPI-OpenPose
     enabled: true
-    module: models.maskanyone_api_pose_estimator
-    class: MaskAnyoneApiPoseEstimator
+    code_file: models.maskanyone_api_pose_estimator.MaskAnyoneApiPoseEstimator
     config:
       overlay_strategy: openpose # uses BODY_25 model
       save_keypoints_in_coco_format: true
@@ -61,8 +55,7 @@ pose_estimators:
 
   - name: MaskAnyoneUI-MediaPipe
     enabled: true
-    module: models.maskanyone_ui_pose_estimator
-    class: MaskAnyoneUiPoseEstimator  
+    code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
       dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_mediapipe
       overlay_strategy: mp_pose
@@ -71,8 +64,7 @@ pose_estimators:
 
   - name: MaskAnyoneUI-OpenPose
     enabled: true
-    module: models.maskanyone_ui_pose_estimator
-    class: MaskAnyoneUiPoseEstimator  
+    code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
       dataset_folder_path: /datasets/tragic-talkers/maskanyone_ui_openpose
       overlay_strategy: openpose # uses BODY_25 model
@@ -81,32 +73,27 @@ pose_estimators:
 
 metrics:
   - name: RMSE
-    module: evaluation.metrics.rmse
-    class: RMSEMetric
+    code_file: evaluation.metrics.rmse.RMSEMetric
     config:
       normalize_by: bbox
   
   - name: PCK
-    module: evaluation.metrics.pck
-    class: PCKMetric
+    code_file: evaluation.metrics.pck.PCKMetric
     config:
       normalize_by: bbox
       threshold: 0.2
 
   - name: Velocity
-    module: evaluation.metrics.velocity
-    class: VelocityMetric
+    code_file: evaluation.metrics.velocity.VelocityMetric
     config:
       time_unit: frame
 
   - name: Acceleration
-    module: evaluation.metrics.acceleration
-    class: AccelerationMetric
+    code_file: evaluation.metrics.acceleration.AccelerationMetric
     config:
       time_unit: frame
   
   - name: Jerk
-    module: evaluation.metrics.jerk
-    class: JerkMetric
+    code_file: evaluation.metrics.jerk.JerkMetric
     config:
       time_unit: frame
