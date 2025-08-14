@@ -11,13 +11,13 @@ Its **modular design** makes it easy to add new datasets, models, metrics, or vi
 Whether you’re testing a new model, comparing existing ones, or studying the impact of masking strategies, MaskBench provides a clear, repeatable workflow to get the job done.
 
 ## 🛠️ Getting Started
-### System Requirements
+### 🖥️ System Requirements
 
 - 🐳 **Docker**: Latest stable version  
 - 🎮 **GPU**: NVIDIA (CUDA-enabled)  
 - 💾 **Memory**: 20 GB or more
 
-### Installation
+### 📦 Installation
 
 Follow the instructions below to install and run experiments with MaskBench:
 
@@ -26,47 +26,47 @@ Follow the instructions below to install and run experiments with MaskBench:
    ```bash
    git clone https://github.com/maskbench/maskbench.git
    ```
-3. **Setup the folder structure**. You can store the datasets, outputs or weights in any location you want (for example, if your dataset is large and stored on a separate disk), however, to minimize setup overhead, we suggest the following folder structure:
+3. **Setup the folder structure**. Place your dataset with videos into the `assets/datasets` folder. For storing datasets, output or weights in different locations, see the "Editing the .env file". Labels, maskanyone_ui_mediapipe and mask_anyone_ui_openpose folders are optional and not required for a quick start.
 
     ```bash
     maskbench/
     ├── src
-    └── config/
-        └── your-experiment-config.yml
-    
-    maskbench_assets/
-    ├── weights
-    ├── output
-    └── datasets/
-        └── your-dataset/
-            ├── videos/
-            │   └── video_name1.mp4
-            ├── labels/
-            │   └── video_name1.json
-            ├── maskanyone_ui_mediapipe/
-            │   └── video_name1.json
-            └── maskanyone_ui_openpose/
-                └── video_name1.json
+    ├── config/
+    │   └── your-experiment-config.yml
+    └── assets/
+        ├── weights
+        ├── output
+        └── datasets/
+            └── your-dataset/
+                ├── videos/
+                │   └── video_name1.mp4
+                ├── labels/
+                │   └── video_name1.json
+                ├── maskanyone_ui_mediapipe/
+                │   └── video_name1.json
+                └── maskanyone_ui_openpose/
+                    └── video_name1.json
     ```
 4. **Switch to the git repository**
-
     ```bash
     cd maskbench
     ```
 5. **Create the environment file**. This file is used to tell MaskBench about your dataset, output and weights directory, as well as the configuration file to use for an experiment. Copy the .env file using:
-
     ```bash
     cp .env.dist .env
     ```
 6. **Edit the .env file**. Open it using `vim .env` or `nano .env.`. Adjust the following variables:
-    * `MASKBENCH_GPU_ID:` If you are on a multi-GPU setup, tell MaskBench which GPU to use. Either specify a number (0, 1, ...) or "all" in which case all available GPUs on the system are used. Currently, MaskBench only supports inference on a single GPU or on all GPUs.
     * `MASKBENCH_CONFIG_FILE:` The configuration file used to define your experiment setup.
+    * `MASKBENCH_GPU_ID:` If you are on a multi-GPU setup, tell MaskBench which GPU to use. Either specify a number (0, 1, ...) or "all" in which case all available GPUs on the system are used. Currently, MaskBench only supports inference on a single GPU or on all GPUs.
 
-    The following variables only need to be adjusted, if you use a different folder structure than the one proposed above:
+    The following variables only need to be adjusted, if you use a different asset folder structure than the one proposed above (for example, if your dataset is large and you want to store it on a separate disk):
     * `MASKBENCH_DATASET_DIR:` The directory where video files are located. MaskBench supports video files with .mp4 and .avi extensions.
     * `MASKBENCH_OUTPUT_DIR:` The directory where experiment results will be saved.
-    * `MASKBENCH_WEIGHTS_DIR:` Directory for storing model weights (e.g., MediaPipe, YOLOv11, OpenPose).
-7. **Run the MaskBench Docker container**.
+    * `MASKBENCH_WEIGHTS_DIR:` Directory for storing model weights user-specific weights for custom pose estimators.
+7. **Build and run the MaskBench Docker container**.
+    ```bash
+    docker compose build
+    ```
 
     ```bash
     docker compose up

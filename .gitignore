@@ -1,3 +1,9 @@
+# Assets
+assets/**/*
+!assets/**/
+!assets/**/.gitkeep
+
+# Report
 report/*.html
 report/*_files/
 
