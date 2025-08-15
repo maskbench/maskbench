@@ -4,20 +4,18 @@ execute_rendering: true         # set to false to skip rendering the videos
 
 dataset:
   name: RawMaskedExperiment
-  module: datasets.ted_dataset
-  class: TedDataset
-  dataset_folder: /datasets/raw-masked-experiment/videos/raw
-  # dataset_folder: /datasets/raw-masked-experiment/videos/blurring
-  # dataset_folder: /datasets/raw-masked-experiment/videos/pixelation
-  # dataset_folder: /datasets/raw-masked-experiment/videos/contours
-  # dataset_folder: /datasets/raw-masked-experiment/videos/solid_fill
+  code_file: datasets.dataset.Dataset
+  video_folder: /datasets/raw-masked-experiment/videos/raw
+  # video_folder: /datasets/raw-masked-experiment/videos/blurring
+  # video_folder: /datasets/raw-masked-experiment/videos/pixelation
+  # video_folder: /datasets/raw-masked-experiment/videos/contours
+  # video_folder: /datasets/raw-masked-experiment/videos/solid_fill
 
 
 pose_estimators:
   - name: YoloPose
     enabled: true
-    module: models.yolo_pose_estimator
-    class: YoloPoseEstimator
+    code_file: models.yolo_pose_estimator.YoloPoseEstimator
     config:
       weights: yolo11l-pose.pt
       save_keypoints_in_coco_format: true
@@ -25,8 +23,7 @@ pose_estimators:
 
   - name: MediaPipePose
     enabled: true
-    module: models.mediapipe_pose_estimator
-    class: MediaPipePoseEstimator
+    code_file: models.mediapipe_pose_estimator.MediaPipePoseEstimator
     config:
       weights: pose_landmarker_heavy.task
       max_num_poses: 3
@@ -35,8 +32,7 @@ pose_estimators:
 
   - name: OpenPose
     enabled: true
-    module: models.open_pose_estimator
-    class: OpenPoseEstimator
+    code_file: models.open_pose_estimator.OpenPoseEstimator
     config:
       save_keypoints_in_coco_format: true
       overlay_strategy: BODY_25B
@@ -44,8 +40,7 @@ pose_estimators:
   
   - name: MaskAnyoneAPI-MediaPipe
     enabled: true
-    module: models.maskanyone_api_pose_estimator
-    class: MaskAnyoneApiPoseEstimator
+    code_file: models.maskanyone_api_pose_estimator.MaskAnyoneApiPoseEstimator
     config:
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
@@ -53,8 +48,7 @@ pose_estimators:
 
   - name: MaskAnyoneAPI-OpenPose
     enabled: true
-    module: models.maskanyone_api_pose_estimator
-    class: MaskAnyoneApiPoseEstimator
+    code_file: models.maskanyone_api_pose_estimator.MaskAnyoneApiPoseEstimator
     config:
       overlay_strategy: openpose_body25b
       save_keypoints_in_coco_format: true
@@ -62,48 +56,43 @@ pose_estimators:
 
   - name: MaskAnyoneUI-MediaPipe
     enabled: true
-    module: models.maskanyone_ui_pose_estimator
-    class: MaskAnyoneUiPoseEstimator  
+    code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/raw
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/blurring
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/pixelation
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/contours
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/solid_fill
+      dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/raw
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/blurring
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/pixelation
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/contours
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_mediapipe/solid_fill
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
 
   - name: MaskAnyoneUI-OpenPose
     enabled: true
-    module: models.maskanyone_ui_pose_estimator
-    class: MaskAnyoneUiPoseEstimator  
+    code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
-      dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/raw
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/blurring
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/pixelation
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/contours
-      # dataset_folder_path: /datasets/raw-masked-experiment/maskanyone_ui_openpose/solid_fill
+      dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/raw
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/blurring
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/pixelation
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/contours
+      # dataset_poses_folder: /datasets/raw-masked-experiment/maskanyone_ui_openpose/solid_fill
       overlay_strategy: openpose_body25b
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
   
 metrics:
   - name: Velocity
-    module: evaluation.metrics.velocity
-    class: VelocityMetric
+    code_file: evaluation.metrics.velocity.VelocityMetric
     config:
       time_unit: frame
 
   - name: Acceleration
-    module: evaluation.metrics.acceleration
-    class: AccelerationMetric
+    code_file: evaluation.metrics.acceleration.AccelerationMetric
     config:
       time_unit: frame
   
   - name: Jerk
-    module: evaluation.metrics.jerk
-    class: JerkMetric
+    code_file: evaluation.metrics.jerk.JerkMetric
     config:
       time_unit: frame
 

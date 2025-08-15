@@ -146,36 +146,9 @@ class Checkpointer:
                     continue
                     
                 video_name = pose_file.replace("_poses.json", "")
-                file_path = os.path.join(estimator_dir, pose_file)
-                
-                with open(file_path, "r") as f:
-                    data = json.load(f)
-                    frames = data.get("frames", [])
-                    frame_pose_results = []
-                    
-                    for frame_index, frame in enumerate(frames):
-                        persons = frame.get("persons", [])
-                        person_pose_results = []
-                        for person in persons:
-                            keypoints = person.get("keypoints", [])
-                            pose_keypoints = [
-                                PoseKeypoint(
-                                    x=k["x"], 
-                                    y=k["y"], 
-                                    confidence=k.get("confidence", None)
-                                ) for k in keypoints
-                            ]
-                            person_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
-                        frame_pose_results.append(FramePoseResult(persons=person_pose_results, frame_idx=frame_index))
-                    
-                    video_pose_result = VideoPoseResult(
-                        fps=data.get("fps", None),
-                        frame_width=data.get("frame_width", None),
-                        frame_height=data.get("frame_height", None),
-                        video_name=video_name,
-                        frames=frame_pose_results
-                    )
-                    results[estimator_name][video_name] = video_pose_result
+                json_path = os.path.join(estimator_dir, pose_file)
+                video_pose_result = VideoPoseResult.from_json(json_path, video_name)
+                results[estimator_name][video_name] = video_pose_result
                     
         return results 
 

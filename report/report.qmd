@@ -1,0 +1,1755 @@
+---
+title: "MaskBench - A Comprehensive Benchmark Framework for 2D Pose Estimation and Video De-Identification"
+date: "2025 08 08"
+author:
+    - name: Tim Riedel
+      affiliation: Hasso Plattner Institute, University of Potsdam, Germany
+    - name: Zainab Zafari
+      affiliation: Hasso Plattner Institute, University of Potsdam, Germany
+    - name: Sharjeel Shaik
+      affiliation: University of Potsdam, Germany
+    - name: Babajide Alamu Owoyele
+      affiliation: Hasso Plattner Institute, University of Potsdam, Germany
+    - name: Wim Pouw
+      affiliation: Tilburg University, Netherlands
+contact:
+    - name: Tim Riedel
+      email: tim.riedel@student.hpi.de
+    - name: Zainab Zafari
+      email: zainab.zafari@student.hpi.de
+    - name: Babajide Alamu Owoyele
+      email: babajide.owoyele@.hpi.de
+    - name: Wim Pouw
+      email: w.pouw@tilburguniversity.edu
+bibliography: dependencies/refs.bib
+css: dependencies/styles.css
+theme:
+    - journal
+    - dependencies/theme.scss
+format:
+    html:
+        tbl-cap-location: bottom
+        toc: true
+        toc-location: left
+        toc-title: "Contents"
+        toc-depth: 3
+        number-sections: true
+        code-fold: true
+        code-tools: true
+        output-file: index.html
+        grid:
+            margin-width: 100px
+filters:
+    - include-code-files
+# engine: knitr
+jupyter: python3
+---
+
+# Abstract {#sec-abstract}
+Pose estimation plays a critical role in numerous computer vision applications but remains challenging in scenarios involving privacy-sensitive data and in real-world, unconstrained videos like TED Talks, that are not recorded under controlled laboratory conditions.
+To address the issue of sharing datasets across academic institutions without compromising privacy, we explore how masking strategies like blurring, pixelation, contour overlays, and solid fills impact pose estimation performance.
+We introduce MaskBench, a modular and extensible benchmarking framework designed to evaluate pose estimators under varying conditions, including masked video inputs.
+MaskBench integrates a total of seven pose estimators, including YoloPose, MediaPipePose, OpenPose, and both automated and human-in-the-loop variants of MaskAnyone, a multi-stage pipeline combining segmentation and pose estimation through a mixture-of-expert approach.
+Our evaluation was done on four datasets with increasing scene complexity, and uses both kinematic metrics like velocity, acceleration, and jerk as well as accuracy-based metrics like Percentage of Correct Keypoints (PCK) and Root Mean Square Error (RMSE).
+Results show that MaskAnyone variants significantly improve the visual quality of the pose estimation by reducing jitter and improving keypoint stability, especially the human-in-the-loop variants of MaskAnyone-MediaPipe.
+These visual results are supported by quantitative metrics, with the aforementioned models achieving the lowest acceleration and jerk values across all datasets.
+YoloPose consistently ranks as the most robust standalone model.
+Regarding masking techniques, preliminary results suggest that blurring offers a promising balance between privacy and pose estimation quality.
+However, since this experiment was conducted on a limited set of videos, further investigation is needed to draw general conclusions.
+These findings highlight the potential of pipelines like MaskAnyone and the extensibility of MaskBench for future research on pose estimation under privacy-preserving constraints.
+
+
+
+# Getting Started {#sec-installation}
+
+## 🛠️ Installation {#sec-installation-setup}
+**System Requirements**
+
+- 🐳 **Docker**: Latest stable version  
+- 🎮 **GPU**: NVIDIA (CUDA-enabled)  
+- 💾 **Memory**: 20 GB or more
+
+Follow the instructions below to install and run experiments with MaskBench:
+
+1. **Install Docker** and ensure the daemon is running.
+2. **Clone this repo**:
+
+   ```bash
+   git clone https://github.com/maskbench/maskbench.git
+   ```
+3. **Switch to the git repository**
+
+    ```bash
+    cd maskbench
+    ```
+4. **Setup the folder structure**. For a quick start, create a dataset folder with a name of your choice in the `assets/datasets/` folder. Create a `videos` folder inside and place one or more videos in it. For storing datasets, output or weights in different locations, see "Editing the .env file". Labels, maskanyone_ui_mediapipe and mask_anyone_ui_openpose folders are optional and not required for a quick start. The structure of a dataset is outlined below and also detailed in the "Usage - Dataset Structure" section:
+
+    ```bash
+    maskbench/
+    ├── src
+    ├── config/
+    │   └── your-experiment-config.yml
+    └── assets/
+        ├── weights
+        ├── output
+        └── datasets/
+            └── your-dataset-name/
+                ├── videos/
+                │   └── video_name1.mp4
+                ├── labels/
+                │   └── video_name1.json
+                ├── maskanyone_ui_mediapipe/
+                │   └── video_name1.json
+                └── maskanyone_ui_openpose/
+                    └── video_name1.json
+    ```
+5. **Create the environment file**. This file is used to tell MaskBench about your dataset, output and weights directory, as well as the configuration file to use for an experiment. Copy the .env file using:
+
+    ```bash
+    cp .env.dist .env
+    ```
+6. **Edit the .env file**. Open it using `vim .env` or `nano .env.`. Adjust the following variables:
+    * `MASKBENCH_CONFIG_FILE:` The configuration file used to define your experiment setup. By default, it is set to `config/getting-started.yml`, but you can copy any of the provided configuration files to `config/` and edit it to your needs.
+    * `MASKBENCH_GPU_ID:` If you are on a multi-GPU setup, tell MaskBench which GPU to use. Either specify a number (0, 1, ...) or "all" in which case all available GPUs on the system are used. Currently, MaskBench only supports inference on a single GPU or on all GPUs.
+
+    The following variables only need to be adjusted, if you use a different asset folder structure than the one proposed above (for example, if your dataset is large and you want to store it on a separate disk):
+    * `MASKBENCH_DATASET_DIR:` The directory where entire datasets are located. MaskBench supports video files with .mp4 and .avi extensions.
+    * `MASKBENCH_OUTPUT_DIR:` The directory where experiment results will be saved.
+    * `MASKBENCH_WEIGHTS_DIR:` Directory for storing model weights user-specific weights for custom pose estimators.
+7. **Edit the configuration file** "getting-started.yml" to use the videos folder of your dataset. See section "Usage - Configruation Files" for more details.
+
+    ```yaml
+    dataset:
+        name: GettingStarted
+        code_file: datasets.dataset.Dataset
+        video_folder: /datasets/<your-dataset-name>/videos  # Edit this line to point to the videos folder of your dataset.
+    ```
+8. **Build and run the MaskBench Docker container**.
+
+    ```bash
+    docker compose build
+    ```
+
+    ```bash
+    docker compose up
+    ```
+    If multiple users run MaskBench simultaneously, use `docker compose -p $USER up`.
+9. **Install MaskAnyone**. If you plan on using the UI version of MaskAnyone to create smooth poses, masked videos and improve raw pose estimation models, follow the installation instructions [here](https://github.com/MaskAnyone/MaskAnyone).
+
+## 🚀 Usage {#sec-installation-usage}
+The following paragraphs describe how to structure your dataset, configure the application, and understand the output of MaskBench. Following these guidelines ensures the application runs smoothly and recognizes your data correctly.
+
+### 📂 Dataset structure
+
+1. **Videos**: Place all videos you want to evaluate in the `videos` folder.
+
+    ```bash
+    your-dataset/
+    └── videos/
+         ├── video_name1.mp4
+         └── video_name2.mp4
+    ```
+
+2. **Labels** (Optional): If you provide labels, there must be exactly one label file for each video, with the same file name. Example:
+
+    ```bash
+    your-dataset/
+    ├── videos/
+    │    └── video_name1.mp4
+    └── labels/
+         └── video_name2.json
+    ```
+
+3. **MaskAnyoneUI Output**: If you use [MaskAnyoneUI](https://github.com/MaskAnyone/MaskAnyone), run the application, download the resulting pose file, store it in either the  `maskanyone_ui_openpose` or `maskanyone_ui_mediapipe` folder and once again name it exactly like the corresponding video file.
+
+### ⚙️ Configuration Files
+
+We provide four sample configuration files from our experiments. Feel free to copy and adapt them to your needs. The following note explains some parameters in more detail.
+
+::: {.callout-note collapse="true"}
+## Explanation of config parameters
+```{.yaml}
+# A directory name (MaskBench run name) inside the output directory from which to load existing results.
+# If set, inference is skipped and results are loaded. To run inference from scratch, comment out or set to "None".
+inference_checkpoint_name: None
+execute_evaluation: true                    # Set to false to skip calculating evaluation metrics and plotting.
+execute_rendering: true                     # Set to false to skip rendering the videos.
+
+dataset:
+  name: TragicTalkers                                               # User-definable name of the dataset
+  code_file: datasets.tragic_talkers_dataset.TragicTalkersDataset   # Module and class name of the dataset to instantiate
+  video_folder: /datasets/tragic-talkers/videos                     # Location of the dataset videos folder (always starts with /datasets, because this refers to the mounted folder in the docker container). You only need to adjust the name of the dataset folder.
+  gt_folder: /datasets/tragic-talkers/labels                        # Path to the ground truth poses folder
+  config:
+    convert_gt_keypoints_to_coco: true                              # Whether to convert the ground truth keypoints to COCO format
+
+pose_estimators:                            # List of pose estimators (specificy as many as needed)
+  - name: YoloPose                          # User-definable name of the pose estimator. 
+    enabled: true                           # Enable or disable this pose estimator.
+    code_file: models.yolo_pose_estimator.YoloPoseEstimator # Module and class name of the pose estimator to instantiate
+    config:                                 # Pose estimator specific configuration variables.
+      weights: yolo11l-pose.pt              # Weights file name inside the specified weights directory.
+      save_keypoints_in_coco_format: true   # Whether to store keypoints in COCO format (18 keypoints) or not)
+      confidence_threshold: 0.3             # Confidence threshold below which keyopints are considered undetected.
+
+  - name: MaskAnyoneUI-MediaPipe
+    enabled: true
+    code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator
+    config:
+      dataset_poses_folder: /datasets/tragic-talkers/maskanyone_ui_mediapipe # Folder of MaskAnyone poses
+      overlay_strategy: mp_pose
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0               # Confidence thresholds not supported by MaskAnyone
+
+metrics:                                    # List of metrics  (specificy as many as needed)
+  - name: PCK                               # User-definable name of the metric
+    code_file: evaluation.metrics.pck.PCKMetric
+    config:                                 # Metric specific configuration variables.
+      normalize_by: bbox
+      threshold: 0.2
+
+  - name: Velocity
+    code_file: evaluation.metrics.velocity.VelocityMetric
+    config:
+      time_unit: frame
+```
+:::
+
+### 🏋️ Model Variants and Weights
+
+You only need to modify the weights if you are adding a new pose estimator to MaskBench.
+In that case, place your weights in the `weights/` folder.
+By default, MaskBench automatically downloads the following weights:
+
+* MediaPipe: `pose_landmarker_{lite, full, heavy}.task`
+* Yolo11: `yolo11{n, s, m, l, x}-pose`
+* OpenPose overlay_strategy: `BODY_25, BODY_25B, COCO`
+* MaskAnyone overlay_strategy: `mp_pose, openpose, openpose_body25b`
+
+### 📊 Output
+
+All results, including plots, pose files, inference times and renderings, will be saved in the output directory.
+For each run of MaskBench a folder is created with the name of the dataset and a timestamp. Example:
+
+```bash
+output/
+ └── TedTalks_2025-08-11_15-42-10/
+      ├── plots/
+      ├── poses/
+      ├── renderings/
+      ├── inference_times.json
+      └── config.yml
+```
+
+# Related Work {#sec-related-work}
+
+Human pose estimation is a core task in computer vision, concerned with identifying the spatial positions of body joints—such as shoulders, elbows, and knees—from images or video sequences. Existing approaches are typically classified into two broad strategies: top-down and bottom-up. Top-down methods begin by detecting individual persons within an image, after which a separate pose estimation model is applied to each detected instance. In contrast, bottom-up approaches first detect all keypoints across the image and then group them to form full-body poses for each individual [@saiwa2025openpose; @kaim2024comparison].
+
+Among widely used frameworks, **OpenPose** [@openpose-3] is a prominent example of a bottom-up pose estimation method. It first identifies keypoints across the entire image and then assembles them into person-wise skeletons using Part Affinity Fields (PAFs). OpenPose supports multiple configurations, including 18- and 25-keypoint body models @fig-openpose, and offers full-body tracking, hand and facial landmark estimation. The framework is optimized for GPU execution and is widely used in applications requiring multi-person pose estimation.
+
+**YOLO11** [@yolo; @yolo11_ultralytics], on the other hand, follows a top-down approach. It extends the YOLO family of real-time object detectors by incorporating pose estimation capabilities. After detecting bounding boxes for each person, YOLO11 predicts 17 body keypoints @fig-yolo per individual, using a topology aligned with the COCO keypoint format. It is designed for high-performance scenarios and is optimized for GPU usage, making it suitable for real-time, multi-person tracking in high-resolution video streams.
+
+**MediaPipe Pose** [@mediapipe] is a lightweight, top-down framework designed specifically for real-time pose estimation on CPU-only devices. Built upon BlazePose, it employs a 33-landmark skeleton @fig-mediapipe that extends the standard COCO format with additional joints to improve anatomical precision. The pipeline consists of an initial detection and tracking stage, followed by landmark prediction and overlay. MediaPipe is particularly suited for single-person applications in mobile and browser environments, where computational efficiency and low latency are critical.
+
+::: {#fig-keypoints layout-ncol=3}
+
+![OpenPose](images/openpose-keypointbody25.png){#fig-openpose height=200px}
+
+![YOLO](images/yolo-keypoints.png){#fig-yolo height=200px}
+
+![MediaPipe](images/mediapipe-landmarks.png){#fig-mediapipe height=200px}
+
+Some of the most common pose models and their keypoints. **YOLOv11** uses the COCO format with 17 keypoints. **OpenPose** supports COCO (18) and BODY-25 (25). **MediaPipe** uses a 33-landmark skeleton.
+:::
+
+Several studies have benchmarked popular pose estimation models across different datasets, conditions, and use cases. The following works are particularly relevant to our benchmarking framework:
+
+* **Comparision Of ML Models For Posture** [@kaim2024comparison]
+    Compared YOLOv7 Pose and MediaPipe Pose. YOLOv7 achieved a slightly higher accuracy score of 87.8\% versus MediaPipe’s 84.1\%. However, MediaPipe demonstrated superior real-time performance on CPU-only devices, achieving 16-18 frames per second (FPS) compared to YOLOv7’s 4-5 FPS. In low-light environments, MediaPipe maintained detection consistency, whereas YOLOv7 performed better in occluded scenarios, successfully recognizing hidden body parts. 
+
+* **OpenPose vs MediaPipe: A Practical and Architectural Comparison** [@saiwa2025openpose]
+    A recent blog post by Saiwa presents a detailed comparison between OpenPose and MediaPipe, discussing their architectural differences, device compatibility, and practical applications. OpenPose uses a bottom-up approach with Part Affinity Fields and is optimized for multi-person full-body tracking, whereas MediaPipe follows a top-down strategy focusing on speed and cross-platform deployment.
+
+In addition to standalone pose estimation models, **MaskAnyone** [@maskanyone-github; @schilling2023maskanyone] is a multi-stage framework developed at the Hasso Plattner Institute (HPI) that combines object detection, segmentation, de-identification, and pose estimation within a unified pipeline. The system begins by detecting human instances in a video using YOLO. For each detected bounding box, SAM2 [@sam2] is applied to segment the individual subject. Depending on the configuration, pose estimation is then performed using either OpenPose or MediaPipe. Last but not least, it produces a de-identified video using the SAM2 segmentation masks. The framework supports both fully automatic processing (we refer to it as MaskAnyoneAPI) and a human-in-the-loop approach (referred to as MaskAnyoneUI), where users can manually select specific frames, refine the segmentation output of SAM2 and thereafter start the pose estimation. This combination of automated and user-guided steps allows for finer control in scenarios where automatic segmentation may be insufficient or require correction.
+
+
+# MaskBench Architecture {#sec-architecture}
+![MaskBench Architecture](./images/maskbench-workflow.png){#fig-architecture}
+
+The general workflow of MaskBench is shown in Figure @fig-architecture.
+It begins with loading the dataset, pose estimators, and evaluation metrics.
+The application then creates a checkpoint folder in the specified output directory, named according to the dataset and a timestamp (e.g., `/output/TedTalks-20250724-121127`).
+Subsequently, inference is performed on all videos in the dataset using the pose estimators specified in the configuration file.
+For the MaskAnyoneUI pose estimators, the user is required to perform semi-automatic annotation of the videos using MaskAnyone before starting the MaskBench run.
+A poses folder is created within the checkpoint, containing a subfolder for each pose estimator and a single JSON file for each video.
+The application then evaluates all specified metrics and generates plots, which are stored in the plots folder within the checkpoint.
+Finally, for each video, the application produces a set of rendered videos—one for each pose estimator—which are stored in the renderings folder in the checkpoint.
+
+Each component of MaskBench is implemented in a modular way, so it can be easily extended and modified.
+We will discuss this in the following sections.
+
+## Dataset {#sec-architecture-dataset}
+The dataset provides video data for pose estimation and, if available, ground truth data for evaluation.
+The user can choose to either use the generic dataset class, which requires a video folder, that contains all video files, and an optional labels folder, which contains one ground truth JSON pose file per video.
+The alternative is to implement a custom class, that inherits from the Dataset class and overrides the `load_videos` method, which generates one VideoSample object for each video in the dataset.
+This is useful, if the dataset has a more complex structure with nested subfolder of videos or ground truth data.
+If the dataset provides ground truth, the user must also override the `get_gt_pose_results` and `get_gt_keypoint_pairs` methods.
+For each video, the `get_gt_pose_results` method should return a `VideoPoseResult` object.
+The `get_gt_keypoint_pairs` method is used to render the ground truth keypoints and contains a list of tuples, each specifying the indices of two keypoints to be connected in the rendered video.
+Default keypoint pairs for YoloPose, MediaPipePose, and various implementations of OpenPose models are provided in the `keypoint_pairs.py` file.
+
+Below is the code implementation for the generic dataset class, and the more complex TragicTalkers dataset (with custom pseudo-ground truth data loading).
+
+::: {.callout-note collapse="true"}
+## Dataset Class
+```{.python include="../src/datasets/dataset.py" code-line-numbers="true" filename="src/datasets/dataset.py"}
+```
+:::
+
+::: {.callout-note collapse="true"}
+## Tragic Talkers Dataset
+```{.python include="../src/datasets/tragic_talkers_dataset.py" code-line-numbers="true" filename="src/datasets/tragic_talkers_dataset.py"}
+```
+:::
+
+## Inference {#sec-architecture-inference}
+
+### Video Pose Result {#sec-architecture-video-pose-result}
+The VideoPoseResult object represents the standardized output of a pose prediction model.
+It is a nested structure containing a `FramePoseResult` object for each frame in the video.
+Each frame pose result includes a list of `PersonPoseResult` objects, one for each person detected in the frame.
+Every person’s result contains a list of `PoseKeypoint` objects, one for each keypoint in the model’s output format, providing x and y coordinates along with an optional confidence score.
+
+::: {.callout-note collapse="true"}
+## Video Pose Result Class
+```{.python include="../src/inference/pose_result.py" code-line-numbers="true" filename="src/inference/pose_result.py"}
+```
+:::
+
+### Pose Estimator {#sec-architecture-pose-estimators}
+Pose estimators are responsible for predicting the poses of persons in a video by wrapping calls to specific AI models or pose estimation pipelines.
+Each model is implemented in a separate class that inherits from the abstract `PoseEstimator` class.
+The output of each estimator is a standardized `VideoPoseResult` object.
+
+To add a new pose estimator, users must implement methods for pose estimation and for retrieving keypoint pairs.
+Special care must be taken to ensure that the output meets the following constraints:
+
+1.	The number of frames in the pose results matches the number of frames in the video.
+2.	If no persons are detected in a frame, the persons list should be empty.
+3.	For detected persons with missing keypoints, those keypoints should have values `x=0, y=0, confidence=None`.
+4.	The number of keypoints per person remains constant across all frames.
+5.	Keypoints with low confidence should be masked out using the `confidence_threshold` configuration parameter.
+6.	Keypoints must be mapped to the COCO format if the `save_keypoints_in_coco_format` configuration parameter is set to true.
+
+
+As an example, we provide the implementation of the abstract pose estimator class and the implementation of the YOLO model.
+
+::: {.callout-note collapse="true"}
+## Pose Estimator Class
+```{.python include="../src/models/pose_estimator.py" code-line-numbers="true" filename="src/models/pose_estimator.py"}
+```
+:::
+
+::: {.callout-note collapse="true"}
+## YOLO Model
+```{.python include="../src/models/yolo_pose_estimator.py" code-line-numbers="true" filename="src/models/yolo_pose_estimator.py"}
+```
+:::
+
+MaskBench supports seven pose estimators, including pure AI models such as YOLOv11-Pose, MediaPipePose, and OpenPose.
+Additionally, it incorporates MaskAnyone as a pose estimator, which combines multiple expert models.
+We distinguish between two variants of the MaskAnyone estimator: the MaskAnyoneAPI pose estimator, which runs fully automatically during inference, and the MaskAnyoneUI pose estimator, which employs a human-in-the-loop approach allowing manual adjustment of the mask for the persons of interest.
+The latter requires manual execution by the user prior to running MaskBench, with the resulting pose files provided as one file per video.
+
+### Inference Engine {#sec-architecture-inference-engine}
+The inference engine is responsible for running pose estimators on videos and saving the results as JSON files in the poses folder.
+If a checkpoint name is specified in the configuration file, the inference engine will load existing results from the checkpoint and skip inference for videos that already have corresponding outputs.
+This feature allows the user to resume an already started inference process or to bypass the time-consuming inference entirely and perform only metric evaluation and rendering.
+The inference engine returns a nested dictionary that maps pose estimator names to video names and their corresponding `VideoPoseResult` objects.
+Additionally, it records the inference times for each pose estimator and video, saving this information as a JSON file within the checkpoint folder.
+
+
+## Evaluation {#sec-architecture-evaluation}
+
+### Metric {#sec-architecture-evaluation-metric}
+Metrics play a crucial role in quantitatively evaluating the accuracy and quality of pose predictions.
+Each metric inherits from the abstract `Metric` class and implements a computation method that takes as input a predicted video pose result, an optional ground truth pose result, and the name of the pose estimator.
+The `compute` method of a metric outputs a MetricResult object containing the metric values for the video (see section @sec-architecture-evaluation-metric-result).
+
+::: {.callout-note collapse="true"}
+## Metric Class 
+```{.python include="../src/evaluation/metrics/metric.py" code-line-numbers="true" filename="src/evaluation/metrics/metric.py"}
+```
+:::
+
+MaskBench currently implements ground truth-based metrics for Euclidean Distance, Percentage of Correct Keypoints (PCK), and Root Mean Square Error (RMSE).
+Furthermore, we provide kinematic metrics for velocity, acceleration, and jerk.
+Section @sec-metrics contains a more extensive description of the implemented metrics.
+
+**Matching Person Indices**
+
+For some metrics, it is essential to ensure that the order of persons in the predicted video pose results matches that of the reference.
+The metric class provides a method called `match_person_indices` to align person indices between ground truth and predicted results.
+This method is used not only in ground-truth-based metrics but also in kinematic metrics, which require consistent person indices across consecutive frames to compute velocity, acceleration, and other temporal measures.
+The implementation employs the Hungarian algorithm, using the mean position of a person’s keypoints to find the optimal matching between all persons in the reference and predicted pose results.
+
+Let $N$ denote the number of persons in the reference, $M$ the number in the prediction, and $K$ the number of keypoints per person.
+The output of the `match_person_indices` method is an array with shape $\text{max}(N, M) \times K \times 2$.
+The first $N$ entries correspond to persons ordered as in the reference, while the remaining $M - N$ entries (if $M > N$) represent additional persons present only in the prediction.
+
+Edge cases include situations where a person appears in one frame but not in the next.
+In such cases, the unmatched person is assigned an index with infinite values to indicate absence, while the other persons retain consistent indices.
+This also applies when the prediction contains fewer persons than the reference (M < N).
+Each metric can then handle these infinite values appropriately, for example, by converting them to `NaN` in kinematic metrics or assigning predefined values in Euclidean distance and ground truth–based metrics.
+
+**Unit Testing**
+
+Implementing unit tests for metric classes is essential to ensure that their outputs are accurate and consistent.
+We provide unit tests for all metrics in the `src/tests` folder, which can be executed using the `pytest` command.
+Running these tests after any modifications to the metric classes helps guarantee that existing functionality remains intact.
+
+### Metric Result {#sec-architecture-evaluation-metric-result}
+The output of a metric’s compute method is a `MetricResult` object.
+This object contains metric values stored in a multi-dimensional array, where each axis is labeled with descriptive names such as “frame,” “person,” and “keypoint”.
+The class provides an `aggregate` function that reduces these values using a specified method along selected axes only.
+Currently, MaskBench supports aggregation methods including mean, median, Root Mean Square Error (RMSE), vector magnitude, sum, minimum, and maximum.
+The result of the aggregation is another MetricResult object with reduced dimensionality, retaining only the axes that were not aggregated.
+
+This flexible approach of storing the results with their axes names and using the names in the aggregation method allows for the visualization of the results in a variety of ways, for example, as a per-keypoint plot, distribution plot, or as a single scalar value. Furthermore, it allows extending the framework with new metrics (possibly containing different axis names) and also different visualizations.
+
+### Evaluator {#sec-architecture-evaluation-evaluator}
+Given a list of metrics, the evaluator executes each configured metric on the pose estimation results for all pose estimators and videos.
+It returns a nested dictionary that maps metric names to pose estimator names, then to video names, and finally to their corresponding `MetricResult` objects.
+It does not perform aggregation over the videos or pose estimators in order to allow for more flexibility in the visualization of the results.
+
+## Visualization {#sec-architecture-visualization}
+After evaluation, the results are visualized in plots and tables.
+
+### Visualizer
+An abstract `BaseVisualizer` class defines the interface for all visualization components.
+We implemented a MaskBench-specific visualizer class tailored to our experiments, which can be reused for other studies or extended to accommodate new types of visualizations.
+
+::: {.callout-note collapse="true"}
+## MaskBench Visualizer
+```{.python include="../src/evaluation/visualizer/maskbench_visualizer.py" code-line-numbers="true" filename="src/visualization/maskbench_visualizer.py"}
+```
+:::
+
+The visualizer saves the plots and tables in the `plots` folder in the checkpoint.
+
+### Plots
+Each plot inherits from the abstract `Plot` class and implements the `draw` method.
+This method accepts various forms of input data, most commonly the results produced by the evaluator.
+Each plot can define a specific approach to aggregating and organizing the data, such as computing the median over all videos for a given pose estimator.
+
+::: {.callout-note collapse="true"}
+## Plot Class
+```{.python include="../src/evaluation/plots/plot.py" code-line-numbers="true" filename="src/evaluation/plots/plot.py"}
+```
+:::
+
+::: {.callout-note collapse="true"}
+## Kinematic Distribution Plot
+```{.python include="../src/evaluation/plots/kinematic_distribution_plot.py" code-line-numbers="true" filename="src/evaluation/plots/kinematic_distribution_plot.py"}
+```
+:::
+
+We provide the following plots and tables:
+
+- **Kinematic Distribution Plot**: Visualizes the distribution of kinematic values for each pose estimator.
+- **Per Keypoint Plot**:  Displays the median kinematic metric values or Euclidean distance for each COCO keypoint. This plot requires keypoints to be stored in COCO format.
+- **Inference Time Plot**: Visualizes the average inference time associated with each pose estimator.
+- **Result Table**: Aggregates results per metric and pose estimator across all videos, presenting the data in tabular form.
+
+
+## Rendering {#sec-architecture-rendering}
+Video rendering is handled by the `Renderer` class.
+For each video in the dataset, the renderer creates a dedicated folder within the `renderings` directory of the checkpoint folder.
+Inside each video folder, it generates one video per pose estimator, displaying the rendered keypoints.
+Special attention was given to maintaining consistent colors for each pose estimator across all videos and plots, using a predefined, color-blind–friendly palette.
+
+
+# Datasets {#sec-datasets}
+This study uses four video-based datasets, each representing a different level of complexity, from simple, controlled settings to more dynamic and interactive scenarios. To capture this range, we selected or created four distinct datasets: TED Kid Video [@ted-kid], TED Talks [@ted], Tragic Talkers [@tragic-talkers], and a masked video dataset. Each dataset was chosen based on specific criteria to evaluate pose estimation models under varying degrees of difficulty.
+
+## TED Kid Video {#sec-datasets-ted-kid}
+The TED kid video is a short, 10-second clip featuring a child in a well-lit environment from the TEDx talk "Education for all" [@ted-kid].
+Throughout the sequence, all body parts remain clearly visible, with no occlusion or obstruction of the subject.
+This video represents a controlled scenario designed to evaluate pose estimation methods under ideal conditions, serving as a baseline for comparison with more complex datasets.
+
+We first tested our models' performance and evaluation metrics on this video to verify that our metrics function correctly in an ideal setting and that the implementation is accurate. This initial validation ensures that subsequent experiments on more challenging datasets can be interpreted with confidence in the correctness of our evaluation pipeline.
+
+## TED Talks {#sec-datasets-ted-talks}
+For the TED talks dataset [@ted], we selected ten videos featuring diverse speakers to capture a wide range of conditions.
+The selection criteria included speaker gender, skin tone, clothing types (e.g., long dresses versus short garments), partial occlusion, and videos where only specific body parts—such as hands, upper body, or lower body—are visible.
+We also considered variations in movement style and speed.
+
+Our focus was on evaluating model performance under more complex conditions, such as scene changes, background noise (e.g., audience sounds), partial visibility of the body, and situations where body parts are difficult to distinguish (e.g., due to long dresses).
+We also accounted for visual distractions like images or patterns on the speaker’s clothing.
+In each TED talk video, our analysis concentrates solely on the primary speaker.
+
+## Tragic Talkers {#sec-datasets-tragic-talkers}
+We aimed to evaluate model performance in scenarios involving multiple people interacting.
+The Tragic Talkers dataset [@tragic-talkers] was chosen because it provides 2D pseudo-ground truth annotations generated by the OpenPose AI model, allowing us to test metrics such as PCK or RMSE.
+
+The dataset features a man in regular clothing and a woman wearing a long dress.
+It contains four distinct video scenarios, each originally recorded from twenty-two different camera angles.
+For our analysis, we used only four angles, as many viewpoints were too similar.
+
+* **Monologue (Male and Female):** Individual speakers deliver monologues with relatively simple and slow movements.
+* **Conversation:** A male and female speaker engage in dialogue with limited movement.
+* **Interactive 1:** A conversation between a male and female speaker that includes physical interaction (e.g., hand contact), with the man sitting close to the woman.
+* **Interactive 4:** A more dynamic dialogue featuring faster movements, partial occlusion, and moments of full occlusion.
+
+These scenarios were chosen to reflect a variety of real-world human interactions, allowing us to test how well pose estimation models perform under conditions such as occlusion, multi-person scenes, and varied movement patterns.
+
+However, the ground truth pose estimations were produced by an AI model rather than human annotators, which is why they are imperfect and should not be considered a true ground truth baseline (we refer to it as pseudo-ground truth).
+Because the original study does not specify which OpenPose variant, parameters, or post-processing steps were used, the PCK and RMSE accuracy values should be interpreted as a measure of how closely pose estimators replicate the OpenPose output rather than as an absolute indicator of pose estimation quality.
+In this context, a PCK accuracy above 80% is considered a good result, indicating that poses are generally well estimated.
+
+## Masked Video Dataset {#sec-datasets-masked-video}
+The masked video dataset is a collection of three videos.
+It includes the TED kid video, a segment from the TED talk “Let curiosity lead” [@ted-curiosity], and the video “interactive1_t1-cam06” from the Tragic Talkers dataset.
+This dataset was created to evaluate the performance of pose estimators on masked videos, addressing the challenge of sharing datasets containing sensitive information among researchers.
+
+For the dataset creation, we used MaskAnyoneUI to manually mask the persons of interest in each video using four different hiding strategies: blurring, pixelation, contours, and solid fill.
+Including the original unmasked videos, this resulted in a total of 15 videos for evaluation.
+
+
+## Data Preprocessing
+Data preprocessing was carried out on the TED talks to remove unnecessary parts of the videos and to split them into shorter segments compatible with MaskAnyone. Since MaskAnyone cannot process videos longer than 2.5 minutes, and is already resource-intensive even at that limit, we divided the TED Talk videos into chunks of 30 or 50 seconds, depending on the content.
+
+TED talks also showed some inconsistency in structure. Some videos were straightforward, with only the speaker and audience visible, making them easy to segment at any point. However, others included additional visual content such as slides, pictures, or unrelated scenes, which made it more difficult to determine clean chunking points.
+
+For these more complex videos, we carefully selected segment boundaries to ensure that each chunk started with frames where a human was clearly visible. When necessary, we manually trimmed the beginning of chunks to avoid starting with empty or unrelated frames. This step was critical because if a video starts with non-human content, MaskAnyone may incorrectly classify objects in the first frame as humans and then continue misdetecting them in subsequent frames.
+
+No preprocessing was required for the Tragic Talkers dataset, as the videos were already clean and free of noise or unrelated visual content.
+
+
+# Evaluation Metrics {#sec-metrics}
+In the following sections, we outline the metrics used for evaluating accuracy, smoothness and jitter of different pose estimators.
+
+## Ground-Truth Metrics
+The metrics in this section are based on ground truth data provided by the dataset and primarily evaluate the accuracy of the pose estimation compared to the reference ground truth.
+
+### Euclidean Distance {#sec-metrics-euclidean-distance}
+The Euclidean distance metric measures the spatial accuracy of pose estimation by calculating the normalized distance between predicted and ground truth keypoint positions. 
+For each keypoint of a person in a frame, it computes the L2 norm (Euclidean distance) between the predicted position $(x_p, y_p)$ and the ground truth position $(x_{gt}, y_{gt})$:
+
+$$ d = \frac{\sqrt{(x_p - x_{gt})^2 + (y_p - y_{gt})^2}}{s} $$
+
+where $s$ is a normalization factor. 
+Normalization is essential to make the metric scale-invariant and comparable across persons of different sizes.
+
+The metric is set up to support three normalization strategies, out of which we only implemented the bounding box normalization.
+We outline future work for the implementation of head and torso normalization in section @sec-future-work.
+
+1. **Bounding Box Size**: The distance is normalized by the maximum of the width and height of the person’s bounding box, computed from the ground truth keypoints.
+This approach adapts to varying person sizes but may introduce minor pose-dependent scaling variance.
+2. **Head Size**: Normalization by the head bone link size (not implemented).
+3. **Torso Size**: Normalization by the torso diameter (not implemented).
+
+Head and torso normalization address the pose-dependent scaling variance of the bounding box normalization.
+The metric also accounts for several edge cases to ensure robust evaluation:
+
+- **Different Order of Persons**: The metric uses the Hungarian algorithm as described in section @sec-architecture-evaluation-metric to match person indices between ground truth and predictions, ensuring that distances are calculated between corresponding persons even if they appear in different orders.
+- **Keypoint Missing in Ground Truth but not in Prediction**: When a keypoint is absent in the ground truth (coordinates `(0,0)`) but detected in the prediction, the distance is set to `NaN` and excluded from aggregation, as no valid ground truth reference exists.
+- **Keypoint Missing in Prediction but Present in Ground Truth**: When a keypoint exists in the ground truth but is missing in the prediction, the distance is assigned a predetermined large fill value (here, 1).
+This penalizes missing detections while preventing disproportionate impact on aggregated results.
+- **Undetected Persons**: If a person in the ground truth is completely undetected in the prediction, all their keypoint distances are set to the same fill value to penalize the failure.
+
+Euclidean distance forms the basis for computing the Percentage of Correct Keypoints (PCK) and Root Mean Square Error (RMSE) metrics.
+
+### Percentage of Keypoints (PCK) {#sec-metrics-pck}
+The Percentage of Correct Keypoints (PCK) metric evaluates pose estimation accuracy by calculating the proportion of predicted keypoints whose normalized Euclidean distance to the ground truth falls within a specified threshold.
+A keypoint is considered “correct” if its distance is below this threshold, allowing PCK to quantify the reliability of pose predictions at the chosen precision level.
+
+For each frame, PCK is calculated as:
+
+$$
+PCK = \frac{\text{number of keypoints with distance < threshold}}{\text{total number of valid keypoints}}
+$$
+
+PCK values range from zero to one, where one indicates perfect predictions (all keypoints are within the threshold) and zero indicates complete failure (no keypoints within the threshold).
+
+### Root Mean Square Error (RMSE) {#sec-metrics-rmse}
+The Root Mean Square Error (RMSE) provides a single aggregated measure of pose estimation accuracy by calculating the root mean square of normalized Euclidean distances across all valid keypoints and persons in a frame.
+RMSE is defined as:
+
+$$
+RMSE = \sqrt{\frac{1}{N} \sum_{i=1}^{N} d_i^2}
+$$
+
+where $N$ is the total number of valid keypoints in the frame, and $d_i$ is the normalized Euclidean distance of keypoint $i$. 
+By squaring the distances before averaging, RMSE penalizes larger errors more heavily, making it particularly sensitive to outliers.
+
+## Kinematic Metrics
+Velocity, acceleration, and jerk are key kinematic metrics that help identify unnatural or erratic movements in pose estimations by highlighting rapid changes in motion.
+
+### Velocity {#sec-metrics-velocity}
+The velocity metric measures the rate of change in keypoint positions between consecutive frames.
+For each keypoint of a person, it quantifies how quickly the keypoint moves in pixels per frame, providing insight into the smoothness and temporal consistency of the pose estimation.
+
+The velocity calculation proceeds in three steps:
+
+1. Person indices are matched between consecutive frames (as described in @sec-architecture-evaluation-metric) to ensure tracking of the same individual over time.
+2. The velocity is then computed with $v_t = p_{t+1} - p_t$ as the difference between keypoint positions in consecutive frames, where $p_t$ represents the keypoint position at frame $t$, and $v_t$ is the resulting velocity vector.
+3. Finally, the metric can be configured to report velocities in either pixels per frame or pixels per second. In the latter case, the frame-based velocity is divided by the time delta between frames (1/fps).
+
+The metric robustly handles several edge cases:
+
+- For videos with fewer than two frames, velocity cannot be computed, and the metric returns `NaN` values.
+- If a keypoint is missing in either of two consecutive frames, the corresponding velocity is set to `NaN`.
+- Since velocity is derived from frame-to-frame differences, the output contains one fewer frame than the input video.
+- The output includes a coordinate axis (x and y) representing the velocity vector, which serves as a basis for the computation of the acceleration and jerk metrics.
+For evaluation and visualization, aggregate along this axis using the `vector_magnitude` method to obtain scalar velocity values.
+
+### Acceleration {#sec-metrics-acceleration}
+The acceleration metric measures the rate of change in velocity over time, representing how quickly the movement speed of keypoints changes. 
+It is computed by $a_t = v_{t+1} - v_t$, where $a_t$ is the acceleration at time $t$, $v_t$ represents the velocity, and $p_t$ the keypoint position. 
+Acceleration values can be reported in either pixels per frame squared or pixels per second squared, with the latter requiring normalization by the squared time delta between frames (1/fps²).
+
+
+### Jerk {#sec-metrics-jerk}
+Jerk measures the rate of change of acceleration, offering insights into the smoothness and abruptness of motion by quantifying how quickly acceleration varies.
+It is calculated with $j_t = a_{t+1} - a_t$ as the difference between consecutive acceleration values, where $j_t$ is the jerk at time $t$ and $a_t$ represents the acceleration. 
+The metric supports reporting in pixels per frame cubed or pixels per second cubed, with the latter normalized by the cubed time delta between frames (1/fps³).
+
+
+# Experimental Setup {#sec-experiments}
+In this section, we describe the experimental setup used to evaluate pose estimators across four datasets.
+
+**General Setup**
+
+We evaluated seven pose estimators on the four datasets: TED Kid Video, TED Talks, Tragic Talkers, and the Masked Video Dataset.
+The pose estimators are: YoloPose (v11-l), MediaPipePose (pose_landmarker_heavy), OpenPose (body_25), MaskAnyoneAPI-MediaPipe, MaskAnyoneAPI-OpenPose, MaskAnyoneUI-MediaPipe, and MaskAnyoneUI-OpenPose.
+Confidence thresholds were visually determined on a subset of videos and set to 0.3 for YoloPose and MediaPipePose, and 0.15 for OpenPose. Since MaskAnyone-based estimators do not output confidence scores, a threshold of zero was used for them.
+All keypoints were stored in COCO format to enable per-keypoint comparisons across models.
+
+**TED Kid Video and TED Talks**
+
+For both datasets, we evaluated the kinematic metrics velocity, acceleration, and jerk for each pose estimator.
+Due to the absence of ground truth annotations for TED Talks, accuracy metrics could not be computed.
+
+**Tragic Talkers**
+
+For the Tragic Talkers dataset, we evaluated both accuracy metrics (Euclidean distance, PCK, RMSE) and kinematic metrics (velocity, acceleration, jerk) for each pose estimator.
+
+**Inference on Raw vs. Masked Videos**
+
+For the Masked Video dataset, inference was first performed on the raw videos with all pose estimators to establish a baseline.
+Subsequently, inference was repeated on videos masked with different hiding strategies.
+Performance was compared against the baseline to assess the impact of masking, using PCK and RMSE metrics to quantify accuracy relative to raw videos.
+
+Note that this masking evaluation pipeline is a preliminary implementation outside of MaskBench’s native capabilities, serving as a proof of concept.
+We intend to integrate full support for this workflow in future MaskBench releases (see section @sec-future-work-pipelining).
+
+
+# Results {#sec-results}
+We present the experimental results below.
+To improve readability, kinematic metrics are reported without units in the text: velocity is in pixels/frame, acceleration in pixels/frame², and jerk in pixels/frame³.
+Our analysis focuses primarily on acceleration and jerk, instead of velocity, as these metrics are more suited to detecting instability and unnatural motion in pose estimation.
+
+## TED Kid Video {#sec-results-ted-kid}
+@tbl-results-ted-kid summarizes the average velocity, acceleration, and jerk for each pose estimator on the TED aid video.
+Standard pose estimation models like YoloPose, MediaPipePose, and OpenPose exhibit relatively high values across all metrics, indicating more erratic and less stable pose estimations.
+MediaPipePose has the highest values for velocity (3.36), acceleration (4.10), and jerk (5.56).
+
+In contrast, all evaluated MaskAnyone pose estimators show consistently lower acceleration and jerk, with MaskAnyoneUI-MediaPipe achieving the best results (velocity: 1.97, acceleration: 1.20, jerk: 1.89), representing reductions of 40%, 70%, and 66% respectively, compared to pure MediaPipePose.
+This indicates substantially smoother and more stable pose tracking over time.
+The improvements are more pronounced for MediaPipePose than OpenPose: MaskAnyone reduces MediaPipePose’s acceleration and jerk by 2.9 and 5.31, while OpenPose sees smaller decreases of 1.11 and 2.81, demonstrating the greater effectiveness of MaskAnyone with MediaPipePose.
+
+::: {#tbl-results-ted-kid}
+```{=html}
+<table class="results"><thead>
+  <tr>
+    <th>Pose Estimator</th>
+    <th>Velocity</th>
+    <th>Acceleration</th>
+    <th>Jerk</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td>YoloPose</td>
+    <td>2.81</td>
+    <td>2.95</td>
+    <td>5.04</td>
+  </tr>
+  <tr>
+    <td>MediaPipePose</td>
+    <td>3.36</td>
+    <td>4.10</td>
+    <td>7.18</td>
+  </tr>
+  <tr>
+    <td>OpenPose</td>
+    <td>2.71</td>
+    <td>3.20</td>
+    <td>5.56</td>
+  </tr>
+  <tr class="maskanyone-api border-top">
+    <td>MaskAnyoneAPI-MediaPipe</td>
+    <td class="second">2.00</td>
+    <td class="second">1.21</td>
+    <td class="best">1.87</td>
+  </tr>
+  <tr class="maskanyone-api border-bottom">
+    <td>MaskAnyoneAPI-OpenPose</td>
+    <td>2.73</td>
+    <td>2.46</td>
+    <td>3.53</td>
+  </tr>
+  <tr class="maskanyone-ui border-top">
+    <td>MaskAnyoneUI-MediaPipe</td>
+    <td class="best">1.97</td>
+    <td class="best">1.20</td>
+    <td class="second">1.89</td>
+  </tr>
+  <tr class="maskanyone-ui border-bottom">
+    <td>MaskAnyoneUI-OpenPose</td>
+    <td>2.62</td>
+    <td>2.09</td>
+    <td>2.75</td>
+  </tr>
+</tbody>
+</table>
+```
+Average metric results for different pose estimators on the TED kid video.
+:::
+
+@fig-ted-kid-acceleration-distribution and @fig-ted-kid-jerk-distribution present the distribution of the acceleration and jerk metrics for the different pose estimators.
+These plots show the percentage of keypoints within fixed value ranges for the acceleration and jerk metrics over all frames.
+The ideal curve for a stable pose estimation follows an exponential decay curve, with most kinematic values near zero and a few large values.
+Both plots confirm the results from @tbl-results-ted-kid, showing that the MaskAnyone pose estimators have a very high concentration of low acceleration and jerk values.
+The UI and API variants of MaskAnyone-MediaPipe most closely resemble the ideal curve, with over 80% of keypoints having acceleration below 1 pixel/frame².
+MaskAnyone-OpenPose estimators rank third and fourth, with around 57% of keypoints below this threshold.
+YoloPose ranks fifth with 52%, followed by OpenPose at 40%.
+MediaPipePose is the most unstable, with only 30% of keypoints below one pixel/frame² and a relatively flat distribution curve.
+Similar patterns can be observed for the jerk distribution.
+
+@fig-ted-kid-acceleration-per-keypoint shows the median acceleration per keypoint for the different pose estimators.
+Each keypoint contains a set of seven bars, one for each pose estimator, indicating the median acceleration value for that keypoint and pose estimator.
+The first notable finding is that keypoints like the wrists, elbows, hips, and ankles exhibit consistently higher median acceleration compared to more stable points like the eyes, ears, and nose.
+This aligns with expectations since these joints undergo more frequent and pronounced movement.
+Secondly, MaskAnyoneAPI-MediaPipe and MaskAnyoneUI-MediaPipe consistently achieve the lowest acceleration values across all keypoints.
+Both MaskAnyoneUI variants improve upon their default counterparts, MediaPipePose and OpenPose, for every keypoint.
+The most pronounced gains appear at the hips, knees, and ankles, where MaskAnyoneUI-MediaPipe reduces median acceleration from about six pixels/frame² down to less than one.
+
+::: {#fig-ted-kid-plots layout="[[1,1], [1]]"}
+
+![Acceleration Distribution](plots/TED-kid/acceleration_distribution.png){#fig-ted-kid-acceleration-distribution}
+
+![Jerk Distribution](plots/TED-kid/jerk_distribution.png){#fig-ted-kid-jerk-distribution}
+
+![Median Acceleration per Keypoint](plots/TED-kid/keypoint_plot_acceleration.png){#fig-ted-kid-acceleration-per-keypoint}
+
+**Comparison of pose estimation models on the TED-kid video.**
+(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value range. 
+A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
+(c) Median acceleration per keypoint, indicating stability across individual body parts. Keypoints like the wrist, elbow, and ankle are expected to have a higher median acceleration than other body parts, which tend to be more stable during movements, like the eyes, ears, and nose.
+:::
+
+Last but not least, it is important to not only evaluate pose estimation results analytically but also to visually inspect pose quality.
+@tbl-results-ted-kid-videos shows rendered videos for the seven pose estimators on the TED kid video.
+
+In the MediaPipePose video, the pose estimation appears unstable, showing more jitter and sudden pose changes.
+At the beginning, the model fails to detect the right elbow joint, which all other estimators detect correctly.
+Additionally, the hips, ankles, and elbows display rapid, jerky movements throughout the video.
+
+Comparing MaskAnyoneUI-MediaPipe and MaskAnyoneAPI-MediaPipe rendered videos reveals that both are considerably more stable and smoother than pure MediaPipePose.
+Aside from the person’s natural movement, key points generally remain fixed and steady.
+
+Observing the other pose estimators shows that none are as stable as MaskAnyoneUI-MediaPipe, but most outperform pure MediaPipePose in stability.
+This visual evidence supports the quantitative results in @tbl-results-ted-kid and @fig-ted-kid-plots.
+It also confirms that our kinematic metrics effectively indicate pose estimation stability.
+
+::: {#tbl-results-ted-kid-videos}
+```{=html}
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">Raw Video</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_YoloPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">YOLOPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MediaPipePose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MediaPipe Pose</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">OpenPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-MediaPipe</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneAPI-OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-OpenPose</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-MediaPipe</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper ted-kid-video">
+                <video class="video-zoom ted-kid-sync" autoplay muted playsinline>
+                    <source src="videos/TED-kid/TED-kid_MaskAnyoneUI-OpenPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-OpenPose</div>
+        </td>
+    </tr>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.ted-kid-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+</script>
+```
+Rendered result videos of different pose estimators on the TED-kid video.
+:::
+
+## TED Talks {#sec-results-ted-talks}
+The results on ten full TED talks closely mirror those on the single TED kid video, as shown in @tbl-results-ted-talks.
+Among the evaluated pose estimators, MaskAnyoneUI-MediaPipe consistently achieved the best stability, with the lowest average velocity, acceleration, and jerk values of 1.25, 1.08, and 1.83, respectively.
+MaskAnyoneAPI-MediaPipe followed, showing the second-best performance in acceleration and jerk, closely trailed by YoloPose.
+OpenPose ranked next, while both MaskAnyone-OpenPose variants exhibited greater instability than the pure OpenPose model.
+Consistent with earlier findings, MediaPipePose was the least stable estimator, with the highest values across all metrics: 3.29 for velocity, 4.52 for acceleration, and 7.94 for jerk.
+An additional observation is the clear trend that MediaPipe-based MaskAnyone variants generally outperform OpenPose-based ones in stability, as reflected by their consistently lower velocity, acceleration, and jerk values.
+
+::: {#tbl-results-ted-talks}
+```{=html}
+<table class="results"><thead>
+  <tr>
+    <th>Pose Estimator</th>
+    <th>Velocity</th>
+    <th>Acceleration</th>
+    <th>Jerk</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td>YoloPose</td>
+    <td class="second">1.35</td>
+    <td>1.46</td>
+    <td>2.44</td>
+  </tr>
+  <tr>
+    <td>MediaPipePose</td>
+    <td>3.29</td>
+    <td>4.52</td>
+    <td>7.94</td>
+  </tr>
+  <tr>
+    <td>OpenPose</td>
+    <td>1.58</td>
+    <td>2.22</td>
+    <td>3.44</td>
+  </tr>
+  <tr class="maskanyone-api border-top">
+    <td>MaskAnyoneAPI-MediaPipe</td>
+    <td>1.44</td>
+    <td class="second">1.25</td>
+    <td class="second">2.04</td>
+  </tr>
+  <tr class="maskanyone-api border-bottom">
+    <td>MaskAnyoneAPI-OpenPose</td>
+    <td>2.30</td>
+    <td>2.42</td>
+    <td>4.07</td>
+  </tr>
+  <tr class="maskanyone-ui border-top">
+    <td>MaskAnyoneUI-MediaPipe</td>
+    <td class="best">1.25</td>
+    <td class="best">1.08</td>
+    <td class="best">1.83</td>
+  </tr>
+  <tr class="maskanyone-ui border-bottom">
+    <td>MaskAnyoneUI-OpenPose</td>
+    <td>2.07</td>
+    <td>2.29</td>
+    <td>3.72</td>
+  </tr>
+</tbody>
+</table>
+```
+Average metric results for different pose estimators aggregated over all TED talk videos.
+:::
+
+::: {#fig-ted-talks-plots layout="[[1,1], [1]]"}
+
+![Acceleration Distribution](plots/TED-talks/acceleration_distribution.png){#fig-ted-talks-acceleration-distribution}
+
+![Jerk Distribution](plots/TED-talks/jerk_distribution.png){#fig-ted-talks-jerk-distribution}
+
+![Median Acceleration per Keypoint](plots/TED-talks/keypoint_plot_acceleration.png){#fig-ted-kid-acceleration-per-keypoint}
+
+**Comparison of pose estimation models on the TED talks dataset.**
+(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value range. 
+A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
+(c) Median acceleration per keypoint, indicating stability across individual body parts.
+:::
+
+@fig-ted-talks-acceleration-distribution and @fig-ted-talks-jerk-distribution indicate that pose estimators are less stable in TED talks than in the TED kid video, with high acceleration and jerk values occurring more frequently.
+This is likely because TED talks include camera movements, scene changes, segments without visible people, and audience views, none of which appear in the TED kid video.
+We included two particularly challenging video chunks in @tbl-results-ted-videos.
+The first column shows results for the qualitatively worst-performing pose estimator, MediaPipePose, while the second column presents the best performer, MaskAnyoneUI-MediaPipe.
+
+In the first scene [@ted-tarana] from the TED talk “Me Too is a Movement, Not a Moment”, the woman wears a long dress, and the video contains multiple scene changes, audience views with the speaker in the background, and parts where the speaker is not visible.
+MaskAnyone substantially improves the stability and visual accuracy of pose estimation in all these scenarios.
+
+In the second scene [@ted-song] from the TED talk “Universe / Statues / Liberation”, the main challenges are rapid camera view changes and close-up shots of the singing woman.
+Both MaskAnyoneUI-MediaPipe and raw MediaPipe struggle with close-ups of the hips and arms.
+The model attempts to fit a full human pose into the small visible area of an arm or hip, leading to incorrect pose estimation and unstable motion.
+It appears that once the model detects one joint, it tries to estimate the entire pose, which can cause errors in these conditions.
+This issue was primarily observed with MediaPipe models, including MaskAnyone-MediaPipe variants, and not with other pose estimators.
+Despite this, MaskAnyoneUI-MediaPipe still provides more stable and accurate pose estimations than pure MediaPipePose for most frames in this video.
+
+::: {#tbl-results-ted-videos}
+```{=html}
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tarana-sync" autoplay muted playsinline>
+                    <source src="videos/ted-talks/tarana_chunk17_MediaPipePose.mp4" type="video/mp4">
+                </video>
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tarana-sync" autoplay muted playsinline>
+                    <source src="videos/ted-talks/tarana_chunk17_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom song-sync" autoplay muted playsinline>
+                    <source src="videos/ted-talks/song_chunk1_MediaPipePose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MediaPipePose</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom song-sync" autoplay muted playsinline>
+                    <source src="videos/ted-talks/song_chunk1_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-MediaPipe</div>
+        </td>
+    </tr>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.tarana-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.song-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+</script>
+```
+Two TED Talk chunks overlaid with pose estimations from MediaPipePose and MaskAnyoneUI-MediaPipe, featuring challenging segments with scene changes, camera movements, and periods without visible persons.
+The first row shows a clip from the TED talk “Me Too is a Movement, Not a Moment” [@ted-tarana].
+The second row shows a clip from the TED talk “Universe / Statues / Liberation” [@ted-song].
+:::
+
+## Tragic Talkers {#sec-results-tragic-talkers}
+@tbl-results-tragic-talkers presents the average metric results of various pose estimators on the Tragic Talkers dataset.
+Regarding accuracy against the pseudo-ground truth, YoloPose achieves the highest PCK at 96%, followed by OpenPose at 87%.
+All pose estimators except MediaPipePose exceed a PCK of 83%, with MediaPipePose detecting only 69% of keypoints correctly.
+However, these PCK and RMSE values should be interpreted cautiously, as the pseudo-ground truth was generated by an AI model rather than human annotators, making it inherently imperfect.
+Thus, the results reflect how closely each pose estimator matches the OpenPose output, rather than absolute pose estimation quality.
+
+The kinematic metrics, especially acceleration and jerk, provide clearer results.
+MaskAnyoneAPI-MediaPipe performs best, with the lowest acceleration and jerk values of approximately 2.9 and 5.0, respectively.
+MaskAnyoneUI-MediaPipe follows closely behind MaskAnyoneAPI-MediaPipe with slightly increased acceleration and jerk, while YoloPose shows similar acceleration but a somewhat higher jerk.
+Although MaskAnyone-OpenPose variants outperform standard OpenPose, they still exhibit noticeably greater acceleration and jerk, reflecting less smooth motion.
+Pure MediaPipePose remains the least stable estimator, with average acceleration and jerk values of approximately 9.8 and 17.6, respectively.
+
+::: {#tbl-results-tragic-talkers}
+```{=html}
+<table class="results"><thead>
+  <tr>
+    <th>Pose Estimator</th>
+    <th>PCK</th>
+    <th>RMSE</th>
+    <th>Velocity</th>
+    <th>Acceleration</th>
+    <th>Jerk</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td>YoloPose</td>
+    <td class="best">0.96</td>
+    <td class="second">0.11</td>
+    <td>4.36</td>
+    <td>3.27</td>
+    <td>5.57</td>
+  </tr>
+  <tr>
+    <td>MediaPipePose</td>
+    <td>0.69</td>
+    <td>0.47</td>
+    <td>6.48</td>
+    <td>9.80</td>
+    <td>17.58</td>
+  </tr>
+  <tr>
+    <td>OpenPose</td>
+    <td class="second">0.87</td>
+    <td>0.33</td>
+    <td>4.63</td>
+    <td>6.38</td>
+    <td>10.00</td>
+  </tr>
+  <tr class="maskanyone-api border-top">
+    <td>MaskAnyoneAPI-MediaPipe</td>
+    <td>0.78</td>
+    <td>0.12</td>
+    <td class="second">3.46</td>
+    <td class="best">2.86</td>
+    <td class="best">5.01</td>
+  </tr>
+  <tr class="maskanyone-api border-bottom">
+    <td>MaskAnyoneAPI-OpenPose</td>
+    <td>0.85</td>
+    <td>0.36</td>
+    <td>5.69</td>
+    <td>6.08</td>
+    <td>10.22</td>
+  </tr>
+  <tr class="maskanyone-ui border-top">
+    <td>MaskAnyoneUI-MediaPipe</td>
+    <td>0.83</td>
+    <td class="best">0.07</td>
+    <td class="best">3.26</td>
+    <td class="second">2.91</td>
+    <td class="second">5.10</td>
+  </tr>
+  <tr class="maskanyone-ui border-bottom">
+    <td>MaskAnyoneUI-OpenPose</td>
+    <td>0.85</td>
+    <td>0.36</td>
+    <td>5.53</td>
+    <td>5.12</td>
+    <td>9.06</td>
+  </tr>
+</tbody>
+</table>
+```
+Average metric results for different pose estimators aggregated over four camera angles of five Tragic Talkers sequences with pseudo-ground truth.
+:::
+
+@fig-tragic-talkers-acceleration-distribution and @fig-tragic-talkers-jerk-distribution confirm the results from @tbl-results-tragic-talkers.
+Both plots show that the MaskAnyone-MediaPipe pose estimators achieve the highest proportion of low acceleration and jerk values, followed by YoloPose, the MaskAnyone-OpenPose pose estimators, and OpenPose.
+MediaPipePose once again has a very flat curve, indicating a lot of large acceleration and jerk values.
+
+@fig-tragic-talkers-acceleration-per-keypoint shows that MediaPipePose is among the pose estimators with the highest median acceleration values for all keypoints.
+YoloPose, MaskAnyoneAPI-MediaPipe, and MaskAnyoneUI-MediaPipe achieve consistently low median acceleration values for all keypoints.
+
+::: {#fig-tragic-talkers-plots layout="[[1,1], [1]]"}
+
+![Acceleration Distribution](plots/TragicTalkers/acceleration_distribution.png){#fig-tragic-talkers-acceleration-distribution}
+
+![Jerk Distribution](plots/TragicTalkers/jerk_distribution.png){#fig-tragic-talkers-jerk-distribution}
+
+![Median Acceleration per Keypoint](plots/TragicTalkers/keypoint_plot_Acceleration.png){#fig-tragic-talkers-acceleration-per-keypoint}
+
+**Comparison of pose estimation models on the Tragic Talkers dataset.**
+(a, b) Acceleration and jerk distribution showing the proportion of keypoints within a fixed value range. 
+A larger concentration at lower values indicates a smoother and more stable pose, whereas a high number of keypoints with large values indicates more jittery movements.
+(c) Median acceleration per keypoint, indicating stability across individual body parts.
+:::
+
+Interestingly, although the MaskAnyone-OpenPose pose estimators achieve lower acceleration values for nose, eye, ear, shoulder, and ankle keypoints than pure OpenPose, they perform worse for the elbow, hip, and knee keypoints.
+A potential reason for this could be that MaskAnyone uses a higher confidence threshold for keypoints than our OpenPose implementation, which leads to the elbow, hip, and knee keypoints not being detected or rendered.
+As an example, consider @tbl-results-tragic-talkers-bad-legs, which shows the first seconds of the rendered video for OpenPose, MaskAnyoneAPI-OpenPose, and MaskAnyoneUI-OpenPose for the “conversation1_t3-cam08” sequence.
+In this scene, both MaskAnyone-OpenPose pose estimators fail to detect the legs of the woman, while OpenPose correctly detects them.
+
+::: {#tbl-results-tragic-talkers-bad-legs}
+```{=html}
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-legs-sync" autoplay muted playsinline>
+                    <source src="videos/TragicTalkers/conversation1_t3-cam08/conversation1_t3-cam08_OpenPose.mp4#t=0,10" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">OpenPose</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-legs-sync" autoplay muted playsinline>
+                    <source src="videos/TragicTalkers/conversation1_t3-cam08/conversation1_t3-cam08_MaskAnyoneAPI-OpenPose.mp4#t=0,10" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-OpenPose</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-legs-sync" autoplay muted playsinline>
+                    <source src="videos/TragicTalkers/conversation1_t3-cam08/conversation1_t3-cam08_MaskAnyoneUI-OpenPose.mp4#t=0,10" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-OpenPose</div>
+        </td>
+    </tr>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.tt-legs-sync');
+    let videosReady = 0;
+    
+    function checkAllVideosEnded(video) {
+        if (video.currentTime >= 10) {  // Check if we've reached the fragment end time
+            videosReady++;
+            if (videosReady === videos.length) {
+                videos.forEach(v => {
+                    v.currentTime = 0;
+                    v.play();
+                });
+                videosReady = 0;
+            }
+        }
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('timeupdate', () => checkAllVideosEnded(video));
+    });
+});
+</script>
+```
+First 10 seconds of the rendered Tragic Talkers videos for OpenPose, MaskAnyoneAPI-OpenPose, and MaskAnyoneUI-OpenPose for the "conversation1_t3-cam08" sequence.
+:::
+
+Last but not least, we qualitatively compare MaskAnyoneAPI-MediaPipe, MaskAnyoneUI-MediaPipe, and YoloPose on the “interactive4_t3-cam08” sequence (@tbl-results-tragic-talkers-best-models).
+These three pose estimators have the lowest overall average acceleration values, as shown in @tbl-results-tragic-talkers.
+Two important observations were made:
+
+1.	YoloPose is the only estimator that correctly identifies the woman when she turns around, facing away from the camera.
+Both MaskAnyone variants fail in this scenario.
+2.	At the start of the sequence, where both actors stand with hands stretched out, only YoloPose correctly captures the lower part of the woman’s body.
+Both MaskAnyone estimators produce an incorrect upper-body pose initially, which improves as the woman lowers her arms, eventually stabilizing in the correct position.
+
+Qualitatively, YoloPose performs best on this sequence.
+
+
+::: {#tbl-results-tragic-talkers-best-models}
+```{=html}
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-best-models-sync" autoplay muted playsinline>
+                    <source src="videos/TragicTalkers/interactive4_t3-cam08/interactive4_t3-cam08_YoloPose.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">YoloPose</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-best-models-sync" autoplay muted playsinline>
+                    <source src="videos/TragicTalkers/interactive4_t3-cam08/interactive4_t3-cam08_MaskAnyoneAPI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneAPI-MediaPipe</div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-best-models-sync" autoplay muted playsinline>
+                    <source src="videos/TragicTalkers/interactive4_t3-cam08/interactive4_t3-cam08_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-caption">MaskAnyoneUI-MediaPipe</div>
+        </td>
+    </tr>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.tt-best-models-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+</script>
+```
+The most stable pose estimators on the Tragic Talkers "interactive4_t3-cam08" sequence.
+:::
+
+## Inference on Raw vs. Masked Videos {#sec-results-inference-raw-masked}
+::: {#tbl-pck-raw-masked}
+```{=html}
+<table class="results raw-masked-table">
+  <thead>
+    <tr>
+      <th>Pose Estimator</th>
+      <th>Blurring</th>
+      <th>Pixelation</th>
+      <th>Contours</th>
+      <th>Solid Fill</th>
+      <th>Average</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>YoloPose</td>
+      <td class="best">0.95</td>
+      <td>0.09</td>
+      <td class="best">0.93</td>
+      <td class="second">0.32</td>
+      <td class="second">0.57</td>
+    </tr>
+    <tr>
+      <td>MediaPipePose</td>
+      <td class="best">0.95</td>
+      <td class="best">0.81</td>
+      <td>0.56</td>
+      <td class="best">0.34</td>
+      <td class="best">0.67</td>
+    </tr>
+    <tr>
+      <td>OpenPose</td>
+      <td class="second">0.88</td>
+      <td>0.10</td>
+      <td class="second">0.62</td>
+      <td>0.01</td>
+      <td>0.40</td>
+    </tr>
+    <tr class="maskanyone-api border-top">
+      <td>MaskAnyoneAPI-MediaPipe</td>
+      <td>0.85</td>
+      <td>0.30</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.29</td>
+    </tr>
+    <tr class="maskanyone-api border-bottom">
+      <td>MaskAnyoneAPI-OpenPose</td>
+      <td>0.75</td>
+      <td>0.00</td>
+      <td>0.36</td>
+      <td>0.00</td>
+      <td>0.28</td>
+    </tr>
+    <tr class="maskanyone-ui border-top">
+      <td>MaskAnyoneUI-MediaPipe</td>
+      <td class="best">0.95</td>
+      <td class="second">0.63</td>
+      <td>0.00</td>
+      <td>0.07</td>
+      <td>0.41</td>
+    </tr>
+    <tr class="maskanyone-ui border-bottom">
+      <td>MaskAnyoneUI-OpenPose</td>
+      <td>0.87</td>
+      <td>0.03</td>
+      <td>0.58</td>
+      <td>0.00</td>
+      <td>0.37</td>
+    </tr>
+    <tr>
+      <td>Average</td>
+      <td>0.86</td>
+      <td>0.23</td>
+      <td>0.44</td>
+      <td>0.11</td>
+      <td>/</td>
+    </tr> 
+  </tbody>
+</table>
+```
+Percentage of correct keypoints (PCK) for different pose estimators on videos masked by different hiding strategies.
+:::
+
+
+::: {#tbl-rmse-raw-masked}
+```{=html}
+<table class="results raw-masked-table">
+  <thead>
+    <tr>
+      <th>Pose Estimator</th>
+      <th>Blurring</th>
+      <th>Pixelation</th>
+      <th>Contours</th>
+      <th>Solid Fill</th>
+      <th>Average</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>YoloPose</td>
+      <td class="second">0.12</td>
+      <td>0.92</td>
+      <td class="best">0.13</td>
+      <td class="second">0.74</td>
+      <td class="second">0.48</td>
+    </tr>
+    <tr>
+      <td>MediaPipePose</td>
+      <td class="second">0.12</td>
+      <td class="best">0.26</td>
+      <td>0.49</td>
+      <td class="best">0.64</td>
+      <td class="best">0.38</td>
+    </tr>
+    <tr>
+      <td>OpenPose</td>
+      <td>0.25</td>
+      <td>0.94</td>
+      <td class="second">0.47</td>
+      <td>1.0</td>
+      <td>0.67</td>
+    </tr>
+    <tr class="maskanyone-api border-top">
+      <td>MaskAnyoneAPI-MediaPipe</td>
+      <td>0.27</td>
+      <td>0.74</td>
+      <td>1.00</td>
+      <td>0.99</td>
+      <td>0.75</td>
+    </tr>
+    <tr class="maskanyone-api border-bottom">
+      <td>MaskAnyoneAPI-OpenPose</td>
+      <td>0.43</td>
+      <td>0.99</td>
+      <td>0.75</td>
+      <td>1.00</td>
+      <td>0.79</td>
+    </tr>
+    <tr class="maskanyone-ui border-top">
+      <td>MaskAnyoneUI-MediaPipe</td>
+      <td class="best">0.07</td>
+      <td class="second">0.41</td>
+      <td>1.00</td>
+      <td>0.94</td>
+      <td>0.60</td>
+    </tr>
+    <tr class="maskanyone-ui border-bottom">
+      <td>MaskAnyoneUI-OpenPose</td>
+      <td>0.24</td>
+      <td>0.98</td>
+      <td>0.52</td>
+      <td>1.00</td>
+      <td>0.69</td>
+    </tr>
+    <tr>
+      <td>Average</td>
+      <td>0.21</td>
+      <td>0.78</td>
+      <td>0.62</td>
+      <td>0.90</td>
+      <td>/</td>
+    </tr> 
+  </tbody>
+</table>
+```
+Root mean square error (RMSE) for different pose estimators on videos masked by different hiding strategies.
+:::
+
+As described in @sec-datasets-masked-video, three videos were masked using four different hiding strategies.
+@tbl-pck-raw-masked and @tbl-rmse-raw-masked present the percentage of correct keypoints (PCK) and root mean square error (RMSE) for various pose estimators on the masked videos, compared to the original videos.
+
+**Comparison of pose estimators**
+
+MediaPipePose achieves the highest average PCK of 67% and the lowest average RMSE of 0.38, indicating robustness across all hiding strategies.
+YoloPose also performs well with an average PCK of 57%, particularly on the blurring and contours strategies, where it detects 95% and 93% of the original keypoints, respectively.
+In contrast, OpenPose performs weaker, with an average PCK of only 40% and a high RMSE of 0.67.
+
+Among the MaskAnyone variants, UI-based models generally outperform API-based ones.
+MaskAnyoneUI-MediaPipe achieves a moderate average PCK of 41% and RMSE of 0.6.
+The API variants perform poorly, with average PCKs around 28% to 29%, indicating that human input improves performance on masked videos.
+
+However, unlike in other datasets, MaskAnyone UI variants do not improve but rather degrade performance compared to the pure AI models.
+Masking the videos makes keypoint detection more challenging, often lowering the confidence scores assigned by the models.
+Because MaskAnyone applies higher confidence thresholds than the base AI models, many keypoints with reduced confidence may be discarded, leading to more undetected keypoints.
+Additionally, if the first stage of MaskAnyone, where YoloPose detects the person, performs poorly, the second stage, which uses SAM2 [@sam2] to segment and crop the person, also suffers.
+This cascades to low-quality input for the final pose estimation stage, degrading overall performance.
+
+
+**Comparison of hiding strategies**
+
+Last, we compare the hiding strategies in terms of balancing privacy and pose estimation performance on masked videos.
+
+Blurring produced the highest average PCK of 86% across all pose estimators.
+This shows that models can still recognize and track people accurately, even when the image is partially obscured.
+The result highlights that pose estimation does not depend solely on the visibility of individual joints.
+Instead, the models appear to rely on the overall shape and structure of the body, using contextual cues to fill in missing details.
+They likely infer joint positions by applying spatial relationships and body priors learned during training, such as limb proportions, symmetry, and common human poses.
+For instance, even when specific features like eyes or hands are hidden, the surrounding geometry, such as head position, shoulder width, or arm direction, provides sufficient context for pose estimation.
+This suggests that these models depend more on learned pose patterns than on fine-grained pixel information.
+
+The results for other hiding strategies are more mixed.
+YoloPose achieves an impressive 93% PCK on videos masked with contours, indicating its ability to utilize edge and shape information rather than texture or color.
+In contrast, other pose estimators perform poorly on this strategy.
+Both MaskAnyone API variants detect almost no keypoints, and the remaining models achieve between 36% and 62% PCK.
+
+For pixelation, only MediaPipePose detects persons reasonably well, with 81% PCK.
+YoloPose, OpenPose, and both MaskAnyone-OpenPose variants detect fewer than 10% of keypoints.
+This suggests that the pixelation level used drastically reduces usable information for pose estimation and that this method is currently unsuitable for such tasks.
+
+The solid fill hiding strategy is the most challenging, removing nearly all information about the person except the outline.
+As a result, it yields the lowest average PCK of 11%.
+MediaPipePose performs best here but reaches only 34% PCK.
+
+In conclusion, blurring offers the best trade-off between privacy and pose estimation performance on masked videos.
+While it may not fully de-identify individuals, it retains sufficient information for accurate pose predictions.
+The contour hiding strategy can be considered when stronger privacy is required, though it reduces accuracy for all but YoloPose.
+
+@tbl-results-raw-masked-rendered presents qualitative results of the best-performing pose estimators on masked videos from the TED talk “Let curiosity lead” and the Tragic Talkers sequence “interactive1_t1-cam06.”
+
+
+::: {#tbl-results-raw-masked-rendered}
+```{=html}
+<style>
+/* Style for raw-masked videos table */
+.video-table {
+    border-collapse: collapse; /* Remove spacing between cells */
+}
+.video-table td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 4px; /* Minimal padding around cells */
+}
+.video-table .video-zoom-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.video-table .video-zoom-wrapper video {
+    height: 200px; /* Fixed height for all videos in this table */
+    width: auto;   /* Maintain aspect ratio */
+}
+</style>
+
+<table class="video-table">
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom ted-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Blurring-TED-curiosity-chunk_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Blurring-TT-interactive1_t1-cam06_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom ted-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Pixelation-TED-curiosity-chunk_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">MaskAnyoneUI-MediaPipe</div> -->
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Pixelation-TT-interactive1_t1-cam06_MediaPipePose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">MediaPipePose</div> -->
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom ted-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Contours-TED-curiosity-chunk_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/Contours-TT-interactive1_t1-cam06_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom ted-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/SolidFill-TED-curiosity-chunk_YoloPose.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">YoloPose</div> -->
+            </div>
+        </td>
+        <td>
+            <div class="video-zoom-wrapper">
+                <video class="video-zoom tt-raw-masked-sync" autoplay muted playsinline>
+                    <source src="videos/raw-masked/SolidFill-TT-interactive1_t1-cam06_MaskAnyoneUI-MediaPipe.mp4" type="video/mp4">
+                </video>
+                <!-- <div class="video-caption">MaskAnyoneUI-MediaPipe</div> -->
+            </div>
+        </td>
+    </tr>
+</table>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.ted-raw-masked-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.tt-raw-masked-sync');
+    let endedCount = 0;
+
+    function restartAllVideos() {
+        videos.forEach(video => {
+            video.currentTime = 0;
+            video.play();
+        });
+        endedCount = 0;
+    }
+
+    videos.forEach(video => {
+        video.addEventListener('ended', () => {
+            endedCount++;
+            if (endedCount === videos.length) {
+                restartAllVideos();
+            }
+        });
+    });
+});
+</script>
+```
+The best-performing pose estimators on the masked videos are shown for the TED sequence “Let curiosity lead” and the Tragic Talkers sequence “interactive1_t1-cam06”.
+Each row corresponds to a different hiding strategy, in the order: Blurring, Pixelation, Contours, and Solid Fill.
+For the TED sequence (first column), the pose estimators are YoloPose, MaskAnyoneUI-MediaPipe, YoloPose, and YoloPose.
+For the Tragic Talkers sequence (second column), the pose estimators are YoloPose, MediaPipePose, YoloPose, and MaskAnyoneUI-MediaPipe.
+:::
+
+
+# Future Work & Limitations {#sec-future-work}
+In this section, we outline future work and limitations of MaskBench and MaskAnyone.
+
+## MaskAnyone Limitations
+Both MaskAnyone-API and MaskAnyone-UI have introduced improvements in detection accuracy and user interaction. However, they still exhibit notable limitations in complex and long video scenarios such as TED talks, which often feature background noise, occlusions, scene transitions, and unrelated visual elements. 
+
+The first and most important challenge of MaskAnyone-API and MaskAnyone-UI is that it does not support long videos, such as TED talks. It requires manual chunking of the video; however, chunking introduces another issue. After chunking, some videos start with frames where no human is visible. When a video begins with such frames, MaskAnyone falsely predicts objects in the scene as humans and then continues to the end of the video with that false prediction. For better detection and pose estimation, we would need to remove the start of chunks without visible humans, but this results in a loss of content.
+
+Another major challenge lies in handling abrupt scene changes or shifts in camera perspective. For example, when a video cuts from a close-up to a full-body shot (or vice versa), MaskAnyone fails to maintain consistent detection and tracking, resulting in missed detections or inaccurate pose estimation. MaskAnyone-UI addresses this issue through a human-in-the-loop mechanism that allows users to manually select key frames, ensuring more reliable tracking throughout the video.
+
+Another issue, observed primarily in MaskAnyone-API, is the double overlaying of pose skeletons on the same person. This results in duplicate or misaligned pose renderings. This problem has not been observed in the UI version, as manual frame selection allows users to avoid such misdetections.
+
+Finally, false positive predictions remain a common problem in MaskAnyone-API. Not only in scenes where no human is present, where the system interprets non-human objects such as buildings, cigarettes, or images as people, but it also occurs in scenarios where a human is actually present, yet MaskAnyone-API segments the background instead of the person. False positive predictions occur in MaskAnyone-UI as well, but only on rare occasions. 
+
+## MaskBench Outlook
+With our promising results, we are laying the groundwork for a more versatile benchmarking framework for pose estimation on masked videos.
+There are several directions in which we plan to extend our work.
+
+### Pipelining {#sec-future-work-pipelining}
+Currently, MaskBench supports a single workflow: running inference on a set of videos, evaluating results using metrics, visualizing them, and rendering the videos with overlaid poses.
+As demonstrated with the masked video dataset experiment, there are many more potential workflows that could be integrated.
+We aim to introduce an extensible and customizable pipeline class to MaskBench.
+Each pipeline would define a specific workflow (i.e., our current workflow, the masked video dataset workflow, or other, yet to be defined workflows) by chaining MaskBench components in a particular order, reusing existing modules and adding new ones where necessary.
+
+For example, the masked video dataset workflow could be structured as follows:
+
+1.	Run inference on the raw videos with all pose estimators.
+2.	Evaluate results with metrics.
+3.	Visualize pose estimator performance on raw videos using plots or tables.
+4.	Render the raw videos with overlaid poses.
+5.	Reuse the SAM2 masks from MaskAnyone to apply different hiding strategies to the videos. Masking parameters could be adjusted by the user to explore not only different strategies but also varying degrees of masking, helping determine the optimal balance between privacy and performance.
+6.	For each pose estimator, run inference on all videos across all hiding strategies.
+7.	Evaluate results with metrics.
+8.	Visualize performance on masked videos using plots or tables.
+9.	Render the masked videos with overlaid poses.
+
+### Evaluation of downstream tasks {#sec-future-work-downstream-tasks}
+Estimating a person’s pose can serve as a preliminary step for many downstream tasks, such as gesture recognition [@gesture-recognition; @gesture-recognition-3d], 3D human reconstruction [@sith; @pose2mesh], and action classification.
+MaskBench could be extended to evaluate how different upstream pose estimators affect performance on these downstream tasks for both raw and masked videos.
+This extension would give researchers practical guidance on which pose estimator to choose for a given downstream application.
+Furthermore, researchers could use MaskBench to mask sensitive datasets and publish the masked videos together with pose outputs derived from the original raw videos.
+Other researchers could then use the masked videos plus the provided pose outputs as input for downstream tasks without accessing the original raw data.
+MaskBench should include an evaluation framework that quantifies the potential performance loss in downstream tasks when using masked videos or alternative upstream estimators.
+
+### User interface
+Adding a web-based user interface to MaskBench would make the framework significantly more accessible.
+At present, running MaskBench requires technical expertise, such as working with Docker containers, setting environment variables, and editing configuration files.
+A dedicated interface could replace these steps with an intuitive, visual workflow for configuring and running pipelines.
+It could also provide built-in visualization panels for metrics, interactive plots, and side-by-side video comparisons, making it easier to explore results without leaving the application.
+Ultimately, this would lower the entry barrier for non-technical users while speeding up experimentation for advanced users.
+
+### Additional improvements
+In addition to the major extensions outlined above, several smaller improvements could further enhance MaskBench in the future:
+
+- **Expanded normalization options for the Euclidean distance metric**.
+Currently, normalization is only possible using bounding boxes, but can be extended to support head and torso normalization as described in @sec-metrics-euclidean-distance.
+This requires identifying the relevant head and torso keypoints while keeping the system flexible enough to support multiple keypoint formats beyond COCO.
+- **Integrated logging system**.
+A built-in logger could provide cleaner, more structured terminal output.
+For debugging, an option to display all logs from the underlying Docker containers would make error tracing during development much easier.
+- **Support for face and hand keypoints**.
+This would enable evaluation of a broader set of downstream tasks where fine-grained keypoint data is important.
+- **Additional ground-truth–independent metrics and plots**.
+Beyond velocity, acceleration, and jerk, metrics could assess the physical plausibility of a pose given human body constraints.
+This would shift part of the evaluation focus from pure numerical quality to biomechanical realism.
+- **3D pose estimation support** as a long-term goal.
+This could include both evaluating 3D models directly and projecting 3D ground truth keypoints onto the 2D image plane using camera calibration data.
+Leveraging marker-based motion capture datasets—such as BioCV from the University of Bath [@bio-cv]—would allow for more precise real-world benchmarking than 2D pseudo-ground truth data.
+- **Integrate Samurai [@samurai] into MaskAnyone**. This would allow for more stable tracking of persons over time by using adapted memory modules that more consistently maintain the identity of a person across frames.
+
+
+# Conclusion {#sec-conclusion}
+This work introduced MaskBench, a modular and extensible benchmarking framework for evaluating pose estimation models under diverse conditions, including privacy-preserving masking strategies.
+We evaluated four datasets of increasing complexity, including real-world TED talk recordings to examine how models perform in unconstrained, natural scenarios rather than under controlled laboratory conditions.
+The study includes popular pose estimators such as YoloPose [@yolo], MediaPipe [@mediapipe], and OpenPose [@openpose-1], alongside the mixture-of-expert-model pipeline MaskAnyone [@schilling2023maskanyone], to assess their performance across these varied settings.
+
+Our quantitative evaluation, using acceleration and jerk metrics to measure temporal stability, showed that the MaskAnyone pipeline, particularly the human-in-the-loop MediaPipe variant, substantially improves stability by reducing acceleration and jerk compared to standard models.
+YoloPose was the most robust standalone estimator, while MediaPipePose consistently exhibited the highest instability.
+Visual inspection of the output poses confirmed these findings, with noticeably smoother and more consistent motion in cases where the metrics indicated high stability.
+
+Our small study on masked videos revealed that blurring offers the best trade-off between privacy and accuracy, maintaining high PCK values across models, whereas pixelation and solid fills significantly degraded performance.
+Model-specific responses to masking strategies highlighted that pose estimation often relies more on overall body structure than on pixel-level detail.
+
+While results are promising, limitations remain, including reliance on pseudo-ground truth in some datasets and the preliminary implementation of masked-video workflows.
+Future work will focus on extending MaskBench with flexible pipelining, downstream task evaluation, and user-friendly interfaces, enabling systematic exploration of how privacy-preserving transformations affect pose estimation and subsequent applications.
+
+
+# References
