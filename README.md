@@ -26,7 +26,11 @@ Follow the instructions below to install and run experiments with MaskBench:
    ```bash
    git clone https://github.com/maskbench/maskbench.git
    ```
-3. **Setup the folder structure**. Place your dataset into the `assets/datasets/` folder. For storing datasets, output or weights in different locations, see "Editing the .env file". Labels, maskanyone_ui_mediapipe and mask_anyone_ui_openpose folders are optional and not required for a quick start. The structure of a dataset is outlined below and also detailed in the "Usage - Dataset Structure" section:
+3. **Switch to the git repository**
+    ```bash
+    cd maskbench
+    ```
+4. **Setup the folder structure**. For a quick start, create a dataset folder with a name of your choice in the `assets/datasets/` folder. Create a `videos` folder inside and place one or more videos in it. For storing datasets, output or weights in different locations, see "Editing the .env file". Labels, maskanyone_ui_mediapipe and mask_anyone_ui_openpose folders are optional and not required for a quick start. The structure of a dataset is outlined below and also detailed in the "Usage - Dataset Structure" section:
 
     ```bash
     maskbench/
@@ -37,7 +41,7 @@ Follow the instructions below to install and run experiments with MaskBench:
         ├── weights
         ├── output
         └── datasets/
-            └── your-dataset/
+            └── your-dataset-name/
                 ├── videos/
                 │   └── video_name1.mp4
                 ├── labels/
@@ -47,23 +51,25 @@ Follow the instructions below to install and run experiments with MaskBench:
                 └── maskanyone_ui_openpose/
                     └── video_name1.json
     ```
-4. **Switch to the git repository**
-    ```bash
-    cd maskbench
-    ```
 5. **Create the environment file**. This file is used to tell MaskBench about your dataset, output and weights directory, as well as the configuration file to use for an experiment. Copy the .env file using:
     ```bash
     cp .env.dist .env
     ```
 6. **Edit the .env file**. Open it using `vim .env` or `nano .env.`. Adjust the following variables:
-    * `MASKBENCH_CONFIG_FILE:` The configuration file used to define your experiment setup.
+    * `MASKBENCH_CONFIG_FILE:` The configuration file used to define your experiment setup. By default, it is set to `config/getting-started.yml`, but you can copy any of the provided configuration files to `config/` and edit it to your needs.
     * `MASKBENCH_GPU_ID:` If you are on a multi-GPU setup, tell MaskBench which GPU to use. Either specify a number (0, 1, ...) or "all" in which case all available GPUs on the system are used. Currently, MaskBench only supports inference on a single GPU or on all GPUs.
 
     The following variables only need to be adjusted, if you use a different asset folder structure than the one proposed above (for example, if your dataset is large and you want to store it on a separate disk):
     * `MASKBENCH_DATASET_DIR:` The directory where entire datasets are located. MaskBench supports video files with .mp4 and .avi extensions.
     * `MASKBENCH_OUTPUT_DIR:` The directory where experiment results will be saved.
     * `MASKBENCH_WEIGHTS_DIR:` Directory for storing model weights user-specific weights for custom pose estimators.
-7. **Edit the configuration file** to use your dataset. See section "Usage - Configruation Files" for more details.
+7. **Edit the configuration file** "getting-started.yml" to use the videos folder of your dataset. See section "Usage - Configruation Files" for more details.
+    ```yaml
+    dataset:
+        name: GettingStarted
+        code_file: datasets.dataset.Dataset
+        video_folder: /datasets/<your-dataset-name>/videos  # Edit this line to point to the videos folder of your dataset.
+    ```
 8. **Build and run the MaskBench Docker container**.
     ```bash
     docker compose build
@@ -84,9 +90,9 @@ The following paragraphs describe how to structure your dataset, configure the a
 
     ```bash
     your-dataset/
-    ├── videos/
-    │    ├── video_name1.mp4
-    │    ├── video_name2.mp4
+    └── videos/
+         ├── video_name1.mp4
+         └── video_name2.mp4
     ```
 
 2. **Labels** (Optional): If you provide labels, there must be exactly one label file for each video, with the same file name. Example:
@@ -95,8 +101,8 @@ The following paragraphs describe how to structure your dataset, configure the a
     your-dataset/
     ├── videos/
     │    └── video_name1.mp4
-    ├── labels/
-    │    └── video_name2.json
+    └── labels/
+         └── video_name2.json
     ```
 
 3. **MaskAnyoneUI Output**: If you use [MaskAnyoneUI](https://github.com/MaskAnyone/MaskAnyone), run the application, download the resulting pose file, store it in either the  `maskanyone_ui_openpose` or `maskanyone_ui_mediapipe` folder and once again name it exactly like the corresponding video file.
@@ -174,11 +180,12 @@ For each run of MaskBench a folder is created with the name of the dataset and a
 
 ```bash
 output/
- ├── TedTalks_2025-08-11_15-42-10/
- │    ├── plots/
- │    ├── poses/
- │    ├── renderings/
- │    ├── inference_times.json
+ └── TedTalks_2025-08-11_15-42-10/
+      ├── plots/
+      ├── poses/
+      ├── renderings/
+      ├── inference_times.json
+      └── config.yml
 ```
 
 ## 📄 Abstract 
@@ -205,8 +212,7 @@ If you use **MaskBench** in your research, please cite **both** the technical re
   year         = {2025},
   month        = aug,
   institution  = {Hasso Plattner Institute, University of Potsdam, Germany and Tilburg University, Netherlands},
-  url          = {https://github.com/maskbench/maskbench/report/index.html},
-  note         = {Technical report},
+  url          = {https://maskbench.github.io/maskbench/},
 }
 
 @software{maskbench-software,
