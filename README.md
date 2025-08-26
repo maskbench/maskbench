@@ -10,6 +10,8 @@ It supports **ground-truth metrics** (RMSE, PCK, Euclidean distance) and **kinem
 Its **modular design** makes it easy to add new datasets, models, metrics, or visualizations for custom benchmarking workflows.
 Whether you’re testing a new model, comparing existing ones, or studying the impact of masking strategies, MaskBench provides a clear, repeatable workflow to get the job done.
 
+More details can be found in our report: https://maskbench.github.io/maskbench/
+
 ## 🛠️ Getting Started
 ### 🖥️ System Requirements
 
@@ -188,7 +190,7 @@ output/
       └── config.yml
 ```
 
-## 📄 Abstract 
+## 📄 Report Abstract 
 Pose estimation plays a critical role in numerous computer vision applications but remains challenging in scenarios involving privacy-sensitive data and in real-world, unconstrained videos like TED Talks, that are not recorded under controlled laboratory conditions.
 To address the issue of sharing datasets across academic institutions without compromising privacy, we explore how masking strategies like blurring, pixelation, contour overlays, and solid fills impact pose estimation performance.
 We introduce MaskBench, a modular and extensible benchmarking framework designed to evaluate pose estimators under varying conditions, including masked video inputs.
@@ -200,6 +202,8 @@ YoloPose consistently ranks as the most robust standalone model.
 Regarding masking techniques, preliminary results suggest that blurring offers a promising balance between privacy and pose estimation quality.
 However, since this experiment was conducted on a limited set of videos, further investigation is needed to draw general conclusions.
 These findings highlight the potential of pipelines like MaskAnyone and the extensibility of MaskBench for future research on pose estimation under privacy-preserving constraints.
+
+The report is published under: https://maskbench.github.io/maskbench/
 
 ## 📚 Citation
 
