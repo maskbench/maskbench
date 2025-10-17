@@ -41,6 +41,14 @@ pose_estimators:
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
 
+  - name: MaskAnyoneAPI-OpenPose
+    enabled: true
+    code_file: models.maskanyone_api_pose_estimator.MaskAnyoneApiPoseEstimator
+    config:
+      overlay_strategy: openpose_body25b
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0
+
 metrics:
   - name: Velocity
     code_file: evaluation.metrics.velocity.VelocityMetric
