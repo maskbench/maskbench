@@ -1,6 +1,6 @@
 FROM python:3.12
 
-RUN apt-get update && apt-get install -y libgl1 ffmpeg
+RUN apt-get update && apt-get install -y libgl1 ffmpeg dos2unix
 RUN pip install --upgrade pip && pip install poetry
 
 # set the current working directory inside the container
@@ -23,6 +23,11 @@ RUN curl -L -o /weights/pre_built/yolo11x-pose.pt "https://github.com/ultralytic
 
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./
+COPY entrypoint.sh /entrypoint.sh
+# Ensure entrypoint uses Unix line endings and is executable
+RUN dos2unix /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Avoid creating a virtualenv in a container
 RUN poetry config virtualenvs.create false \
     && poetry install --no-root
@@ -31,6 +36,5 @@ WORKDIR /src
 COPY src/ /src/
 
 # Default command when the container starts
-COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 
