@@ -1,6 +1,5 @@
 services:
-    runner:
-        container_name: ${USER}_maskbench_dev
+    maskbench:
         build: .                
         env_file: 
           - .env
