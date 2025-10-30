@@ -5,7 +5,7 @@ execute_rendering: true         # set to false to skip rendering the videos
 dataset:
   name: GettingStarted
   code_file: datasets.dataset.Dataset
-  video_folder: /datasets/<your-dataset-name>/videos
+  video_folder: /datasets/getting-started/videos
 
 pose_estimators:
   - name: YoloPose

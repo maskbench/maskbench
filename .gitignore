@@ -1,7 +1,15 @@
 # Assets
-assets/**/*
-!assets/**/
-!assets/**/.gitkeep
+# Ignore the contents of the 'output' folder
+/assets/output/
+# Ignore the contents of the 'weights' folder
+/assets/weights/
+# Ignore all 'datasets' contents...
+/assets/datasets/*
+# ...but re-include the 'getting-started' dataset folder itself
+!/assets/datasets/getting-started/
+# ...and re-include all contents within the 'getting-started' folder
+!/assets/datasets/getting-started/**
+
 
 # Report
 report/*.html
