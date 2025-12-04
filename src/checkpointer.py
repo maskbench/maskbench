@@ -4,10 +4,10 @@ import datetime
 import shutil
 import numpy as np
 from typing import Dict, Optional
-
+import logging
 import cv2 as cv
 
-from inference.pose_result import VideoPoseResult, FramePoseResult, PersonPoseResult, PoseKeypoint
+from inference.pose_result import VideoPoseResult
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -130,14 +130,18 @@ class Checkpointer:
             mapping video names to their pose results.
         """
         if not os.path.exists(self.poses_dir):
-            raise ValueError(f"No pose results found in checkpoint {self.checkpoint_dir}")
+            print(f"No pose results found in checkpoint {self.checkpoint_dir}. Will run all models again.")
+            logging.error("No pose results found in checkpoint %s. Will run all models again.", self.checkpoint_dir)
+            return {}
             
         results = {}
         
         for estimator_name in pose_estimator_names:
             if estimator_name not in os.listdir(self.poses_dir):
-                raise ValueError(f"No pose results found for estimator {estimator_name}' in checkpoint {self.checkpoint_dir}")
-            
+                print(f"No pose results found for estimator {estimator_name} in checkpoint {self.checkpoint_dir}. Will run model again.")
+                logging.error(f"No pose results found for estimator {estimator_name} in checkpoint {self.checkpoint_dir}. Will run model again.")
+                continue
+
             estimator_dir = os.path.join(self.poses_dir, estimator_name)
             results[estimator_name] = {}
             

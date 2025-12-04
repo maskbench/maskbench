@@ -2,6 +2,9 @@ import importlib
 import os
 import yaml
 from typing import List
+import logging 
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', filename='maskbench.log')
 
 from datasets import Dataset
 from inference import InferenceEngine

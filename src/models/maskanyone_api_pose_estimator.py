@@ -42,7 +42,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         _, video_metadata = utils.get_video_metadata(video_path)
 
         print("MaskAnyoneAPI: Splitting video into chunks.")
-        video_chunk_paths = VideoChunker(chunk_length=60).chunk_video_using_opencv(video_path, self.chunk_output_dir)
+        video_chunk_paths = VideoChunker(chunk_length=600).chunk_video_using_opencv(video_path, self.chunk_output_dir)
         print("MaskAnyoneAPI: Processing chunks.")
         self._process_chunks(video_chunk_paths, self.processed_output_dir)
         print("MaskAnyoneAPI: Combining chunk outputs into a single video result.")

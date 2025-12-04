@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Dict, List
 import cv2
@@ -26,9 +27,14 @@ class PoseRenderer:
             start_time = time.time()
             video_name = video.get_filename()
 
-            video_pose_results = {
-                estimator: pose_results[estimator][video_name] for estimator in pose_results.keys()
-            }
+            video_pose_results = {}
+            for estimator in pose_results.keys():
+                if video_name not in pose_results[estimator]:
+                    print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
+                    logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
+                    continue
+                video_pose_results[estimator] = pose_results[estimator][video_name]
+                    
             self.render_video(video, video_pose_results)
 
             time_taken = time.time() - start_time
@@ -47,7 +53,9 @@ class PoseRenderer:
         """
         cap = cv2.VideoCapture(video.path)  # load the video
         if not cap.isOpened():
-            raise IOError(f"Cannot open video file {video.path}")
+            print(f"Cannot open video file {video.path}")
+            logging.error(f"Cannot open video file {video.path}")
+            return 
 
         fps = int(cap.get(cv2.CAP_PROP_FPS))  # get video specs
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -84,10 +92,10 @@ class PoseRenderer:
                         self.estimators_point_pairs[estimator_name],
                         self.hex_to_bgr(color_palette[idx]),
                     )  # draw keypoints on frame
+                    writer.write(frame_copies[idx])  # write rendered frame
                 except IndexError as e:
                     print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
-                writer.write(frame_copies[idx])  # write rendered frame
-
+                    logging.error(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")                    
             frame_number += 1
 
         cap.release()

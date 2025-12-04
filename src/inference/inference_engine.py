@@ -2,6 +2,7 @@ import time
 from .pose_result import VideoPoseResult
 from typing import Dict, List
 from checkpointer import Checkpointer
+import logging
 
 class InferenceEngine:
     """Class responsible for running the pose estimators on the videos and saving the results in the `poses` folder."""
@@ -27,11 +28,12 @@ class InferenceEngine:
             results = self.checkpointer.load_pose_results(pose_estimator_names=list(map(lambda x: x.name, self.pose_estimators)))
             
         for estimator in self.pose_estimators:
-            if estimator.name not in results:
+            if estimator.name not in results: # if the estimator has no results yet
                 results[estimator.name] = {} 
             
             for video in self.dataset:
                 if video.get_filename() in results[estimator.name]:
+                    print(f"Skipping already processed video {video.get_filename()} for estimator {estimator.name}")
                     continue 
 
                 print(f"Running estimator '{estimator.name}' on video {video.path}")
@@ -42,7 +44,8 @@ class InferenceEngine:
                     self.checkpointer.save_video_pose_result(video_pose_result, estimator.name)
                     self.checkpointer.save_inference_time(estimator.name, video.get_filename(), time.time() - start_time)
                 except Exception as e:
-                    raise Exception(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
-
+                    print(f"Error processing video {video.get_filename()} with estimator {estimator.name}: {e}")
+                    logging.error(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
+                    continue
 
         return results 
