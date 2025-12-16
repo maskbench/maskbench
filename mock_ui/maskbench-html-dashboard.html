@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaskBench - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#000;line-height:1.5}
+    
+    /* Icon Boxes */
+    .icon-box{width:40px;height:40px;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0;transition:transform .2s}
+    .icon-box-sm{width:32px;height:32px;font-size:14px}
+    .icon-box-lg{width:48px;height:48px;font-size:18px}
+    .icon-box-success{background:#e8f5e9;color:#2e7d32}
+    .icon-box-warning{background:#fff8e1;color:#f57f17}
+    .icon-box-error{background:#ffebee;color:#c62828}
+    .icon-box-gray{background:#e5e5e5;color:#666}
+    
+    /* Cards */
+    .card{background:#fff;border:1px solid #e5e5e5;transition:box-shadow .2s}
+    .card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+    .card-elevated{background:#fff;border:3px solid #000;position:relative;cursor:pointer;transition:transform .2s}
+    .card-elevated::before{content:'';position:absolute;top:-3px;left:-3px;right:-3px;bottom:-3px;background:#000;z-index:-1;transform:translate(4px,4px);transition:transform .2s}
+    .card-elevated:hover{transform:translate(-2px,-2px)}
+    .card-elevated:hover::before{transform:translate(6px,6px)}
+    
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;border:none}
+    .btn-primary{background:#000;color:#fff}.btn-primary:hover{background:#333;transform:translateY(-1px)}
+    .btn-ghost{background:transparent;color:#666;padding:8px 16px}.btn-ghost:hover{background:#f0f0f0;color:#000}
+    .btn-sm{padding:8px 16px;font-size:12px}
+    
+    /* Tags */
+    .tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;font-size:11px;font-weight:600}
+    .tag-success{background:#e8f5e9;color:#2e7d32}
+    .tag-warning{background:#fff8e1;color:#f57f17}
+    .tag-outline{background:#fff;color:#000;border:1px solid #000}
+    .tag-gray{background:#e5e5e5;color:#666}
+    
+    /* Progress */
+    .progress-bar{height:6px;background:#e5e5e5;border-radius:3px;overflow:hidden}
+    .progress-bar-fill{height:100%;background:#000;border-radius:3px;transition:width 1s ease-out}
+    
+    /* Layout */
+    .app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;border-bottom:1px solid #e5e5e5}
+    .app-logo{font-size:18px;font-weight:700;display:flex;align-items:center;gap:12px}
+    .app-nav{display:flex;gap:4px}
+    .app-nav a{font-size:13px;color:#666;text-decoration:none;padding:8px 16px;transition:all .2s}
+    .app-nav a:hover{background:#f5f5f5;color:#000}
+    .app-nav a.active{background:#000;color:#fff}
+    .main-content{max-width:1200px;margin:0 auto;padding:32px 24px}
+    
+    /* Stats */
+    .stat-card{text-align:center;padding:24px}
+    .stat-value{font-size:36px;font-weight:300;margin-bottom:4px;transition:all .3s}
+    .stat-label{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px}
+    .stat-trend{font-size:11px;margin-top:6px;opacity:0;transform:translateY(5px);transition:all .3s}
+    .stat-trend.visible{opacity:1;transform:translateY(0)}
+    .stat-trend.up{color:#2e7d32}
+    
+    /* Experiment rows */
+    .experiment-row{display:flex;align-items:center;gap:16px;padding:16px;border-bottom:1px solid #e5e5e5;transition:background .15s}
+    .experiment-row:last-child{border-bottom:none}
+    .experiment-row:hover{background:#fafafa}
+    
+    /* Charts */
+    .chart-container{position:relative;height:200px;padding:16px}
+    
+    /* Animations */
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes countUp{from{opacity:0}to{opacity:1}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .fade-in-up{animation:fadeInUp .5s ease-out forwards;opacity:0}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}.delay-3{animation-delay:.3s}.delay-4{animation-delay:.4s}
+    .pulse{animation:pulse 2s infinite}
+    .spinner{animation:spin 1s linear infinite}
+    
+    /* Utility */
+    h1{font-size:28px;font-weight:300}h1 span{font-weight:600}
+    h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-bottom:16px}
+    .text-sm{font-size:13px}.text-xs{font-size:11px}.text-gray{color:#666}
+    .flex{display:flex}.flex-1{flex:1}.items-center{align-items:center}.justify-between{justify-content:space-between}
+    .gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+    .mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}.mb-24{margin-bottom:24px}.mb-32{margin-bottom:32px}
+    .p-16{padding:16px}.p-24{padding:24px}
+    .accent-line{height:2px;background:linear-gradient(90deg,#000 0%,transparent 100%);width:100px;margin-top:16px}
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="flex items-center gap-16">
+    <div class="app-logo"><i class="fas fa-chart-bar"></i> MaskBench</div>
+    <nav class="app-nav">
+      <a href="#" class="active">Dashboard</a>
+      <a href="maskbench-new-experiment.html">New Experiment</a>
+      <a href="maskbench-results.html">Results</a>
+      <a href="maskbench-compare.html">Compare</a>
+      <a href="maskbench-history.html">History</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-8">
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-book"></i> Docs</button>
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-cog"></i></button>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="main-content">
+  
+  <!-- Page Header -->
+  <div class="flex justify-between items-center mb-32 fade-in-up">
+    <div>
+      <h1 class="mb-8">Pose Estimation <span>Benchmarking</span></h1>
+      <p class="text-gray">Compare estimators, evaluate metrics, make informed decisions</p>
+      <div class="accent-line"></div>
+    </div>
+    <button class="btn btn-primary"><i class="fas fa-plus"></i> New Experiment</button>
+  </div>
+
+  <!-- Quick Actions -->
+  <section class="mb-32">
+    <h4><i class="fas fa-bolt" style="margin-right:8px"></i> QUICK START</h4>
+    <div class="grid-4">
+      <div class="card-elevated p-16 fade-in-up delay-1">
+        <div class="icon-box mb-16"><i class="fas fa-video"></i></div>
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:4px">Single Video</h3>
+        <p class="text-xs text-gray">Benchmark one video across all estimators</p>
+      </div>
+      <div class="card-elevated p-16 fade-in-up delay-2">
+        <div class="icon-box mb-16"><i class="fas fa-folder"></i></div>
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:4px">Dataset</h3>
+        <p class="text-xs text-gray">Evaluate entire dataset with metrics</p>
+      </div>
+      <div class="card-elevated p-16 fade-in-up delay-3">
+        <div class="icon-box mb-16"><i class="fas fa-mask"></i></div>
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:4px">Masked Videos</h3>
+        <p class="text-xs text-gray">Test estimators on de-identified data</p>
+      </div>
+      <div class="card-elevated p-16 fade-in-up delay-4">
+        <div class="icon-box mb-16"><i class="fas fa-balance-scale"></i></div>
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:4px">Compare</h3>
+        <p class="text-xs text-gray">Side-by-side estimator comparison</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="mb-32">
+    <div class="grid-4">
+      <div class="card stat-card fade-in-up delay-1">
+        <div class="icon-box" style="margin:0 auto 12px"><i class="fas fa-flask"></i></div>
+        <div class="stat-value" data-target="12">0</div>
+        <div class="stat-label">Experiments Run</div>
+        <div class="stat-trend up">+3 this week</div>
+      </div>
+      <div class="card stat-card fade-in-up delay-2">
+        <div class="icon-box icon-box-success" style="margin:0 auto 12px"><i class="fas fa-video"></i></div>
+        <div class="stat-value" data-target="48">0</div>
+        <div class="stat-label">Videos Processed</div>
+        <div class="stat-trend up">+12 this week</div>
+      </div>
+      <div class="card stat-card fade-in-up delay-3">
+        <div class="icon-box icon-box-gray" style="margin:0 auto 12px"><i class="fas fa-robot"></i></div>
+        <div class="stat-value" data-target="7">0</div>
+        <div class="stat-label">Estimators Available</div>
+        <div class="stat-trend"></div>
+      </div>
+      <div class="card stat-card fade-in-up delay-4">
+        <div class="icon-box icon-box-warning" style="margin:0 auto 12px"><i class="fas fa-clock"></i></div>
+        <div class="stat-value" data-target="2.4" data-suffix="h">0</div>
+        <div class="stat-label">Avg Processing Time</div>
+        <div class="stat-trend up">-15min vs last week</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Charts -->
+  <section class="mb-32">
+    <div class="grid-2">
+      <div class="card fade-in-up delay-2">
+        <div class="p-16" style="border-bottom:1px solid #e5e5e5">
+          <h4 style="margin:0"><i class="fas fa-chart-bar" style="margin-right:8px"></i> WEEKLY ACTIVITY</h4>
+        </div>
+        <div class="chart-container">
+          <canvas id="activityChart"></canvas>
+        </div>
+      </div>
+      <div class="card fade-in-up delay-3">
+        <div class="p-16" style="border-bottom:1px solid #e5e5e5">
+          <h4 style="margin:0"><i class="fas fa-tachometer-alt" style="margin-right:8px"></i> ESTIMATOR PERFORMANCE</h4>
+        </div>
+        <div class="chart-container">
+          <canvas id="performanceChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Experiments -->
+  <section class="fade-in-up delay-4">
+    <h4><i class="fas fa-clock" style="margin-right:8px"></i> RECENT EXPERIMENTS</h4>
+    <div class="card">
+      <div class="experiment-row">
+        <div class="icon-box icon-box-sm icon-box-success"><i class="fas fa-check"></i></div>
+        <div class="flex-1">
+          <h3 style="font-size:14px;font-weight:500;margin-bottom:2px">TED Talks Evaluation</h3>
+          <p class="text-xs text-gray">10 videos • All estimators • Kinematic metrics</p>
+        </div>
+        <span class="tag tag-success">Completed</span>
+        <button class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i> View</button>
+      </div>
+      <div class="experiment-row">
+        <div class="icon-box icon-box-sm icon-box-warning"><i class="fas fa-spinner spinner"></i></div>
+        <div class="flex-1">
+          <h3 style="font-size:14px;font-weight:500;margin-bottom:2px">Masked Video Comparison</h3>
+          <p class="text-xs text-gray">3 videos • 4 masking strategies • PCK/RMSE</p>
+        </div>
+        <span class="tag tag-outline">Processing</span>
+        <div style="width:100px">
+          <div class="progress-bar"><div class="progress-bar-fill" id="processingProgress" style="width:0%"></div></div>
+          <span class="text-xs text-gray"><span id="progressText">0</span>%</span>
+        </div>
+      </div>
+      <div class="experiment-row">
+        <div class="icon-box icon-box-sm icon-box-gray"><i class="fas fa-file-alt"></i></div>
+        <div class="flex-1">
+          <h3 style="font-size:14px;font-weight:500;margin-bottom:2px">Tragic Talkers Ground Truth</h3>
+          <p class="text-xs text-gray">20 videos • Accuracy + Kinematic metrics</p>
+        </div>
+        <span class="tag tag-gray">Draft</span>
+        <button class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i> Edit</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// Animate stat counters
+function animateCounters() {
+  document.querySelectorAll('.stat-value[data-target]').forEach(el => {
+    const target = parseFloat(el.dataset.target);
+    const suffix = el.dataset.suffix || '';
+    const isFloat = target % 1 !== 0;
+    const duration = 1500;
+    const steps = 60;
+    const increment = target / steps;
+    let current = 0;
+    
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        el.textContent = (isFloat ? target.toFixed(1) : target) + suffix;
+        clearInterval(timer);
+        // Show trend after counter finishes
+        const trend = el.parentElement.querySelector('.stat-trend');
+        if (trend) trend.classList.add('visible');
+      } else {
+        el.textContent = (isFloat ? current.toFixed(1) : Math.floor(current)) + suffix;
+      }
+    }, duration / steps);
+  });
+}
+
+// Animate processing progress
+function animateProgress() {
+  const bar = document.getElementById('processingProgress');
+  const text = document.getElementById('progressText');
+  let progress = 0;
+  const target = 65;
+  
+  const timer = setInterval(() => {
+    progress += 1;
+    bar.style.width = progress + '%';
+    text.textContent = progress;
+    if (progress >= target) clearInterval(timer);
+  }, 30);
+}
+
+// Weekly Activity Chart
+function createActivityChart() {
+  const ctx = document.getElementById('activityChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [
+        {
+          label: 'Videos',
+          data: [4, 7, 3, 8, 12, 5, 9],
+          backgroundColor: '#000',
+          borderRadius: 4
+        },
+        {
+          label: 'Experiments',
+          data: [1, 2, 1, 3, 2, 1, 2],
+          backgroundColor: '#999',
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { grid: { color: '#eee' }, ticks: { font: { size: 11 } } }
+      },
+      animation: { duration: 1500, easing: 'easeOutQuart' }
+    }
+  });
+}
+
+// Performance Chart (Acceleration comparison)
+function createPerformanceChart() {
+  const ctx = document.getElementById('performanceChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['YOLOv11', 'MediaPipe', 'OpenPose', 'MaskAnyone-MP'],
+      datasets: [{
+        label: 'Acceleration (lower is better)',
+        data: [1.46, 4.52, 2.22, 1.08],
+        backgroundColor: ['#000', '#2196f3', '#ff9800', '#9c27b0'],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { grid: { color: '#eee' }, ticks: { font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      },
+      animation: { duration: 1500, easing: 'easeOutQuart', delay: (ctx) => ctx.dataIndex * 200 }
+    }
+  });
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(animateCounters, 500);
+  setTimeout(animateProgress, 1000);
+  createActivityChart();
+  createPerformanceChart();
+});
+</script>
+
+</body>
+</html>

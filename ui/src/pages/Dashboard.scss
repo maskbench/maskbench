@@ -1,0 +1,109 @@
+.dashboard {
+  &-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+  }
+}
+
+.section-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--mb-gray-50);
+  margin-bottom: var(--mb-spacing-04);
+  display: flex;
+  align-items: center;
+  gap: var(--mb-spacing-02);
+}
+
+.chart-container {
+  height: 200px;
+  position: relative;
+}
+
+.quick-action-card {
+  padding: var(--mb-spacing-05);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+  }
+
+  &__icon {
+    width: 40px;
+    height: 40px;
+    background: var(--mb-black);
+    color: var(--mb-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--mb-radius-md);
+    margin-bottom: var(--mb-spacing-04);
+  }
+
+  &__title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: var(--mb-spacing-01);
+  }
+
+  &__description {
+    font-size: 0.75rem;
+    color: var(--mb-gray-50);
+  }
+}
+
+.experiment-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mb-spacing-04);
+  padding: var(--mb-spacing-04) var(--mb-spacing-05);
+  border-bottom: 1px solid var(--mb-gray-20);
+  transition: background 0.15s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--mb-gray-10);
+  }
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--mb-radius-md);
+    flex-shrink: 0;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: var(--mb-spacing-01);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    font-size: 0.75rem;
+    color: var(--mb-gray-50);
+  }
+
+  &__progress {
+    display: flex;
+    align-items: center;
+    gap: var(--mb-spacing-02);
+  }
+}

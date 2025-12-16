@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaskBench - Compare</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#000;line-height:1.5}
+    
+    .icon-box{width:40px;height:40px;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
+    .icon-box-sm{width:32px;height:32px;font-size:14px}
+    .icon-box-success{background:#e8f5e9;color:#2e7d32}
+    .icon-box-warning{background:#fff8e1;color:#f57f17}
+    .icon-box-gray{background:#e5e5e5;color:#666}
+    
+    .card{background:#fff;border:1px solid #e5e5e5}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;border:none}
+    .btn-primary{background:#000;color:#fff}.btn-primary:hover{background:#333}
+    .btn-secondary{background:#fff;color:#000;border:2px solid #000}.btn-secondary:hover{background:#000;color:#fff}
+    .btn-ghost{background:transparent;color:#666;padding:8px 16px}.btn-ghost:hover{background:#f0f0f0;color:#000}
+    .btn-sm{padding:8px 16px;font-size:12px}
+    .btn-icon{width:40px;height:40px;padding:0;justify-content:center;border-radius:4px;background:#fff;border:1px solid #e5e5e5}
+    .btn-icon:hover{background:#f5f5f5;border-color:#000}
+    .btn-icon.active{background:#000;color:#fff;border-color:#000}
+    
+    .tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;font-size:11px;font-weight:600}
+    .tag-default{background:#000;color:#fff}
+    .tag-success{background:#e8f5e9;color:#2e7d32}
+    .tag-warning{background:#fff8e1;color:#f57f17}
+    
+    .select{padding:10px 14px;font-family:inherit;font-size:13px;border:2px solid #e5e5e5;background:#fff;cursor:pointer;transition:border-color .2s;min-width:180px}
+    .select:focus{outline:none;border-color:#000}
+    
+    .app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;border-bottom:1px solid #e5e5e5}
+    .app-logo{font-size:18px;font-weight:700;display:flex;align-items:center;gap:12px}
+    .app-nav{display:flex;gap:4px}
+    .app-nav a{font-size:13px;color:#666;text-decoration:none;padding:8px 16px;transition:all .2s}
+    .app-nav a:hover{background:#f5f5f5;color:#000}
+    .app-nav a.active{background:#000;color:#fff}
+    
+    .main-content{padding:24px;max-width:1400px;margin:0 auto}
+    
+    .compare-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+    
+    .video-compare-container{display:grid;grid-template-columns:1fr 1fr;gap:0;background:#fff;border:1px solid #e5e5e5;overflow:hidden}
+    .video-panel{position:relative}
+    .video-panel:first-child{border-right:1px solid #e5e5e5}
+    .video-panel-header{padding:12px 16px;background:#fafafa;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;gap:12px}
+    .video-canvas{aspect-ratio:16/9;background:#1a1a1a;position:relative;overflow:hidden}
+    .video-canvas-content{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative}
+    .skeleton-overlay{position:absolute;inset:0;pointer-events:none}
+    .video-label{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.8);color:#fff;padding:4px 10px;font-size:11px;font-weight:600;border-radius:4px}
+    .video-fps{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.8);color:#0f0;padding:4px 8px;font-size:10px;font-family:'SF Mono',Monaco,monospace;border-radius:4px}
+    
+    .timeline-container{background:#fff;border:1px solid #e5e5e5;border-top:none;padding:16px}
+    .timeline-controls{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+    .play-controls{display:flex;gap:4px}
+    .time-display{font-family:'SF Mono',Monaco,monospace;font-size:13px;color:#666;min-width:120px}
+    .speed-control{display:flex;align-items:center;gap:8px;margin-left:auto}
+    .speed-btn{padding:4px 10px;font-size:11px;background:#f5f5f5;border:1px solid #e5e5e5;cursor:pointer;transition:all .15s}
+    .speed-btn:hover{background:#e5e5e5}
+    .speed-btn.active{background:#000;color:#fff;border-color:#000}
+    
+    .timeline-track{position:relative;height:60px;background:#fafafa;border:1px solid #e5e5e5;border-radius:4px;overflow:hidden;cursor:pointer}
+    .timeline-waveform{position:absolute;inset:0;opacity:.3}
+    .timeline-progress{position:absolute;left:0;top:0;bottom:0;background:rgba(0,0,0,.1);pointer-events:none}
+    .timeline-playhead{position:absolute;top:0;bottom:0;width:2px;background:#000;pointer-events:none;z-index:10}
+    .timeline-playhead::before{content:'';position:absolute;top:-4px;left:-5px;width:12px;height:12px;background:#000;border-radius:50%}
+    .timeline-markers{position:absolute;inset:0;display:flex;pointer-events:none}
+    .timeline-marker{flex:1;border-right:1px solid #e5e5e5;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px}
+    .timeline-marker span{font-size:9px;color:#999}
+    
+    .keypoint-tracks{margin-top:16px}
+    .keypoint-track{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f0f0f0}
+    .keypoint-track:last-child{border-bottom:none}
+    .keypoint-label{font-size:11px;color:#666;width:80px;flex-shrink:0}
+    .keypoint-bars{flex:1;display:flex;gap:4px;height:20px}
+    .keypoint-bar{flex:1;border-radius:2px;position:relative}
+    .keypoint-bar .value{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff}
+    
+    .metrics-panel{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:24px}
+    .metric-card{background:#fff;border:1px solid #e5e5e5;padding:20px;text-align:center;transition:all .2s}
+    .metric-card:hover{border-color:#000}
+    .metric-card h4{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+    .metric-values{display:flex;justify-content:center;gap:24px}
+    .metric-value{text-align:center}
+    .metric-value .number{font-size:24px;font-weight:300;font-family:'SF Mono',Monaco,monospace}
+    .metric-value .label{font-size:10px;color:#666;margin-top:2px}
+    .metric-value.better .number{color:#2e7d32}
+    .metric-value.worse .number{color:#c62828}
+    .metric-diff{font-size:11px;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0}
+    .metric-diff.positive{color:#2e7d32}
+    .metric-diff.negative{color:#c62828}
+    
+    .color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    
+    .skeleton-svg{width:100%;height:100%}
+    .skeleton-joint{fill:#fff;stroke:#000;stroke-width:2}
+    .skeleton-bone{stroke-width:3;stroke-linecap:round}
+    
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+    @keyframes slideIn{from{transform:translateX(-10px);opacity:0}to{transform:translateX(0);opacity:1}}
+    .fade-in{animation:fadeIn .4s ease-out}
+    .pulse{animation:pulse 1.5s infinite}
+    .slide-in{animation:slideIn .3s ease-out}
+    
+    h1{font-size:24px;font-weight:300}h1 span{font-weight:600}
+    h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#666}
+    .text-sm{font-size:13px}.text-xs{font-size:11px}.text-gray{color:#666}
+    .flex{display:flex}.flex-1{flex:1}.items-center{align-items:center}.justify-between{justify-content:space-between}.justify-center{justify-content:center}
+    .gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+    .mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}.mb-24{margin-bottom:24px}
+    .p-16{padding:16px}
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="flex items-center gap-16">
+    <div class="app-logo"><i class="fas fa-chart-bar"></i> MaskBench</div>
+    <nav class="app-nav">
+      <a href="maskbench-dashboard.html">Dashboard</a>
+      <a href="maskbench-new-experiment.html">New Experiment</a>
+      <a href="maskbench-results.html">Results</a>
+      <a href="#" class="active">Compare</a>
+      <a href="maskbench-history.html">History</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-8">
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-book"></i> Docs</button>
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-cog"></i></button>
+  </div>
+</header>
+
+<main class="main-content">
+  <!-- Header -->
+  <div class="compare-header fade-in">
+    <div>
+      <h1 class="mb-4">Side-by-Side <span>Comparison</span></h1>
+      <p class="text-sm text-gray">Compare pose estimator outputs frame by frame</p>
+    </div>
+    <div class="flex gap-8">
+      <select class="select" id="videoSelect" onchange="changeVideo()">
+        <option value="ted1">TED_Talk_Gesture_01.mp4</option>
+        <option value="ted2">TED_Talk_Gesture_02.mp4</option>
+        <option value="ted3">TED_Talk_Gesture_03.mp4</option>
+      </select>
+      <button class="btn btn-secondary btn-sm"><i class="fas fa-download"></i> Export Comparison</button>
+    </div>
+  </div>
+
+  <!-- Video Compare -->
+  <div class="video-compare-container fade-in">
+    <!-- Left Panel -->
+    <div class="video-panel">
+      <div class="video-panel-header">
+        <div class="color-dot" style="background:#000"></div>
+        <select class="select" style="flex:1;min-width:0" id="leftEstimator" onchange="updateComparison()">
+          <option value="yolo">YOLOv11-Pose</option>
+          <option value="mediapipe">MediaPipe Pose</option>
+          <option value="openpose">OpenPose</option>
+          <option value="maskanyone">MaskAnyone-MediaPipe</option>
+        </select>
+        <span class="tag tag-success"><i class="fas fa-check"></i> Best Acceleration</span>
+      </div>
+      <div class="video-canvas" id="leftCanvas">
+        <div class="video-canvas-content">
+          <svg class="skeleton-overlay" id="leftSkeleton" viewBox="0 0 640 360"></svg>
+        </div>
+        <div class="video-label">YOLOv11-Pose</div>
+        <div class="video-fps">30 FPS</div>
+      </div>
+    </div>
+    
+    <!-- Right Panel -->
+    <div class="video-panel">
+      <div class="video-panel-header">
+        <div class="color-dot" style="background:#2196f3"></div>
+        <select class="select" style="flex:1;min-width:0" id="rightEstimator" onchange="updateComparison()">
+          <option value="yolo">YOLOv11-Pose</option>
+          <option value="mediapipe" selected>MediaPipe Pose</option>
+          <option value="openpose">OpenPose</option>
+          <option value="maskanyone">MaskAnyone-MediaPipe</option>
+        </select>
+        <span class="tag tag-warning"><i class="fas fa-exclamation"></i> High Jitter</span>
+      </div>
+      <div class="video-canvas" id="rightCanvas">
+        <div class="video-canvas-content">
+          <svg class="skeleton-overlay" id="rightSkeleton" viewBox="0 0 640 360"></svg>
+        </div>
+        <div class="video-label">MediaPipe Pose</div>
+        <div class="video-fps">30 FPS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-container fade-in">
+    <div class="timeline-controls">
+      <div class="play-controls">
+        <button class="btn-icon" onclick="skipBackward()"><i class="fas fa-step-backward"></i></button>
+        <button class="btn-icon" onclick="framePrev()"><i class="fas fa-chevron-left"></i></button>
+        <button class="btn-icon active" id="playBtn" onclick="togglePlay()"><i class="fas fa-play" id="playIcon"></i></button>
+        <button class="btn-icon" onclick="frameNext()"><i class="fas fa-chevron-right"></i></button>
+        <button class="btn-icon" onclick="skipForward()"><i class="fas fa-step-forward"></i></button>
+      </div>
+      <div class="time-display">
+        <span id="currentTime">0:00.00</span> / <span id="totalTime">2:34.00</span>
+      </div>
+      <div class="flex items-center gap-8">
+        <span class="text-xs text-gray">Frame:</span>
+        <span class="text-sm" style="font-family:monospace;min-width:60px" id="frameDisplay">1 / 4620</span>
+      </div>
+      <div class="speed-control">
+        <span class="text-xs text-gray">Speed:</span>
+        <button class="speed-btn" onclick="setSpeed(0.25)">0.25x</button>
+        <button class="speed-btn" onclick="setSpeed(0.5)">0.5x</button>
+        <button class="speed-btn active" onclick="setSpeed(1)">1x</button>
+        <button class="speed-btn" onclick="setSpeed(2)">2x</button>
+      </div>
+    </div>
+    
+    <div class="timeline-track" id="timeline" onclick="seekTimeline(event)" onmousemove="hoverTimeline(event)">
+      <div class="timeline-progress" id="timelineProgress"></div>
+      <div class="timeline-playhead" id="playhead" style="left:0%"></div>
+      <div class="timeline-markers">
+        <div class="timeline-marker"><span>0:00</span></div>
+        <div class="timeline-marker"><span>0:30</span></div>
+        <div class="timeline-marker"><span>1:00</span></div>
+        <div class="timeline-marker"><span>1:30</span></div>
+        <div class="timeline-marker"><span>2:00</span></div>
+        <div class="timeline-marker"><span>2:34</span></div>
+      </div>
+    </div>
+
+    <!-- Keypoint Velocity Tracks -->
+    <div class="keypoint-tracks" id="keypointTracks">
+      <div class="flex justify-between items-center mb-8">
+        <h4 style="margin:0"><i class="fas fa-running" style="margin-right:8px"></i> KEYPOINT ACCELERATION (CURRENT FRAME)</h4>
+        <select class="select" style="min-width:120px;padding:6px 10px;font-size:11px">
+          <option>All Keypoints</option>
+          <option>Upper Body</option>
+          <option>Lower Body</option>
+        </select>
+      </div>
+      <!-- Generated by JS -->
+    </div>
+  </div>
+
+  <!-- Metrics Panel -->
+  <div class="metrics-panel fade-in">
+    <div class="metric-card">
+      <h4>Velocity</h4>
+      <div class="metric-values">
+        <div class="metric-value better">
+          <div class="number" id="leftVelocity">1.8</div>
+          <div class="label">YOLO</div>
+        </div>
+        <div class="metric-value worse">
+          <div class="number" id="rightVelocity">4.2</div>
+          <div class="label">MediaPipe</div>
+        </div>
+      </div>
+      <div class="metric-diff positive" id="velocityDiff">YOLO 57% lower ↓</div>
+    </div>
+    <div class="metric-card">
+      <h4>Acceleration</h4>
+      <div class="metric-values">
+        <div class="metric-value better">
+          <div class="number" id="leftAccel">1.2</div>
+          <div class="label">YOLO</div>
+        </div>
+        <div class="metric-value worse">
+          <div class="number" id="rightAccel">3.8</div>
+          <div class="label">MediaPipe</div>
+        </div>
+      </div>
+      <div class="metric-diff positive" id="accelDiff">YOLO 68% lower ↓</div>
+    </div>
+    <div class="metric-card">
+      <h4>Jerk</h4>
+      <div class="metric-values">
+        <div class="metric-value better">
+          <div class="number" id="leftJerk">2.1</div>
+          <div class="label">YOLO</div>
+        </div>
+        <div class="metric-value worse">
+          <div class="number" id="rightJerk">6.9</div>
+          <div class="label">MediaPipe</div>
+        </div>
+      </div>
+      <div class="metric-diff positive" id="jerkDiff">YOLO 70% lower ↓</div>
+    </div>
+    <div class="metric-card">
+      <h4>Keypoints Detected</h4>
+      <div class="metric-values">
+        <div class="metric-value better">
+          <div class="number" id="leftKp">17/17</div>
+          <div class="label">YOLO</div>
+        </div>
+        <div class="metric-value">
+          <div class="number" id="rightKp">15/17</div>
+          <div class="label">MediaPipe</div>
+        </div>
+      </div>
+      <div class="metric-diff" id="kpDiff">2 keypoints difference</div>
+    </div>
+  </div>
+</main>
+
+<script>
+// State
+let isPlaying = false;
+let currentFrame = 0;
+let totalFrames = 4620;
+let playbackSpeed = 1;
+let animationId = null;
+
+const estimatorColors = {
+  yolo: '#000',
+  mediapipe: '#2196f3',
+  openpose: '#ff9800',
+  maskanyone: '#9c27b0'
+};
+
+const estimatorData = {
+  yolo: { velocity: [1.2, 2.1, 1.8, 1.5, 2.3], acceleration: [1.0, 1.5, 1.2, 0.9, 1.8], jerk: [1.8, 2.4, 2.1, 1.6, 2.9] },
+  mediapipe: { velocity: [3.5, 4.8, 4.2, 3.9, 5.1], acceleration: [3.2, 4.1, 3.8, 3.5, 4.5], jerk: [6.1, 7.5, 6.9, 6.3, 8.2] },
+  openpose: { velocity: [1.8, 2.5, 2.2, 1.9, 2.7], acceleration: [1.8, 2.4, 2.2, 1.7, 2.6], jerk: [3.0, 3.8, 3.4, 2.9, 4.1] },
+  maskanyone: { velocity: [1.0, 1.6, 1.3, 1.1, 1.8], acceleration: [0.8, 1.2, 1.1, 0.7, 1.4], jerk: [1.5, 2.0, 1.8, 1.4, 2.3] }
+};
+
+const keypoints = ['Nose', 'L-Shoulder', 'R-Shoulder', 'L-Elbow', 'R-Elbow', 'L-Wrist', 'R-Wrist', 'L-Hip', 'R-Hip'];
+
+// COCO skeleton connections
+const bones = [
+  [0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6], // Upper body
+  [1, 7], [2, 8], [7, 8], [7, 9], [8, 10], [9, 11], [10, 12] // Lower body
+];
+
+// Generate random pose with slight variations
+function generatePose(baseX, baseY, jitter = 5) {
+  const basePose = [
+    [320, 80],   // Nose
+    [280, 140],  // L-Shoulder
+    [360, 140],  // R-Shoulder
+    [240, 200],  // L-Elbow
+    [400, 200],  // R-Elbow
+    [220, 260],  // L-Wrist
+    [420, 260],  // R-Wrist
+    [290, 240],  // L-Hip
+    [350, 240],  // R-Hip
+    [280, 320],  // L-Knee
+    [360, 320],  // R-Knee
+    [270, 400],  // L-Ankle
+    [370, 400]   // R-Ankle
+  ];
+  
+  return basePose.map(([x, y]) => [
+    x + baseX + (Math.random() - 0.5) * jitter,
+    y + baseY + (Math.random() - 0.5) * jitter
+  ]);
+}
+
+// Draw skeleton on SVG
+function drawSkeleton(svgId, pose, color) {
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = '';
+  
+  // Draw bones
+  bones.forEach(([i, j]) => {
+    if (pose[i] && pose[j]) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', pose[i][0]);
+      line.setAttribute('y1', pose[i][1]);
+      line.setAttribute('x2', pose[j][0]);
+      line.setAttribute('y2', pose[j][1]);
+      line.setAttribute('stroke', color);
+      line.setAttribute('stroke-width', '3');
+      line.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(line);
+    }
+  });
+  
+  // Draw joints
+  pose.forEach(([x, y], i) => {
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', x);
+    circle.setAttribute('cy', y);
+    circle.setAttribute('r', '5');
+    circle.setAttribute('fill', '#fff');
+    circle.setAttribute('stroke', color);
+    circle.setAttribute('stroke-width', '2');
+    svg.appendChild(circle);
+  });
+}
+
+// Update skeletons with animation
+function updateSkeletons() {
+  const leftEst = document.getElementById('leftEstimator').value;
+  const rightEst = document.getElementById('rightEstimator').value;
+  
+  const leftJitter = leftEst === 'mediapipe' ? 15 : leftEst === 'maskanyone' ? 3 : 8;
+  const rightJitter = rightEst === 'mediapipe' ? 15 : rightEst === 'maskanyone' ? 3 : 8;
+  
+  const leftPose = generatePose(0, 0, leftJitter);
+  const rightPose = generatePose(0, 0, rightJitter);
+  
+  drawSkeleton('leftSkeleton', leftPose, estimatorColors[leftEst]);
+  drawSkeleton('rightSkeleton', rightPose, estimatorColors[rightEst]);
+  
+  // Update labels
+  document.querySelector('#leftCanvas .video-label').textContent = document.getElementById('leftEstimator').selectedOptions[0].text;
+  document.querySelector('#rightCanvas .video-label').textContent = document.getElementById('rightEstimator').selectedOptions[0].text;
+  
+  // Update color dots
+  document.querySelector('.video-panel:first-child .color-dot').style.background = estimatorColors[leftEst];
+  document.querySelector('.video-panel:last-child .color-dot').style.background = estimatorColors[rightEst];
+}
+
+// Render keypoint tracks
+function renderKeypointTracks() {
+  const container = document.getElementById('keypointTracks');
+  const leftEst = document.getElementById('leftEstimator').value;
+  const rightEst = document.getElementById('rightEstimator').value;
+  
+  const existingHeader = container.querySelector('.flex');
+  container.innerHTML = '';
+  container.appendChild(existingHeader);
+  
+  keypoints.forEach((kp, i) => {
+    const leftVal = (Math.random() * 3 + 0.5).toFixed(1);
+    const rightVal = (Math.random() * 5 + 1).toFixed(1);
+    
+    const track = document.createElement('div');
+    track.className = 'keypoint-track slide-in';
+    track.style.animationDelay = `${i * 0.03}s`;
+    track.innerHTML = `
+      <div class="keypoint-label">${kp}</div>
+      <div class="keypoint-bars">
+        <div class="keypoint-bar" style="background:${estimatorColors[leftEst]};opacity:${0.3 + leftVal/5}">
+          <span class="value">${leftVal}</span>
+        </div>
+        <div class="keypoint-bar" style="background:${estimatorColors[rightEst]};opacity:${0.3 + rightVal/8}">
+          <span class="value">${rightVal}</span>
+        </div>
+      </div>
+    `;
+    container.appendChild(track);
+  });
+}
+
+// Update metrics
+function updateMetrics() {
+  const leftEst = document.getElementById('leftEstimator').value;
+  const rightEst = document.getElementById('rightEstimator').value;
+  
+  const frameIdx = Math.floor(currentFrame / totalFrames * 4);
+  
+  const lv = estimatorData[leftEst].velocity[frameIdx] + (Math.random() - 0.5) * 0.5;
+  const rv = estimatorData[rightEst].velocity[frameIdx] + (Math.random() - 0.5) * 0.5;
+  const la = estimatorData[leftEst].acceleration[frameIdx] + (Math.random() - 0.5) * 0.3;
+  const ra = estimatorData[rightEst].acceleration[frameIdx] + (Math.random() - 0.5) * 0.3;
+  const lj = estimatorData[leftEst].jerk[frameIdx] + (Math.random() - 0.5) * 0.5;
+  const rj = estimatorData[rightEst].jerk[frameIdx] + (Math.random() - 0.5) * 0.5;
+  
+  document.getElementById('leftVelocity').textContent = lv.toFixed(1);
+  document.getElementById('rightVelocity').textContent = rv.toFixed(1);
+  document.getElementById('leftAccel').textContent = la.toFixed(1);
+  document.getElementById('rightAccel').textContent = ra.toFixed(1);
+  document.getElementById('leftJerk').textContent = lj.toFixed(1);
+  document.getElementById('rightJerk').textContent = rj.toFixed(1);
+  
+  // Update better/worse classes
+  updateMetricClasses('leftVelocity', 'rightVelocity', lv, rv);
+  updateMetricClasses('leftAccel', 'rightAccel', la, ra);
+  updateMetricClasses('leftJerk', 'rightJerk', lj, rj);
+  
+  // Update diffs
+  const vDiff = ((1 - Math.min(lv, rv) / Math.max(lv, rv)) * 100).toFixed(0);
+  const aDiff = ((1 - Math.min(la, ra) / Math.max(la, ra)) * 100).toFixed(0);
+  const jDiff = ((1 - Math.min(lj, rj) / Math.max(lj, rj)) * 100).toFixed(0);
+  
+  const leftName = document.getElementById('leftEstimator').selectedOptions[0].text.split(' ')[0];
+  const rightName = document.getElementById('rightEstimator').selectedOptions[0].text.split(' ')[0];
+  
+  document.getElementById('velocityDiff').textContent = `${lv < rv ? leftName : rightName} ${vDiff}% lower ↓`;
+  document.getElementById('accelDiff').textContent = `${la < ra ? leftName : rightName} ${aDiff}% lower ↓`;
+  document.getElementById('jerkDiff').textContent = `${lj < rj ? leftName : rightName} ${jDiff}% lower ↓`;
+  
+  // Update labels
+  document.querySelectorAll('.metric-value .label').forEach((el, i) => {
+    if (i % 2 === 0) el.textContent = leftName;
+    else el.textContent = rightName;
+  });
+}
+
+function updateMetricClasses(leftId, rightId, leftVal, rightVal) {
+  const leftEl = document.getElementById(leftId).parentElement;
+  const rightEl = document.getElementById(rightId).parentElement;
+  leftEl.classList.remove('better', 'worse');
+  rightEl.classList.remove('better', 'worse');
+  if (leftVal < rightVal) {
+    leftEl.classList.add('better');
+    rightEl.classList.add('worse');
+  } else {
+    rightEl.classList.add('better');
+    leftEl.classList.add('worse');
+  }
+}
+
+// Playback controls
+function togglePlay() {
+  isPlaying = !isPlaying;
+  document.getElementById('playIcon').className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+  
+  if (isPlaying) {
+    animate();
+  } else {
+    cancelAnimationFrame(animationId);
+  }
+}
+
+function animate() {
+  if (!isPlaying) return;
+  
+  currentFrame += playbackSpeed;
+  if (currentFrame >= totalFrames) currentFrame = 0;
+  
+  updateTimeline();
+  updateSkeletons();
+  
+  if (currentFrame % 30 === 0) {
+    updateMetrics();
+    renderKeypointTracks();
+  }
+  
+  animationId = requestAnimationFrame(animate);
+}
+
+function updateTimeline() {
+  const pct = (currentFrame / totalFrames) * 100;
+  document.getElementById('playhead').style.left = pct + '%';
+  document.getElementById('timelineProgress').style.width = pct + '%';
+  
+  const totalSeconds = 154; // 2:34
+  const currentSeconds = (currentFrame / totalFrames) * totalSeconds;
+  const mins = Math.floor(currentSeconds / 60);
+  const secs = (currentSeconds % 60).toFixed(2).padStart(5, '0');
+  document.getElementById('currentTime').textContent = `${mins}:${secs}`;
+  document.getElementById('frameDisplay').textContent = `${currentFrame + 1} / ${totalFrames}`;
+}
+
+function seekTimeline(e) {
+  const rect = e.target.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  currentFrame = Math.floor(pct * totalFrames);
+  updateTimeline();
+  updateSkeletons();
+  updateMetrics();
+  renderKeypointTracks();
+}
+
+function hoverTimeline(e) {
+  // Could add hover preview here
+}
+
+function frameNext() {
+  currentFrame = Math.min(currentFrame + 1, totalFrames - 1);
+  updateTimeline();
+  updateSkeletons();
+  updateMetrics();
+}
+
+function framePrev() {
+  currentFrame = Math.max(currentFrame - 1, 0);
+  updateTimeline();
+  updateSkeletons();
+  updateMetrics();
+}
+
+function skipForward() {
+  currentFrame = Math.min(currentFrame + 300, totalFrames - 1);
+  updateTimeline();
+  updateSkeletons();
+  updateMetrics();
+}
+
+function skipBackward() {
+  currentFrame = Math.max(currentFrame - 300, 0);
+  updateTimeline();
+  updateSkeletons();
+  updateMetrics();
+}
+
+function setSpeed(speed) {
+  playbackSpeed = speed;
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.classList.toggle('active', parseFloat(btn.textContent) === speed);
+  });
+}
+
+function updateComparison() {
+  updateSkeletons();
+  updateMetrics();
+  renderKeypointTracks();
+}
+
+function changeVideo() {
+  currentFrame = 0;
+  updateTimeline();
+  updateSkeletons();
+  updateMetrics();
+  renderKeypointTracks();
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  updateSkeletons();
+  updateMetrics();
+  renderKeypointTracks();
+  updateTimeline();
+});
+</script>
+
+</body>
+</html>

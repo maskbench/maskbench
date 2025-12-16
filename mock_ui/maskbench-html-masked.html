@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaskBench - Masked Videos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#000;line-height:1.5}
+    
+    .icon-box{width:40px;height:40px;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
+    .icon-box-sm{width:32px;height:32px;font-size:14px}
+    .icon-box-lg{width:56px;height:56px;font-size:22px}
+    .icon-box-success{background:#e8f5e9;color:#2e7d32}
+    .icon-box-warning{background:#fff8e1;color:#f57f17}
+    .icon-box-error{background:#ffebee;color:#c62828}
+    .icon-box-gray{background:#e5e5e5;color:#666}
+    .icon-box-outline{background:#fff;color:#000;border:2px solid #e5e5e5}
+    
+    .card{background:#fff;border:1px solid #e5e5e5;transition:all .2s}
+    .card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+    .card-elevated{background:#fff;border:3px solid #000;position:relative}
+    .card-elevated::before{content:'';position:absolute;top:-3px;left:-3px;right:-3px;bottom:-3px;background:#000;z-index:-1;transform:translate(4px,4px)}
+    
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;border:none}
+    .btn-primary{background:#000;color:#fff}.btn-primary:hover{background:#333}
+    .btn-secondary{background:#fff;color:#000;border:2px solid #000}.btn-secondary:hover{background:#000;color:#fff}
+    .btn-ghost{background:transparent;color:#666;padding:8px 16px}.btn-ghost:hover{background:#f0f0f0;color:#000}
+    .btn-sm{padding:8px 16px;font-size:12px}
+    
+    .tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;font-size:11px;font-weight:600}
+    .tag-default{background:#000;color:#fff}
+    .tag-success{background:#e8f5e9;color:#2e7d32}
+    .tag-warning{background:#fff8e1;color:#f57f17}
+    .tag-error{background:#ffebee;color:#c62828}
+    .tag-info{background:#e3f2fd;color:#1565c0}
+    
+    .app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;border-bottom:1px solid #e5e5e5}
+    .app-logo{font-size:18px;font-weight:700;display:flex;align-items:center;gap:12px}
+    .app-nav{display:flex;gap:4px}
+    .app-nav a{font-size:13px;color:#666;text-decoration:none;padding:8px 16px;transition:all .2s}
+    .app-nav a:hover{background:#f5f5f5;color:#000}
+    .app-nav a.active{background:#000;color:#fff}
+    
+    .app-body{display:flex;min-height:calc(100vh - 65px)}
+    .app-sidebar{width:300px;background:#fff;border-right:1px solid #e5e5e5;padding:24px;flex-shrink:0;overflow-y:auto}
+    .app-main{flex:1;padding:32px;overflow-y:auto}
+    
+    .sidebar-section{margin-bottom:24px}
+    .sidebar-section h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-bottom:12px}
+    
+    .strategy-card{padding:16px;border:2px solid #e5e5e5;cursor:pointer;transition:all .2s;margin-bottom:8px}
+    .strategy-card:hover{border-color:#999}
+    .strategy-card.selected{border-color:#000;background:#fafafa}
+    .strategy-card.selected::after{content:'✓';position:absolute;top:8px;right:8px;width:20px;height:20px;background:#000;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+    .strategy-card{position:relative}
+    .strategy-icon{width:48px;height:48px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;margin-bottom:8px;font-size:20px}
+    .strategy-preview{width:100%;height:60px;margin-top:8px;position:relative;overflow:hidden}
+    .strategy-preview img{width:100%;height:100%;object-fit:cover}
+    
+    .pck-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;font-weight:600;border-radius:10px}
+    .pck-high{background:#e8f5e9;color:#2e7d32}
+    .pck-medium{background:#fff8e1;color:#f57f17}
+    .pck-low{background:#ffebee;color:#c62828}
+    
+    .masking-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:32px}
+    .masking-preview{background:#fff;border:1px solid #e5e5e5;overflow:hidden;cursor:pointer;transition:all .2s}
+    .masking-preview:hover{border-color:#000;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+    .masking-preview.active{border:2px solid #000}
+    .masking-thumb{aspect-ratio:16/9;background:#1a1a1a;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .masking-thumb .overlay{position:absolute;inset:0}
+    .masking-thumb .person-silhouette{width:60px;height:100px;position:relative}
+    .masking-label{padding:8px 12px;font-size:12px;font-weight:500;text-align:center;border-top:1px solid #e5e5e5}
+    
+    .results-table{width:100%;border-collapse:collapse;font-size:13px}
+    .results-table th{padding:12px 16px;text-align:left;font-weight:600;background:#fafafa;border-bottom:2px solid #e5e5e5}
+    .results-table th.metric{text-align:center}
+    .results-table td{padding:12px 16px;border-bottom:1px solid #e5e5e5}
+    .results-table td.metric{text-align:center;font-family:'SF Mono',Monaco,monospace}
+    .results-table tr:hover{background:#fafafa}
+    .results-table .best{background:#e8f5e9;color:#2e7d32;font-weight:600}
+    .results-table .worst{background:#ffebee;color:#c62828}
+    
+    .chart-container{height:300px;position:relative}
+    
+    .heatmap-container{display:grid;grid-template-columns:auto repeat(4,1fr);gap:2px;font-size:11px}
+    .heatmap-header{padding:8px;text-align:center;font-weight:600;background:#fafafa}
+    .heatmap-row-label{padding:8px;font-weight:500;display:flex;align-items:center;gap:8px}
+    .heatmap-cell{padding:12px 8px;text-align:center;font-weight:600;font-family:'SF Mono',Monaco,monospace;transition:all .2s}
+    .heatmap-cell:hover{transform:scale(1.05);box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    
+    .recommendation-card{background:#f8f9fa;border-left:4px solid #000;padding:20px;margin-top:24px}
+    .recommendation-card h3{font-size:14px;margin-bottom:8px}
+    .recommendation-card p{font-size:13px;color:#666}
+    
+    .info-banner{background:#e3f2fd;border:1px solid #90caf9;padding:16px;display:flex;align-items:flex-start;gap:12px;margin-bottom:24px}
+    .info-banner i{color:#1565c0;margin-top:2px}
+    .info-banner p{font-size:13px;color:#1565c0}
+    
+    .color-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+    .fade-in{animation:fadeIn .4s ease-out}
+    .slide-up{animation:slideUp .4s ease-out}
+    .pulse{animation:pulse 2s infinite}
+    
+    /* Masking effect styles */
+    .blur-effect{filter:blur(8px);background:#ddd}
+    .pixel-effect{background:repeating-conic-gradient(#999 0 25%,#666 0 50%) 0 0/8px 8px}
+    .contour-effect{background:transparent;border:2px solid #fff}
+    .solid-effect{background:#000}
+    
+    h1{font-size:24px;font-weight:300}h1 span{font-weight:600}
+    h2{font-size:18px;font-weight:600}
+    h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#666}
+    .text-sm{font-size:13px}.text-xs{font-size:11px}.text-gray{color:#666}
+    .flex{display:flex}.flex-1{flex:1}.items-center{align-items:center}.justify-between{justify-content:space-between}
+    .gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}.gap-24{gap:24px}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+    .mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}.mb-24{margin-bottom:24px}.mb-32{margin-bottom:32px}
+    .p-16{padding:16px}.p-24{padding:24px}
+    .border-b{border-bottom:1px solid #e5e5e5}
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="flex items-center gap-16">
+    <div class="app-logo"><i class="fas fa-chart-bar"></i> MaskBench</div>
+    <nav class="app-nav">
+      <a href="maskbench-dashboard.html">Dashboard</a>
+      <a href="maskbench-new-experiment.html">New Experiment</a>
+      <a href="maskbench-results.html">Results</a>
+      <a href="maskbench-compare.html">Compare</a>
+      <a href="#" class="active">Masked Videos</a>
+      <a href="maskbench-history.html">History</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-8">
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-book"></i> Docs</button>
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-cog"></i></button>
+  </div>
+</header>
+
+<div class="app-body">
+  <!-- Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sidebar-section">
+      <h4><i class="fas fa-flask" style="margin-right:6px"></i> Experiment</h4>
+      <div class="card p-16" style="border-left:4px solid #9c27b0">
+        <p class="text-sm" style="font-weight:600">Masked Video Evaluation</p>
+        <p class="text-xs text-gray">3 videos • 4 strategies</p>
+        <p class="text-xs text-gray" style="margin-top:4px">Dec 14, 2025</p>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <h4><i class="fas fa-mask" style="margin-right:6px"></i> Masking Strategies</h4>
+      <div id="strategyList">
+        <div class="strategy-card selected" data-strategy="blur" onclick="selectStrategy('blur')">
+          <div class="flex items-center gap-12">
+            <div class="strategy-icon"><i class="fas fa-tint"></i></div>
+            <div class="flex-1">
+              <p class="text-sm" style="font-weight:600">Blurring</p>
+              <p class="text-xs text-gray">Gaussian blur</p>
+            </div>
+            <span class="pck-badge pck-high">86% PCK</span>
+          </div>
+        </div>
+        <div class="strategy-card" data-strategy="contour" onclick="selectStrategy('contour')">
+          <div class="flex items-center gap-12">
+            <div class="strategy-icon"><i class="fas fa-draw-polygon"></i></div>
+            <div class="flex-1">
+              <p class="text-sm" style="font-weight:600">Contours</p>
+              <p class="text-xs text-gray">Edge outlines only</p>
+            </div>
+            <span class="pck-badge pck-medium">44% PCK</span>
+          </div>
+        </div>
+        <div class="strategy-card" data-strategy="pixel" onclick="selectStrategy('pixel')">
+          <div class="flex items-center gap-12">
+            <div class="strategy-icon"><i class="fas fa-th"></i></div>
+            <div class="flex-1">
+              <p class="text-sm" style="font-weight:600">Pixelation</p>
+              <p class="text-xs text-gray">Mosaic blocks</p>
+            </div>
+            <span class="pck-badge pck-low">23% PCK</span>
+          </div>
+        </div>
+        <div class="strategy-card" data-strategy="solid" onclick="selectStrategy('solid')">
+          <div class="flex items-center gap-12">
+            <div class="strategy-icon"><i class="fas fa-square"></i></div>
+            <div class="flex-1">
+              <p class="text-sm" style="font-weight:600">Solid Fill</p>
+              <p class="text-xs text-gray">Uniform color</p>
+            </div>
+            <span class="pck-badge pck-low">11% PCK</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <h4><i class="fas fa-video" style="margin-right:6px"></i> Test Videos</h4>
+      <div class="flex" style="flex-direction:column;gap:8px">
+        <div class="card p-12 flex items-center gap-8" style="cursor:pointer">
+          <div class="icon-box icon-box-sm icon-box-gray"><i class="fas fa-video"></i></div>
+          <div class="flex-1">
+            <p class="text-xs" style="font-weight:500">ted_kid_video.mp4</p>
+            <p class="text-xs text-gray">0:10</p>
+          </div>
+        </div>
+        <div class="card p-12 flex items-center gap-8" style="cursor:pointer">
+          <div class="icon-box icon-box-sm icon-box-gray"><i class="fas fa-video"></i></div>
+          <div class="flex-1">
+            <p class="text-xs" style="font-weight:500">let_curiosity_lead.mp4</p>
+            <p class="text-xs text-gray">1:45</p>
+          </div>
+        </div>
+        <div class="card p-12 flex items-center gap-8" style="cursor:pointer">
+          <div class="icon-box icon-box-sm icon-box-gray"><i class="fas fa-video"></i></div>
+          <div class="flex-1">
+            <p class="text-xs" style="font-weight:500">interactive1_t1.mp4</p>
+            <p class="text-xs text-gray">2:30</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <h4><i class="fas fa-download" style="margin-right:6px"></i> Export</h4>
+      <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:8px"><i class="fas fa-file-csv"></i> Export Results</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%"><i class="fas fa-image"></i> Download Plots</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <div class="flex justify-between items-center mb-24 fade-in">
+      <div>
+        <h1 class="mb-4">Masked Video <span>Evaluation</span></h1>
+        <p class="text-sm text-gray">Evaluate pose estimation performance on privacy-masked videos</p>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn btn-secondary btn-sm"><i class="fas fa-plus"></i> Add Strategy</button>
+        <button class="btn btn-primary btn-sm"><i class="fas fa-play"></i> Run Evaluation</button>
+      </div>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="info-banner fade-in">
+      <i class="fas fa-info-circle"></i>
+      <div>
+        <p><strong>How this works:</strong> We compare pose estimation on masked videos against the original (unmasked) baseline. PCK measures what percentage of keypoints are detected correctly relative to the original.</p>
+      </div>
+    </div>
+
+    <!-- Masking Preview Grid -->
+    <div class="card mb-24 fade-in">
+      <div class="p-16 border-b">
+        <h2><i class="fas fa-eye" style="margin-right:8px"></i> Visual Comparison</h2>
+        <p class="text-xs text-gray">Click to select masking strategy</p>
+      </div>
+      <div class="p-16">
+        <div class="masking-grid">
+          <div class="masking-preview active" onclick="selectPreview('original')">
+            <div class="masking-thumb" style="background:#2a2a2a">
+              <svg width="60" height="90" viewBox="0 0 60 90">
+                <ellipse cx="30" cy="12" rx="10" ry="12" fill="#f5d0c5"/>
+                <rect x="20" y="24" width="20" height="35" rx="3" fill="#4a90d9"/>
+                <rect x="10" y="28" width="12" height="6" rx="2" fill="#f5d0c5"/>
+                <rect x="38" y="28" width="12" height="6" rx="2" fill="#f5d0c5"/>
+                <rect x="22" y="59" width="7" height="30" rx="2" fill="#3a3a5a"/>
+                <rect x="31" y="59" width="7" height="30" rx="2" fill="#3a3a5a"/>
+              </svg>
+            </div>
+            <div class="masking-label">Original</div>
+          </div>
+          <div class="masking-preview" onclick="selectPreview('blur')">
+            <div class="masking-thumb" style="background:#2a2a2a">
+              <svg width="60" height="90" viewBox="0 0 60 90" style="filter:blur(4px)">
+                <ellipse cx="30" cy="12" rx="10" ry="12" fill="#f5d0c5"/>
+                <rect x="20" y="24" width="20" height="35" rx="3" fill="#4a90d9"/>
+                <rect x="10" y="28" width="12" height="6" rx="2" fill="#f5d0c5"/>
+                <rect x="38" y="28" width="12" height="6" rx="2" fill="#f5d0c5"/>
+                <rect x="22" y="59" width="7" height="30" rx="2" fill="#3a3a5a"/>
+                <rect x="31" y="59" width="7" height="30" rx="2" fill="#3a3a5a"/>
+              </svg>
+            </div>
+            <div class="masking-label">Blurring</div>
+          </div>
+          <div class="masking-preview" onclick="selectPreview('pixel')">
+            <div class="masking-thumb" style="background:#2a2a2a">
+              <svg width="60" height="90" viewBox="0 0 60 90">
+                <defs>
+                  <pattern id="pixelPattern" width="6" height="6" patternUnits="userSpaceOnUse">
+                    <rect width="3" height="3" fill="#8a7a6a"/>
+                    <rect x="3" width="3" height="3" fill="#6a8a9a"/>
+                    <rect y="3" width="3" height="3" fill="#7a6a8a"/>
+                    <rect x="3" y="3" width="3" height="3" fill="#9a8a7a"/>
+                  </pattern>
+                </defs>
+                <ellipse cx="30" cy="12" rx="10" ry="12" fill="url(#pixelPattern)"/>
+                <rect x="20" y="24" width="20" height="35" rx="0" fill="url(#pixelPattern)"/>
+                <rect x="10" y="28" width="12" height="6" rx="0" fill="url(#pixelPattern)"/>
+                <rect x="38" y="28" width="12" height="6" rx="0" fill="url(#pixelPattern)"/>
+                <rect x="22" y="59" width="7" height="30" rx="0" fill="url(#pixelPattern)"/>
+                <rect x="31" y="59" width="7" height="30" rx="0" fill="url(#pixelPattern)"/>
+              </svg>
+            </div>
+            <div class="masking-label">Pixelation</div>
+          </div>
+          <div class="masking-preview" onclick="selectPreview('contour')">
+            <div class="masking-thumb" style="background:#2a2a2a">
+              <svg width="60" height="90" viewBox="0 0 60 90">
+                <ellipse cx="30" cy="12" rx="10" ry="12" fill="none" stroke="#fff" stroke-width="1.5"/>
+                <rect x="20" y="24" width="20" height="35" rx="3" fill="none" stroke="#fff" stroke-width="1.5"/>
+                <rect x="10" y="28" width="12" height="6" rx="2" fill="none" stroke="#fff" stroke-width="1.5"/>
+                <rect x="38" y="28" width="12" height="6" rx="2" fill="none" stroke="#fff" stroke-width="1.5"/>
+                <rect x="22" y="59" width="7" height="30" rx="2" fill="none" stroke="#fff" stroke-width="1.5"/>
+                <rect x="31" y="59" width="7" height="30" rx="2" fill="none" stroke="#fff" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <div class="masking-label">Contours</div>
+          </div>
+          <div class="masking-preview" onclick="selectPreview('solid')">
+            <div class="masking-thumb" style="background:#2a2a2a">
+              <svg width="60" height="90" viewBox="0 0 60 90">
+                <ellipse cx="30" cy="12" rx="10" ry="12" fill="#000"/>
+                <rect x="20" y="24" width="20" height="35" rx="3" fill="#000"/>
+                <rect x="10" y="28" width="12" height="6" rx="2" fill="#000"/>
+                <rect x="38" y="28" width="12" height="6" rx="2" fill="#000"/>
+                <rect x="22" y="59" width="7" height="30" rx="2" fill="#000"/>
+                <rect x="31" y="59" width="7" height="30" rx="2" fill="#000"/>
+              </svg>
+            </div>
+            <div class="masking-label">Solid Fill</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="grid-2 mb-24">
+      <!-- PCK Heatmap -->
+      <div class="card fade-in">
+        <div class="p-16 border-b">
+          <h2><i class="fas fa-th" style="margin-right:8px"></i> PCK by Strategy × Estimator</h2>
+          <p class="text-xs text-gray">Percentage of Correct Keypoints (higher is better)</p>
+        </div>
+        <div class="p-16">
+          <div class="heatmap-container" id="heatmap">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- Bar Chart -->
+      <div class="card fade-in">
+        <div class="p-16 border-b">
+          <h2><i class="fas fa-chart-bar" style="margin-right:8px"></i> Average PCK by Strategy</h2>
+        </div>
+        <div class="p-16">
+          <div class="chart-container">
+            <canvas id="pckChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Results Table -->
+    <div class="card mb-24 fade-in">
+      <div class="p-16 border-b flex justify-between items-center">
+        <div>
+          <h2><i class="fas fa-table" style="margin-right:8px"></i> Detailed Results</h2>
+          <p class="text-xs text-gray">PCK and RMSE for each estimator × strategy combination</p>
+        </div>
+        <button class="btn btn-ghost btn-sm"><i class="fas fa-download"></i> Export</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Estimator</th>
+              <th class="metric">Blur PCK</th>
+              <th class="metric">Pixel PCK</th>
+              <th class="metric">Contour PCK</th>
+              <th class="metric">Solid PCK</th>
+              <th class="metric">Average</th>
+            </tr>
+          </thead>
+          <tbody id="resultsTable">
+            <!-- Generated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="grid-2 fade-in">
+      <div class="recommendation-card" style="border-color:#2e7d32">
+        <div class="flex items-center gap-8 mb-8">
+          <div class="icon-box icon-box-sm icon-box-success"><i class="fas fa-check"></i></div>
+          <h3>Recommended: Blurring</h3>
+        </div>
+        <p>Blurring offers the best trade-off between privacy and pose estimation quality, maintaining <strong>86% average PCK</strong> across all estimators. Pose estimators rely on body shape rather than fine details.</p>
+      </div>
+      <div class="recommendation-card" style="border-color:#c62828">
+        <div class="flex items-center gap-8 mb-8">
+          <div class="icon-box icon-box-sm icon-box-error"><i class="fas fa-times"></i></div>
+          <h3>Avoid: Solid Fill & Pixelation</h3>
+        </div>
+        <p>Solid fill removes nearly all information (11% PCK). Pixelation severely degrades most estimators except MediaPipe (81% PCK). Use only when maximum privacy is required.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// Data
+const estimators = [
+  { id: 'yolo', name: 'YOLOv11-Pose', color: '#000' },
+  { id: 'mediapipe', name: 'MediaPipe Pose', color: '#2196f3' },
+  { id: 'openpose', name: 'OpenPose', color: '#ff9800' },
+  { id: 'maskanyone-ui', name: 'MaskAnyone-UI-MP', color: '#9c27b0' }
+];
+
+const pckData = {
+  yolo: { blur: 95, pixel: 9, contour: 93, solid: 32 },
+  mediapipe: { blur: 95, pixel: 81, contour: 56, solid: 34 },
+  openpose: { blur: 88, pixel: 10, contour: 62, solid: 1 },
+  'maskanyone-ui': { blur: 95, pixel: 63, contour: 0, solid: 7 }
+};
+
+const strategies = ['blur', 'pixel', 'contour', 'solid'];
+const strategyLabels = { blur: 'Blurring', pixel: 'Pixelation', contour: 'Contours', solid: 'Solid Fill' };
+
+// Generate heatmap
+function renderHeatmap() {
+  const container = document.getElementById('heatmap');
+  
+  // Header row
+  let html = '<div class="heatmap-header"></div>';
+  strategies.forEach(s => {
+    html += `<div class="heatmap-header">${strategyLabels[s]}</div>`;
+  });
+  
+  // Data rows
+  estimators.forEach(est => {
+    html += `<div class="heatmap-row-label"><div class="color-dot" style="background:${est.color}"></div>${est.name}</div>`;
+    strategies.forEach(s => {
+      const val = pckData[est.id][s];
+      const bg = getHeatmapColor(val);
+      html += `<div class="heatmap-cell" style="background:${bg};color:${val > 50 ? '#fff' : '#000'}">${val}%</div>`;
+    });
+  });
+  
+  container.innerHTML = html;
+}
+
+function getHeatmapColor(val) {
+  if (val >= 80) return '#2e7d32';
+  if (val >= 60) return '#7cb342';
+  if (val >= 40) return '#fdd835';
+  if (val >= 20) return '#ff9800';
+  return '#c62828';
+}
+
+// Render results table
+function renderTable() {
+  const tbody = document.getElementById('resultsTable');
+  
+  tbody.innerHTML = estimators.map(est => {
+    const data = pckData[est.id];
+    const avg = Math.round((data.blur + data.pixel + data.contour + data.solid) / 4);
+    
+    const maxBlur = Math.max(...estimators.map(e => pckData[e.id].blur));
+    const maxPixel = Math.max(...estimators.map(e => pckData[e.id].pixel));
+    const maxContour = Math.max(...estimators.map(e => pckData[e.id].contour));
+    const maxSolid = Math.max(...estimators.map(e => pckData[e.id].solid));
+    
+    return `
+      <tr>
+        <td><div class="flex items-center gap-8"><div class="color-dot" style="background:${est.color}"></div>${est.name}</div></td>
+        <td class="metric ${data.blur === maxBlur ? 'best' : ''}">${data.blur}%</td>
+        <td class="metric ${data.pixel === maxPixel ? 'best' : ''}">${data.pixel}%</td>
+        <td class="metric ${data.contour === maxContour ? 'best' : ''}">${data.contour}%</td>
+        <td class="metric ${data.solid === maxSolid ? 'best' : ''}">${data.solid}%</td>
+        <td class="metric" style="font-weight:600">${avg}%</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// Create PCK bar chart
+function createPckChart() {
+  const ctx = document.getElementById('pckChart').getContext('2d');
+  
+  const avgByStrategy = strategies.map(s => {
+    const sum = estimators.reduce((acc, e) => acc + pckData[e.id][s], 0);
+    return Math.round(sum / estimators.length);
+  });
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: strategies.map(s => strategyLabels[s]),
+      datasets: [{
+        label: 'Average PCK %',
+        data: avgByStrategy,
+        backgroundColor: ['#2e7d32', '#ff9800', '#fdd835', '#c62828'],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.raw}% PCK`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          grid: { color: '#eee' },
+          ticks: { callback: v => v + '%' }
+        },
+        x: { grid: { display: false } }
+      },
+      animation: {
+        duration: 1500,
+        easing: 'easeOutQuart'
+      }
+    }
+  });
+}
+
+// Strategy selection
+function selectStrategy(strategy) {
+  document.querySelectorAll('.strategy-card').forEach(card => {
+    card.classList.toggle('selected', card.dataset.strategy === strategy);
+  });
+}
+
+// Preview selection
+function selectPreview(type) {
+  document.querySelectorAll('.masking-preview').forEach(p => {
+    p.classList.remove('active');
+  });
+  event.currentTarget.classList.add('active');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  renderHeatmap();
+  renderTable();
+  createPckChart();
+  
+  // Animate heatmap cells
+  setTimeout(() => {
+    document.querySelectorAll('.heatmap-cell').forEach((cell, i) => {
+      cell.style.opacity = '0';
+      cell.style.transform = 'scale(0.8)';
+      setTimeout(() => {
+        cell.style.transition = 'all 0.3s ease-out';
+        cell.style.opacity = '1';
+        cell.style.transform = 'scale(1)';
+      }, i * 50);
+    });
+  }, 300);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaskBench - History</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#000;line-height:1.5}
+    
+    .icon-box{width:40px;height:40px;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
+    .icon-box-sm{width:32px;height:32px;font-size:14px}
+    .icon-box-success{background:#e8f5e9;color:#2e7d32}
+    .icon-box-warning{background:#fff8e1;color:#f57f17}
+    .icon-box-error{background:#ffebee;color:#c62828}
+    .icon-box-gray{background:#e5e5e5;color:#666}
+    
+    .card{background:#fff;border:1px solid #e5e5e5}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;border:none}
+    .btn-primary{background:#000;color:#fff}.btn-primary:hover{background:#333}
+    .btn-secondary{background:#fff;color:#000;border:2px solid #000}.btn-secondary:hover{background:#000;color:#fff}
+    .btn-ghost{background:transparent;color:#666;padding:8px 16px}.btn-ghost:hover{background:#f0f0f0;color:#000}
+    .btn-danger{background:#fff;color:#c62828;border:2px solid #c62828}.btn-danger:hover{background:#c62828;color:#fff}
+    .btn-sm{padding:8px 16px;font-size:12px}
+    .btn-icon{width:36px;height:36px;padding:0;justify-content:center;border-radius:4px;background:transparent;border:1px solid transparent}
+    .btn-icon:hover{background:#f5f5f5;border-color:#e5e5e5}
+    
+    .tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;font-size:11px;font-weight:600}
+    .tag-success{background:#e8f5e9;color:#2e7d32}
+    .tag-warning{background:#fff8e1;color:#f57f17}
+    .tag-error{background:#ffebee;color:#c62828}
+    .tag-gray{background:#e5e5e5;color:#666}
+    .tag-info{background:#e3f2fd;color:#1565c0}
+    
+    .input{padding:10px 14px;font-family:inherit;font-size:13px;border:2px solid #e5e5e5;transition:border-color .2s;min-width:250px}
+    .input:focus{outline:none;border-color:#000}
+    .select{padding:10px 14px;font-family:inherit;font-size:13px;border:2px solid #e5e5e5;background:#fff;cursor:pointer}
+    .select:focus{outline:none;border-color:#000}
+    
+    .app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;border-bottom:1px solid #e5e5e5}
+    .app-logo{font-size:18px;font-weight:700;display:flex;align-items:center;gap:12px}
+    .app-nav{display:flex;gap:4px}
+    .app-nav a{font-size:13px;color:#666;text-decoration:none;padding:8px 16px;transition:all .2s}
+    .app-nav a:hover{background:#f5f5f5;color:#000}
+    .app-nav a.active{background:#000;color:#fff}
+    
+    .main-content{max-width:1200px;margin:0 auto;padding:32px 24px}
+    
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+    .stat-mini{background:#fff;border:1px solid #e5e5e5;padding:16px;display:flex;align-items:center;gap:12px}
+    .stat-mini .value{font-size:24px;font-weight:300}
+    .stat-mini .label{font-size:11px;color:#666;text-transform:uppercase}
+    
+    .filters-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:16px;background:#fff;border:1px solid #e5e5e5}
+    .search-box{position:relative;flex:1;max-width:300px}
+    .search-box input{width:100%;padding-left:36px}
+    .search-box i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999}
+    .filter-group{display:flex;align-items:center;gap:8px}
+    .filter-group label{font-size:12px;color:#666}
+    
+    .data-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid #e5e5e5}
+    .data-table th{padding:14px 16px;text-align:left;font-weight:600;background:#fafafa;border-bottom:2px solid #e5e5e5;white-space:nowrap}
+    .data-table th.sortable{cursor:pointer;user-select:none}
+    .data-table th.sortable:hover{background:#f0f0f0}
+    .data-table th .sort-icon{margin-left:4px;opacity:.3}
+    .data-table th.sorted .sort-icon{opacity:1}
+    .data-table td{padding:14px 16px;border-bottom:1px solid #e5e5e5;vertical-align:middle}
+    .data-table tr:hover{background:#fafafa}
+    .data-table tr.selected{background:#f0f7ff}
+    .data-table .checkbox{width:18px;height:18px;cursor:pointer}
+    
+    .experiment-info{display:flex;flex-direction:column;gap:2px}
+    .experiment-name{font-weight:500}
+    .experiment-meta{font-size:11px;color:#666}
+    
+    .actions-cell{display:flex;gap:4px}
+    
+    .bulk-actions{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #000;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;transform:translateY(100%);transition:transform .3s ease-out;z-index:100}
+    .bulk-actions.visible{transform:translateY(0)}
+    .bulk-actions .selected-count{font-weight:600}
+    
+    .empty-state{text-align:center;padding:64px;color:#666}
+    .empty-state i{font-size:48px;margin-bottom:16px;opacity:.3}
+    
+    .pagination{display:flex;align-items:center;justify-content:space-between;padding:16px;background:#fff;border:1px solid #e5e5e5;border-top:none}
+    .page-info{font-size:13px;color:#666}
+    .page-buttons{display:flex;gap:4px}
+    .page-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e5e5;background:#fff;cursor:pointer;font-size:13px;transition:all .15s}
+    .page-btn:hover{background:#f5f5f5;border-color:#000}
+    .page-btn.active{background:#000;color:#fff;border-color:#000}
+    .page-btn:disabled{opacity:.4;cursor:not-allowed}
+    
+    .color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    
+    .progress-bar-sm{width:60px;height:4px;background:#e5e5e5;border-radius:2px;overflow:hidden}
+    .progress-bar-sm .fill{height:100%;background:#000}
+    
+    /* Delete confirmation modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:200}
+    .modal-overlay.visible{display:flex}
+    .modal-card{background:#fff;padding:32px;max-width:400px;width:90%;text-align:center}
+    .modal-card h2{margin-bottom:8px}
+    .modal-card p{color:#666;margin-bottom:24px}
+    .modal-actions{display:flex;gap:12px;justify-content:center}
+    
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideInBottom{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .fade-in{animation:fadeIn .4s ease-out}
+    .slide-up{animation:slideUp .4s ease-out}
+    
+    h1{font-size:24px;font-weight:300}h1 span{font-weight:600}
+    h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#666}
+    .text-sm{font-size:13px}.text-xs{font-size:11px}.text-gray{color:#666}
+    .flex{display:flex}.flex-1{flex:1}.items-center{align-items:center}.justify-between{justify-content:space-between}
+    .gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+    .mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}.mb-24{margin-bottom:24px}
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="flex items-center gap-16">
+    <div class="app-logo"><i class="fas fa-chart-bar"></i> MaskBench</div>
+    <nav class="app-nav">
+      <a href="maskbench-dashboard.html">Dashboard</a>
+      <a href="maskbench-new-experiment.html">New Experiment</a>
+      <a href="maskbench-results.html">Results</a>
+      <a href="maskbench-compare.html">Compare</a>
+      <a href="maskbench-masked.html">Masked Videos</a>
+      <a href="#" class="active">History</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-8">
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-book"></i> Docs</button>
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-cog"></i></button>
+  </div>
+</header>
+
+<main class="main-content">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-24 fade-in">
+    <div>
+      <h1 class="mb-4">Experiment <span>History</span></h1>
+      <p class="text-sm text-gray">View, manage, and export past benchmarking experiments</p>
+    </div>
+    <div class="flex gap-8">
+      <button class="btn btn-ghost btn-sm"><i class="fas fa-file-export"></i> Export All</button>
+      <button class="btn btn-primary" onclick="window.location.href='maskbench-new-experiment.html'">
+        <i class="fas fa-plus"></i> New Experiment
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row fade-in">
+    <div class="stat-mini">
+      <div class="icon-box icon-box-sm"><i class="fas fa-flask"></i></div>
+      <div>
+        <div class="value" id="totalExperiments">12</div>
+        <div class="label">Total Experiments</div>
+      </div>
+    </div>
+    <div class="stat-mini">
+      <div class="icon-box icon-box-sm icon-box-success"><i class="fas fa-check"></i></div>
+      <div>
+        <div class="value" id="completedCount">9</div>
+        <div class="label">Completed</div>
+      </div>
+    </div>
+    <div class="stat-mini">
+      <div class="icon-box icon-box-sm icon-box-warning"><i class="fas fa-spinner"></i></div>
+      <div>
+        <div class="value" id="processingCount">2</div>
+        <div class="label">Processing</div>
+      </div>
+    </div>
+    <div class="stat-mini">
+      <div class="icon-box icon-box-sm icon-box-error"><i class="fas fa-times"></i></div>
+      <div>
+        <div class="value" id="failedCount">1</div>
+        <div class="label">Failed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar fade-in">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" class="input" placeholder="Search experiments..." id="searchInput" oninput="filterExperiments()">
+    </div>
+    <div class="filter-group">
+      <label>Status:</label>
+      <select class="select" id="statusFilter" onchange="filterExperiments()">
+        <option value="all">All</option>
+        <option value="completed">Completed</option>
+        <option value="processing">Processing</option>
+        <option value="failed">Failed</option>
+        <option value="draft">Draft</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Date:</label>
+      <select class="select" id="dateFilter" onchange="filterExperiments()">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+      </select>
+    </div>
+    <div class="flex-1"></div>
+    <div class="filter-group">
+      <label>Sort:</label>
+      <select class="select" id="sortSelect" onchange="sortExperiments()">
+        <option value="date-desc">Newest First</option>
+        <option value="date-asc">Oldest First</option>
+        <option value="name-asc">Name A-Z</option>
+        <option value="name-desc">Name Z-A</option>
+        <option value="videos-desc">Most Videos</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <table class="data-table fade-in">
+    <thead>
+      <tr>
+        <th style="width:40px"><input type="checkbox" class="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+        <th class="sortable" onclick="sortBy('name')">Experiment <i class="fas fa-sort sort-icon"></i></th>
+        <th class="sortable" onclick="sortBy('videos')">Videos <i class="fas fa-sort sort-icon"></i></th>
+        <th>Estimators</th>
+        <th class="sortable" onclick="sortBy('date')">Date <i class="fas fa-sort sort-icon"></i></th>
+        <th>Status</th>
+        <th>Progress</th>
+        <th style="width:140px">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="experimentsTable">
+      <!-- Generated by JS -->
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="pagination fade-in">
+    <div class="page-info">
+      Showing <strong id="showingStart">1</strong>-<strong id="showingEnd">10</strong> of <strong id="totalItems">12</strong> experiments
+    </div>
+    <div class="page-buttons">
+      <button class="page-btn" onclick="prevPage()" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn" onclick="nextPage()" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+</main>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-actions" id="bulkActions">
+  <div class="flex items-center gap-16">
+    <span class="selected-count"><span id="selectedCount">0</span> experiments selected</span>
+    <button class="btn btn-ghost btn-sm" onclick="clearSelection()"><i class="fas fa-times"></i> Clear</button>
+  </div>
+  <div class="flex gap-8">
+    <button class="btn btn-secondary btn-sm"><i class="fas fa-file-export"></i> Export Selected</button>
+    <button class="btn btn-secondary btn-sm"><i class="fas fa-copy"></i> Duplicate</button>
+    <button class="btn btn-danger btn-sm" onclick="showDeleteModal()"><i class="fas fa-trash"></i> Delete</button>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-card">
+    <div class="icon-box icon-box-error" style="margin:0 auto 16px;width:56px;height:56px;font-size:24px">
+      <i class="fas fa-trash"></i>
+    </div>
+    <h2>Delete Experiments?</h2>
+    <p>This will permanently delete <strong id="deleteCount">0</strong> experiments and all associated data. This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="hideDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="deleteSelected()"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Data
+let experiments = [
+  { id: 1, name: 'TED Talks Evaluation', description: 'YOLO, MediaPipe, OpenPose, MaskAnyone', videos: 10, estimators: ['yolo', 'mediapipe', 'openpose', 'maskanyone'], date: '2025-12-15', status: 'completed', progress: 100 },
+  { id: 2, name: 'Masked Video Comparison', description: 'Blur, Pixelate, Contour, Solid', videos: 3, estimators: ['yolo', 'mediapipe'], date: '2025-12-14', status: 'processing', progress: 65 },
+  { id: 3, name: 'Tragic Talkers Ground Truth', description: 'All estimators, PCK/RMSE metrics', videos: 20, estimators: ['yolo', 'mediapipe', 'openpose'], date: '2025-12-12', status: 'completed', progress: 100 },
+  { id: 4, name: 'Quick Test - Single Video', description: 'YOLO only', videos: 1, estimators: ['yolo'], date: '2025-12-10', status: 'failed', progress: 23 },
+  { id: 5, name: 'Classroom Recording Batch', description: 'MediaPipe, OpenPose', videos: 15, estimators: ['mediapipe', 'openpose'], date: '2025-12-08', status: 'completed', progress: 100 },
+  { id: 6, name: 'Clinical Gait Analysis', description: 'MaskAnyone variants', videos: 8, estimators: ['maskanyone'], date: '2025-12-05', status: 'completed', progress: 100 },
+  { id: 7, name: 'Interview De-identification', description: 'All estimators + masking', videos: 5, estimators: ['yolo', 'mediapipe', 'openpose', 'maskanyone'], date: '2025-12-03', status: 'completed', progress: 100 },
+  { id: 8, name: 'Sports Motion Capture', description: 'High-speed video test', videos: 12, estimators: ['yolo', 'openpose'], date: '2025-12-01', status: 'processing', progress: 42 },
+  { id: 9, name: 'Gesture Study Pilot', description: 'Single speaker analysis', videos: 4, estimators: ['mediapipe'], date: '2025-11-28', status: 'completed', progress: 100 },
+  { id: 10, name: 'Multi-person Interaction', description: 'OpenPose focus', videos: 6, estimators: ['openpose', 'yolo'], date: '2025-11-25', status: 'completed', progress: 100 },
+  { id: 11, name: 'Occlusion Test Set', description: 'Challenging scenarios', videos: 8, estimators: ['yolo', 'mediapipe', 'maskanyone'], date: '2025-11-20', status: 'completed', progress: 100 },
+  { id: 12, name: 'Draft Experiment', description: 'Not started', videos: 0, estimators: [], date: '2025-11-18', status: 'draft', progress: 0 }
+];
+
+let selectedIds = new Set();
+let currentSort = { field: 'date', order: 'desc' };
+
+const estimatorColors = {
+  yolo: '#000',
+  mediapipe: '#2196f3',
+  openpose: '#ff9800',
+  maskanyone: '#9c27b0'
+};
+
+const statusConfig = {
+  completed: { tag: 'tag-success', icon: 'fa-check', label: 'Completed' },
+  processing: { tag: 'tag-warning', icon: 'fa-spinner fa-spin', label: 'Processing' },
+  failed: { tag: 'tag-error', icon: 'fa-times', label: 'Failed' },
+  draft: { tag: 'tag-gray', icon: 'fa-file-alt', label: 'Draft' }
+};
+
+// Render table
+function renderTable(data = experiments) {
+  const tbody = document.getElementById('experimentsTable');
+  
+  if (data.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8">
+          <div class="empty-state">
+            <i class="fas fa-flask"></i>
+            <p>No experiments found</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  tbody.innerHTML = data.map((exp, i) => {
+    const status = statusConfig[exp.status];
+    return `
+      <tr class="${selectedIds.has(exp.id) ? 'selected' : ''} slide-up" style="animation-delay:${i * 0.03}s">
+        <td><input type="checkbox" class="checkbox" ${selectedIds.has(exp.id) ? 'checked' : ''} onchange="toggleSelect(${exp.id})"></td>
+        <td>
+          <div class="experiment-info">
+            <span class="experiment-name">${exp.name}</span>
+            <span class="experiment-meta">${exp.description}</span>
+          </div>
+        </td>
+        <td>${exp.videos}</td>
+        <td>
+          <div class="flex gap-4">
+            ${exp.estimators.map(e => `<div class="color-dot" style="background:${estimatorColors[e]}" title="${e}"></div>`).join('')}
+            ${exp.estimators.length === 0 ? '<span class="text-xs text-gray">None</span>' : ''}
+          </div>
+        </td>
+        <td class="text-gray">${formatDate(exp.date)}</td>
+        <td><span class="tag ${status.tag}"><i class="fas ${status.icon}"></i> ${status.label}</span></td>
+        <td>
+          ${exp.status === 'processing' ? `
+            <div class="flex items-center gap-8">
+              <div class="progress-bar-sm"><div class="fill" style="width:${exp.progress}%"></div></div>
+              <span class="text-xs text-gray">${exp.progress}%</span>
+            </div>
+          ` : exp.status === 'completed' ? '<span class="text-xs text-gray">Done</span>' : 
+             exp.status === 'failed' ? '<span class="text-xs" style="color:#c62828">Error</span>' : 
+             '<span class="text-xs text-gray">-</span>'}
+        </td>
+        <td>
+          <div class="actions-cell">
+            ${exp.status === 'completed' ? `
+              <button class="btn-icon" title="View Results" onclick="viewResults(${exp.id})"><i class="fas fa-eye"></i></button>
+              <button class="btn-icon" title="Download" onclick="downloadExp(${exp.id})"><i class="fas fa-download"></i></button>
+              <button class="btn-icon" title="Duplicate" onclick="duplicateExp(${exp.id})"><i class="fas fa-copy"></i></button>
+            ` : exp.status === 'processing' ? `
+              <button class="btn-icon" title="Pause"><i class="fas fa-pause"></i></button>
+              <button class="btn-icon" title="Cancel"><i class="fas fa-times"></i></button>
+            ` : exp.status === 'failed' ? `
+              <button class="btn-icon" title="Retry" onclick="retryExp(${exp.id})"><i class="fas fa-redo"></i></button>
+              <button class="btn-icon" title="View Error"><i class="fas fa-exclamation-circle"></i></button>
+            ` : `
+              <button class="btn-icon" title="Edit" onclick="editExp(${exp.id})"><i class="fas fa-edit"></i></button>
+            `}
+            <button class="btn-icon" title="Delete" onclick="deleteSingle(${exp.id})"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  
+  updateStats();
+  updatePagination(data.length);
+}
+
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const options = { month: 'short', day: 'numeric', year: 'numeric' };
+  return date.toLocaleDateString('en-US', options);
+}
+
+// Selection
+function toggleSelect(id) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+  } else {
+    selectedIds.add(id);
+  }
+  updateSelection();
+  renderTable(getFilteredData());
+}
+
+function toggleSelectAll() {
+  const allCheckbox = document.getElementById('selectAll');
+  const filteredData = getFilteredData();
+  
+  if (allCheckbox.checked) {
+    filteredData.forEach(exp => selectedIds.add(exp.id));
+  } else {
+    selectedIds.clear();
+  }
+  updateSelection();
+  renderTable(filteredData);
+}
+
+function updateSelection() {
+  const count = selectedIds.size;
+  document.getElementById('selectedCount').textContent = count;
+  document.getElementById('bulkActions').classList.toggle('visible', count > 0);
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  document.getElementById('selectAll').checked = false;
+  updateSelection();
+  renderTable(getFilteredData());
+}
+
+// Filtering
+function getFilteredData() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const date = document.getElementById('dateFilter').value;
+  
+  let filtered = experiments.filter(exp => {
+    const matchesSearch = exp.name.toLowerCase().includes(search) || exp.description.toLowerCase().includes(search);
+    const matchesStatus = status === 'all' || exp.status === status;
+    
+    let matchesDate = true;
+    if (date !== 'all') {
+      const expDate = new Date(exp.date);
+      const now = new Date();
+      if (date === 'today') {
+        matchesDate = expDate.toDateString() === now.toDateString();
+      } else if (date === 'week') {
+        const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+        matchesDate = expDate >= weekAgo;
+      } else if (date === 'month') {
+        const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+        matchesDate = expDate >= monthAgo;
+      }
+    }
+    
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+  
+  // Sort
+  const sortVal = document.getElementById('sortSelect').value;
+  const [field, order] = sortVal.split('-');
+  
+  filtered.sort((a, b) => {
+    let cmp = 0;
+    if (field === 'date') cmp = new Date(a.date) - new Date(b.date);
+    else if (field === 'name') cmp = a.name.localeCompare(b.name);
+    else if (field === 'videos') cmp = a.videos - b.videos;
+    return order === 'desc' ? -cmp : cmp;
+  });
+  
+  return filtered;
+}
+
+function filterExperiments() {
+  renderTable(getFilteredData());
+}
+
+function sortExperiments() {
+  renderTable(getFilteredData());
+}
+
+function sortBy(field) {
+  const select = document.getElementById('sortSelect');
+  const current = select.value;
+  const [currentField, currentOrder] = current.split('-');
+  
+  if (currentField === field) {
+    select.value = `${field}-${currentOrder === 'asc' ? 'desc' : 'asc'}`;
+  } else {
+    select.value = `${field}-desc`;
+  }
+  sortExperiments();
+}
+
+// Stats
+function updateStats() {
+  document.getElementById('totalExperiments').textContent = experiments.length;
+  document.getElementById('completedCount').textContent = experiments.filter(e => e.status === 'completed').length;
+  document.getElementById('processingCount').textContent = experiments.filter(e => e.status === 'processing').length;
+  document.getElementById('failedCount').textContent = experiments.filter(e => e.status === 'failed').length;
+}
+
+function updatePagination(total) {
+  document.getElementById('showingStart').textContent = total > 0 ? 1 : 0;
+  document.getElementById('showingEnd').textContent = Math.min(total, 10);
+  document.getElementById('totalItems').textContent = total;
+}
+
+// Actions
+function viewResults(id) {
+  window.location.href = 'maskbench-results.html';
+}
+
+function downloadExp(id) {
+  alert(`Downloading experiment ${id}...`);
+}
+
+function duplicateExp(id) {
+  const exp = experiments.find(e => e.id === id);
+  const newExp = { ...exp, id: Date.now(), name: exp.name + ' (Copy)', status: 'draft', progress: 0 };
+  experiments.unshift(newExp);
+  renderTable(getFilteredData());
+}
+
+function retryExp(id) {
+  const exp = experiments.find(e => e.id === id);
+  if (exp) {
+    exp.status = 'processing';
+    exp.progress = 0;
+    renderTable(getFilteredData());
+    simulateProgress(id);
+  }
+}
+
+function editExp(id) {
+  window.location.href = 'maskbench-new-experiment.html';
+}
+
+function deleteSingle(id) {
+  selectedIds.clear();
+  selectedIds.add(id);
+  showDeleteModal();
+}
+
+function simulateProgress(id) {
+  const interval = setInterval(() => {
+    const exp = experiments.find(e => e.id === id);
+    if (!exp || exp.status !== 'processing') {
+      clearInterval(interval);
+      return;
+    }
+    exp.progress += Math.random() * 10;
+    if (exp.progress >= 100) {
+      exp.progress = 100;
+      exp.status = 'completed';
+      clearInterval(interval);
+    }
+    renderTable(getFilteredData());
+  }, 500);
+}
+
+// Delete modal
+function showDeleteModal() {
+  document.getElementById('deleteCount').textContent = selectedIds.size;
+  document.getElementById('deleteModal').classList.add('visible');
+}
+
+function hideDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('visible');
+}
+
+function deleteSelected() {
+  experiments = experiments.filter(e => !selectedIds.has(e.id));
+  selectedIds.clear();
+  hideDeleteModal();
+  updateSelection();
+  renderTable(getFilteredData());
+}
+
+// Pagination (simplified)
+function prevPage() {}
+function nextPage() {}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  renderTable();
+});
+</script>
+
+</body>
+</html>

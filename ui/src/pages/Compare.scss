@@ -1,0 +1,238 @@
+.compare {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--mb-spacing-05);
+  }
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 300;
+    margin-bottom: var(--mb-spacing-01);
+
+    span {
+      font-weight: 600;
+    }
+  }
+
+  &__subtitle {
+    font-size: 0.875rem;
+    color: var(--mb-gray-50);
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--mb-spacing-02);
+    align-items: center;
+  }
+
+  &__panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    background: var(--mb-white);
+    border: 1px solid var(--mb-gray-20);
+    overflow: hidden;
+    margin-bottom: var(--mb-spacing-05);
+  }
+
+  &__metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--mb-spacing-04);
+  }
+}
+
+.video-panel {
+  &:first-child {
+    border-right: 1px solid var(--mb-gray-20);
+  }
+
+  &__header {
+    padding: var(--mb-spacing-03) var(--mb-spacing-04);
+    background: var(--mb-gray-10);
+    border-bottom: 1px solid var(--mb-gray-20);
+    display: flex;
+    align-items: center;
+    gap: var(--mb-spacing-03);
+  }
+}
+
+.video-canvas {
+  aspect-ratio: 16/9;
+  background: var(--mb-gray-100);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skeleton-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.video-label {
+  position: absolute;
+  top: var(--mb-spacing-03);
+  left: var(--mb-spacing-03);
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--mb-white);
+  padding: var(--mb-spacing-01) var(--mb-spacing-03);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: var(--mb-radius-sm);
+}
+
+.video-fps {
+  position: absolute;
+  top: var(--mb-spacing-03);
+  right: var(--mb-spacing-03);
+  background: rgba(0, 0, 0, 0.8);
+  color: #0f0;
+  padding: var(--mb-spacing-01) var(--mb-spacing-02);
+  font-size: 0.625rem;
+  font-family: var(--mb-font-mono);
+  border-radius: var(--mb-radius-sm);
+}
+
+.color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+// Timeline
+.timeline {
+  background: var(--mb-white);
+  border: 1px solid var(--mb-gray-20);
+  padding: var(--mb-spacing-04);
+  margin-bottom: var(--mb-spacing-05);
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--mb-spacing-04);
+    margin-bottom: var(--mb-spacing-04);
+  }
+
+  &__track {
+    padding: 0 var(--mb-spacing-02);
+  }
+}
+
+.play-controls {
+  display: flex;
+  gap: var(--mb-spacing-01);
+}
+
+.time-display {
+  font-family: var(--mb-font-mono);
+  font-size: 0.8125rem;
+  color: var(--mb-gray-70);
+}
+
+.frame-display {
+  font-size: 0.8125rem;
+  color: var(--mb-gray-50);
+
+  strong {
+    font-family: var(--mb-font-mono);
+  }
+}
+
+.speed-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--mb-spacing-02);
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--mb-gray-50);
+}
+
+.speed-btn {
+  padding: var(--mb-spacing-01) var(--mb-spacing-03);
+  font-size: 0.6875rem;
+  background: var(--mb-gray-10);
+  border: 1px solid var(--mb-gray-20);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: var(--mb-gray-20);
+  }
+
+  &--active {
+    background: var(--mb-black);
+    color: var(--mb-white);
+    border-color: var(--mb-black);
+  }
+}
+
+// Metric Cards
+.metric-card {
+  background: var(--mb-white);
+  border: 1px solid var(--mb-gray-20);
+  padding: var(--mb-spacing-05);
+  text-align: center;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--mb-black);
+  }
+
+  h4 {
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--mb-gray-50);
+    margin-bottom: var(--mb-spacing-03);
+  }
+
+  &__values {
+    display: flex;
+    justify-content: center;
+    gap: var(--mb-spacing-06);
+  }
+
+  &__diff {
+    font-size: 0.6875rem;
+    margin-top: var(--mb-spacing-03);
+    padding-top: var(--mb-spacing-03);
+    border-top: 1px solid var(--mb-gray-20);
+
+    &.positive {
+      color: var(--mb-success);
+    }
+
+    &.negative {
+      color: var(--mb-error);
+    }
+  }
+}
+
+.metric-value {
+  text-align: center;
+
+  &__number {
+    font-size: 1.5rem;
+    font-weight: 300;
+    font-family: var(--mb-font-mono);
+    display: block;
+  }
+
+  &__label {
+    font-size: 0.625rem;
+    color: var(--mb-gray-50);
+  }
+
+  &--better &__number {
+    color: var(--mb-success);
+  }
+
+  &--worse &__number {
+    color: var(--mb-error);
+  }
+}

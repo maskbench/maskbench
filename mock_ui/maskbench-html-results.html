@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaskBench - Results</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#000;line-height:1.5}
+    
+    .icon-box{width:40px;height:40px;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:8px;flex-shrink:0}
+    .icon-box-sm{width:32px;height:32px;font-size:14px}
+    .icon-box-success{background:#e8f5e9;color:#2e7d32}
+    .icon-box-warning{background:#fff8e1;color:#f57f17}
+    .icon-box-gray{background:#e5e5e5;color:#666}
+    
+    .card{background:#fff;border:1px solid #e5e5e5}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;border:none}
+    .btn-primary{background:#000;color:#fff}.btn-primary:hover{background:#333}
+    .btn-secondary{background:#fff;color:#000;border:2px solid #000}.btn-secondary:hover{background:#000;color:#fff}
+    .btn-ghost{background:transparent;color:#666;padding:8px 16px}.btn-ghost:hover{background:#f0f0f0;color:#000}
+    .btn-sm{padding:8px 16px;font-size:12px}
+    
+    .tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;font-size:11px;font-weight:600}
+    .tag-default{background:#000;color:#fff}
+    .tag-outline{background:#fff;color:#000;border:1px solid #000}
+    .tag-gold{background:#fff8e1;color:#f57f17;border:1px solid #f57f17}
+    .tag-silver{background:#f5f5f5;color:#666;border:1px solid #999}
+    .tag-bronze{background:#fff3e0;color:#e65100;border:1px solid #e65100}
+    
+    .app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;border-bottom:1px solid #e5e5e5}
+    .app-logo{font-size:18px;font-weight:700;display:flex;align-items:center;gap:12px}
+    .app-nav{display:flex;gap:4px}
+    .app-nav a{font-size:13px;color:#666;text-decoration:none;padding:8px 16px;transition:all .2s}
+    .app-nav a:hover{background:#f5f5f5;color:#000}
+    .app-nav a.active{background:#000;color:#fff}
+    
+    .app-body{display:flex;min-height:calc(100vh - 65px)}
+    .app-sidebar{width:280px;background:#fafafa;border-right:1px solid #e5e5e5;padding:24px;flex-shrink:0}
+    .app-main{flex:1;padding:32px;overflow-y:auto}
+    
+    .sidebar-section{margin-bottom:28px}
+    .sidebar-section h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-bottom:12px}
+    
+    .estimator-legend{display:flex;flex-direction:column;gap:8px}
+    .legend-item{display:flex;align-items:center;gap:10px;font-size:13px;padding:8px;border-radius:4px;cursor:pointer;transition:background .15s}
+    .legend-item:hover{background:#fff}
+    .legend-item.active{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+    .color-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    
+    .metric-radio{display:flex;flex-direction:column;gap:6px}
+    .metric-radio label{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:6px 8px;border-radius:4px;transition:background .15s}
+    .metric-radio label:hover{background:#fff}
+    .metric-radio input{accent-color:#000}
+    
+    .tab-nav{display:flex;gap:0;border-bottom:1px solid #e5e5e5;margin-bottom:24px}
+    .tab-btn{padding:12px 24px;background:transparent;border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;color:#666;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+    .tab-btn:hover{color:#000}
+    .tab-btn.active{color:#000;border-bottom-color:#000}
+    
+    .ranking-card{padding:16px;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;gap:16px;transition:background .15s}
+    .ranking-card:last-child{border-bottom:none}
+    .ranking-card:hover{background:#fafafa}
+    .ranking-bar{flex:1;height:8px;background:#e5e5e5;border-radius:4px;overflow:hidden}
+    .ranking-bar-fill{height:100%;border-radius:4px;transition:width 1s ease-out}
+    .ranking-value{width:60px;text-align:right;font-size:14px;font-weight:600;font-family:'SF Mono',Monaco,monospace}
+    
+    .chart-container{position:relative;height:280px}
+    .chart-card{background:#fff;border:1px solid #e5e5e5}
+    .chart-header{padding:16px;border-bottom:1px solid #e5e5e5;display:flex;justify-content:space-between;align-items:center}
+    .chart-header h3{font-size:14px;font-weight:600}
+    .chart-body{padding:16px}
+    
+    .data-table{width:100%;border-collapse:collapse;font-size:13px}
+    .data-table th{padding:12px 16px;text-align:left;font-weight:600;background:#fafafa;border-bottom:1px solid #e5e5e5}
+    .data-table th.num{text-align:right}
+    .data-table td{padding:12px 16px;border-bottom:1px solid #e5e5e5}
+    .data-table td.num{text-align:right;font-family:'SF Mono',Monaco,monospace}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover{background:#fafafa}
+    .data-table .best{color:#2e7d32;font-weight:600}
+    .data-table .worst{color:#c62828}
+    
+    .video-thumb-sm{width:80px;height:45px;background:#e5e5e5;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    
+    .tooltip-custom{position:absolute;background:#000;color:#fff;padding:8px 12px;font-size:11px;border-radius:4px;pointer-events:none;z-index:100;white-space:nowrap}
+    
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes growWidth{from{width:0}to{width:var(--target-width)}}
+    .fade-in{animation:fadeIn .5s ease-out forwards}
+    .slide-in{animation:slideIn .4s ease-out forwards;opacity:0}
+    .delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}.delay-3{animation-delay:.3s}.delay-4{animation-delay:.4s}
+    
+    h1{font-size:28px;font-weight:300}h1 span{font-weight:600}
+    h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#666}
+    .text-sm{font-size:13px}.text-xs{font-size:11px}.text-gray{color:#666}
+    .flex{display:flex}.flex-1{flex:1}.items-center{align-items:center}.justify-between{justify-content:space-between}
+    .gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}.gap-24{gap:24px}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+    .mb-4{margin-bottom:4px}.mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}.mb-24{margin-bottom:24px}
+    .p-16{padding:16px}
+    .border-b{border-bottom:1px solid #e5e5e5}
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="flex items-center gap-16">
+    <div class="app-logo"><i class="fas fa-chart-bar"></i> MaskBench</div>
+    <nav class="app-nav">
+      <a href="maskbench-dashboard.html">Dashboard</a>
+      <a href="maskbench-new-experiment.html">New Experiment</a>
+      <a href="#" class="active">Results</a>
+      <a href="maskbench-compare.html">Compare</a>
+      <a href="maskbench-history.html">History</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-8">
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-book"></i> Docs</button>
+    <button class="btn btn-ghost btn-sm"><i class="fas fa-cog"></i></button>
+  </div>
+</header>
+
+<div class="app-body">
+  <!-- Sidebar -->
+  <aside class="app-sidebar">
+    <div class="sidebar-section">
+      <h4>Experiment</h4>
+      <div class="card p-16" style="border-left:4px solid #000">
+        <p class="text-sm" style="font-weight:600">TED Talks Evaluation</p>
+        <p class="text-xs text-gray">10 videos • Completed</p>
+        <p class="text-xs text-gray" style="margin-top:4px">Dec 15, 2025</p>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <h4>Estimators</h4>
+      <div class="estimator-legend">
+        <div class="legend-item active" data-estimator="yolo">
+          <div class="color-dot" style="background:#000"></div>
+          <span>YOLOv11-Pose</span>
+        </div>
+        <div class="legend-item active" data-estimator="mediapipe">
+          <div class="color-dot" style="background:#2196f3"></div>
+          <span>MediaPipe Pose</span>
+        </div>
+        <div class="legend-item active" data-estimator="openpose">
+          <div class="color-dot" style="background:#ff9800"></div>
+          <span>OpenPose</span>
+        </div>
+        <div class="legend-item active" data-estimator="maskanyone">
+          <div class="color-dot" style="background:#9c27b0"></div>
+          <span>MaskAnyone-MP</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <h4>Metric</h4>
+      <div class="metric-radio">
+        <label><input type="radio" name="metric" value="acceleration" checked> Acceleration</label>
+        <label><input type="radio" name="metric" value="jerk"> Jerk</label>
+        <label><input type="radio" name="metric" value="velocity"> Velocity</label>
+      </div>
+    </div>
+    
+    <div class="sidebar-section">
+      <h4>Export</h4>
+      <div class="flex" style="flex-direction:column;gap:8px">
+        <button class="btn btn-secondary btn-sm" style="width:100%"><i class="fas fa-download"></i> Download Plots</button>
+        <button class="btn btn-secondary btn-sm" style="width:100%"><i class="fas fa-file-csv"></i> Export CSV</button>
+        <button class="btn btn-secondary btn-sm" style="width:100%"><i class="fas fa-file-code"></i> Export JSON</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <div class="flex justify-between items-center mb-24">
+      <div>
+        <h1 class="mb-4">TED Talks <span>Evaluation</span></h1>
+        <p class="text-sm text-gray">10 videos • 4 estimators • Kinematic metrics</p>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn btn-ghost btn-sm"><i class="fas fa-redo"></i> Re-run</button>
+        <button class="btn btn-secondary btn-sm"><i class="fas fa-share"></i> Share</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="distribution">Distribution</button>
+      <button class="tab-btn" data-tab="keypoints">Per-Keypoint</button>
+      <button class="tab-btn" data-tab="videos">Videos</button>
+    </div>
+
+    <!-- Tab: Overview -->
+    <div class="tab-content active" id="tab-overview">
+      <!-- Ranking -->
+      <div class="card mb-24 fade-in">
+        <div class="p-16 border-b flex items-center gap-8">
+          <i class="fas fa-trophy" style="color:#f57f17"></i>
+          <h3 style="font-size:14px;font-weight:600">Estimator Ranking</h3>
+          <span class="text-xs text-gray">(by Acceleration — lower is better)</span>
+        </div>
+        <div id="rankingContainer">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid-2 mb-24">
+        <div class="chart-card fade-in delay-1">
+          <div class="chart-header">
+            <h3>Acceleration Distribution</h3>
+            <button class="btn btn-ghost btn-sm"><i class="fas fa-expand"></i></button>
+          </div>
+          <div class="chart-body">
+            <div class="chart-container">
+              <canvas id="distributionChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card fade-in delay-2">
+          <div class="chart-header">
+            <h3>Per-Keypoint Acceleration</h3>
+            <button class="btn btn-ghost btn-sm"><i class="fas fa-expand"></i></button>
+          </div>
+          <div class="chart-body">
+            <div class="chart-container">
+              <canvas id="keypointChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Table -->
+      <div class="card fade-in delay-3">
+        <div class="p-16 border-b flex justify-between items-center">
+          <h3 style="font-size:14px;font-weight:600"><i class="fas fa-table" style="margin-right:8px"></i> Summary Table</h3>
+          <button class="btn btn-ghost btn-sm"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Estimator</th>
+                <th class="num">Velocity</th>
+                <th class="num">Acceleration</th>
+                <th class="num">Jerk</th>
+                <th class="num">Inference Time</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Distribution -->
+    <div class="tab-content" id="tab-distribution" style="display:none">
+      <div class="chart-card mb-24">
+        <div class="chart-header">
+          <h3>Acceleration Distribution (Full View)</h3>
+          <div class="flex gap-8">
+            <select class="text-sm" style="padding:6px 12px;border:1px solid #e5e5e5">
+              <option>All Videos</option>
+              <option>TED_Talk_01.mp4</option>
+              <option>TED_Talk_02.mp4</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div class="chart-container" style="height:350px">
+            <canvas id="distributionChartFull"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card p-16">
+        <h4 class="mb-8">INTERPRETATION</h4>
+        <p class="text-sm text-gray">Curves concentrated toward zero indicate smoother pose estimation. MaskAnyone-MediaPipe (purple) shows the highest proportion of low-acceleration keypoints, suggesting the most stable trajectories. MediaPipe Pose (blue) has the flattest distribution, indicating more jittery output.</p>
+      </div>
+    </div>
+
+    <!-- Tab: Per-Keypoint -->
+    <div class="tab-content" id="tab-keypoints" style="display:none">
+      <div class="chart-card mb-24">
+        <div class="chart-header">
+          <h3>Median Acceleration by Keypoint</h3>
+        </div>
+        <div class="chart-body">
+          <div class="chart-container" style="height:400px">
+            <canvas id="keypointChartFull"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card p-16">
+        <h4 class="mb-8">KEY FINDINGS</h4>
+        <ul class="text-sm text-gray" style="margin-left:20px">
+          <li style="margin-bottom:4px">Wrists and ankles show highest acceleration across all estimators (expected due to movement)</li>
+          <li style="margin-bottom:4px">Nose, eyes, and ears remain most stable</li>
+          <li>MaskAnyone-MP achieves lowest values for all keypoints</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tab: Videos -->
+    <div class="tab-content" id="tab-videos" style="display:none">
+      <div class="card">
+        <div class="p-16 border-b">
+          <h3 style="font-size:14px;font-weight:600">Rendered Videos</h3>
+          <p class="text-xs text-gray">Click to preview pose overlay for each estimator</p>
+        </div>
+        <div id="videoList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// Data
+const estimators = [
+  { id: 'maskanyone', name: 'MaskAnyone-MP', color: '#9c27b0', velocity: 1.25, acceleration: 1.08, jerk: 1.83, time: '2.1s/frame' },
+  { id: 'yolo', name: 'YOLOv11-Pose', color: '#000', velocity: 1.35, acceleration: 1.46, jerk: 2.44, time: '0.8s/frame' },
+  { id: 'openpose', name: 'OpenPose', color: '#ff9800', velocity: 1.58, acceleration: 2.22, jerk: 3.44, time: '1.2s/frame' },
+  { id: 'mediapipe', name: 'MediaPipe Pose', color: '#2196f3', velocity: 3.29, acceleration: 4.52, jerk: 7.94, time: '0.3s/frame' }
+];
+
+const keypoints = ['Nose','L-Eye','R-Eye','L-Ear','R-Ear','L-Shoulder','R-Shoulder','L-Elbow','R-Elbow','L-Wrist','R-Wrist','L-Hip','R-Hip','L-Knee','R-Knee','L-Ankle','R-Ankle'];
+
+const videos = [
+  { name: 'TED_Talk_01.mp4', duration: '2:34' },
+  { name: 'TED_Talk_02.mp4', duration: '3:12' },
+  { name: 'TED_Talk_03.mp4', duration: '1:58' },
+  { name: 'TED_Talk_04.mp4', duration: '4:05' },
+  { name: 'TED_Talk_05.mp4', duration: '2:47' }
+];
+
+// Render ranking
+function renderRanking() {
+  const container = document.getElementById('rankingContainer');
+  const maxAcc = Math.max(...estimators.map(e => e.acceleration));
+  const sorted = [...estimators].sort((a, b) => a.acceleration - b.acceleration);
+  
+  container.innerHTML = sorted.map((est, i) => {
+    const pct = (1 - est.acceleration / (maxAcc * 1.2)) * 100;
+    const tagClass = i === 0 ? 'tag-gold' : i === 1 ? 'tag-silver' : i === 2 ? 'tag-bronze' : 'tag-outline';
+    return `
+      <div class="ranking-card slide-in" style="animation-delay:${i * 0.1}s">
+        <span class="tag ${tagClass}">${i + 1}</span>
+        <div class="color-dot" style="background:${est.color}"></div>
+        <span class="text-sm flex-1" style="font-weight:500">${est.name}</span>
+        <div class="ranking-bar">
+          <div class="ranking-bar-fill" style="background:${est.color};width:0%" data-width="${pct}%"></div>
+        </div>
+        <span class="ranking-value">${est.acceleration.toFixed(2)}</span>
+      </div>
+    `;
+  }).join('');
+  
+  // Animate bars
+  setTimeout(() => {
+    document.querySelectorAll('.ranking-bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.width;
+    });
+  }, 100);
+}
+
+// Render summary table
+function renderTable() {
+  const tbody = document.getElementById('summaryTableBody');
+  const minAcc = Math.min(...estimators.map(e => e.acceleration));
+  const maxAcc = Math.max(...estimators.map(e => e.acceleration));
+  const minJerk = Math.min(...estimators.map(e => e.jerk));
+  const maxJerk = Math.max(...estimators.map(e => e.jerk));
+  
+  tbody.innerHTML = estimators.map(est => `
+    <tr>
+      <td><div class="flex items-center gap-8"><div class="color-dot" style="background:${est.color}"></div> ${est.name}</div></td>
+      <td class="num">${est.velocity.toFixed(2)}</td>
+      <td class="num ${est.acceleration === minAcc ? 'best' : est.acceleration === maxAcc ? 'worst' : ''}">${est.acceleration.toFixed(2)}</td>
+      <td class="num ${est.jerk === minJerk ? 'best' : est.jerk === maxJerk ? 'worst' : ''}">${est.jerk.toFixed(2)}</td>
+      <td class="num">${est.time}</td>
+    </tr>
+  `).join('');
+}
+
+// Render video list
+function renderVideos() {
+  const container = document.getElementById('videoList');
+  container.innerHTML = videos.map(v => `
+    <div class="flex items-center gap-16 p-16 border-b" style="cursor:pointer" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='#fff'">
+      <div class="video-thumb-sm"><i class="fas fa-video" style="color:#999"></i></div>
+      <div class="flex-1">
+        <p class="text-sm" style="font-weight:500">${v.name}</p>
+        <p class="text-xs text-gray">${v.duration}</p>
+      </div>
+      <div class="flex gap-4">
+        ${estimators.map(e => `<div class="color-dot" style="background:${e.color}" title="${e.name}"></div>`).join('')}
+      </div>
+      <button class="btn btn-ghost btn-sm"><i class="fas fa-play"></i> Preview</button>
+      <button class="btn btn-ghost btn-sm"><i class="fas fa-download"></i></button>
+    </div>
+  `).join('');
+}
+
+// Distribution chart
+function createDistributionChart(canvasId, height) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  
+  // Generate smooth curve data
+  const generateCurve = (peak, spread) => {
+    const data = [];
+    for (let x = 0; x <= 10; x += 0.5) {
+      data.push({ x, y: Math.exp(-Math.pow(x - peak, 2) / spread) * 100 });
+    }
+    return data;
+  };
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        { label: 'MaskAnyone-MP', data: generateCurve(0.5, 2), borderColor: '#9c27b0', backgroundColor: 'rgba(156,39,176,0.1)', fill: true, tension: 0.4 },
+        { label: 'YOLOv11-Pose', data: generateCurve(1, 3), borderColor: '#000', backgroundColor: 'rgba(0,0,0,0.05)', fill: true, tension: 0.4 },
+        { label: 'OpenPose', data: generateCurve(1.5, 4), borderColor: '#ff9800', backgroundColor: 'rgba(255,152,0,0.1)', fill: true, tension: 0.4 },
+        { label: 'MediaPipe Pose', data: generateCurve(2.5, 8), borderColor: '#2196f3', backgroundColor: 'rgba(33,150,243,0.1)', fill: true, tension: 0.4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+      },
+      scales: {
+        x: { type: 'linear', title: { display: true, text: 'Acceleration (px/frame²)', font: { size: 11 } }, grid: { color: '#eee' } },
+        y: { title: { display: true, text: '% of Keypoints', font: { size: 11 } }, grid: { color: '#eee' } }
+      },
+      animation: { duration: 1500, easing: 'easeOutQuart' }
+    }
+  });
+}
+
+// Per-keypoint chart
+function createKeypointChart(canvasId) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  
+  // Generate mock data per keypoint
+  const generateData = (base, variance) => keypoints.map(() => base + Math.random() * variance);
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: keypoints,
+      datasets: [
+        { label: 'YOLOv11', data: generateData(1.2, 1.5), backgroundColor: '#000' },
+        { label: 'MediaPipe', data: generateData(3, 3), backgroundColor: '#2196f3' },
+        { label: 'OpenPose', data: generateData(1.8, 2), backgroundColor: '#ff9800' },
+        { label: 'MaskAnyone-MP', data: generateData(0.8, 1), backgroundColor: '#9c27b0' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 45 } },
+        y: { title: { display: true, text: 'Median Acceleration', font: { size: 11 } }, grid: { color: '#eee' } }
+      },
+      animation: { duration: 1500, easing: 'easeOutQuart' }
+    }
+  });
+}
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
+    
+    // Create full charts when tabs are shown
+    if (btn.dataset.tab === 'distribution' && !window.distFullCreated) {
+      createDistributionChart('distributionChartFull');
+      window.distFullCreated = true;
+    }
+    if (btn.dataset.tab === 'keypoints' && !window.kpFullCreated) {
+      createKeypointChart('keypointChartFull');
+      window.kpFullCreated = true;
+    }
+  });
+});
+
+// Legend item toggle
+document.querySelectorAll('.legend-item').forEach(item => {
+  item.addEventListener('click', () => {
+    item.classList.toggle('active');
+  });
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  renderRanking();
+  renderTable();
+  renderVideos();
+  createDistributionChart('distributionChart');
+  createKeypointChart('keypointChart');
+});
+</script>
+
+</body>
+</html>
