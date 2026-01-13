@@ -42,7 +42,7 @@ def main():
 def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool):
     inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer)
     gt_pose_results = dataset.get_gt_pose_results()
-    pose_results = inference_engine.estimate_pose_keypoints()
+    pose_results = inference_engine.run_parallel_tasks()
     
     if execute_evaluation:
         print("Executing evaluation.")

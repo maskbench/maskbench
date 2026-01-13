@@ -23,7 +23,7 @@ services:
             reservations:
               devices:
                 - driver: nvidia
-                  device_ids: ["${MASKBENCH_GPU_ID:-0}"]
+                  device_ids: ["${MASKBENCH_GPU_ID_1:-0}"]
                   capabilities: [ gpu ]
     
     sam2:
@@ -37,7 +37,7 @@ services:
           reservations:
             devices:
               - driver: nvidia
-                device_ids: ["${MASKBENCH_GPU_ID:-0}"]
+                device_ids: ["${MASKBENCH_GPU_ID_3:-0}"]
                 capabilities: [ gpu ]
   
     maskanyone_api:
@@ -48,7 +48,7 @@ services:
           reservations:
             devices:
               - driver: nvidia
-                device_ids: ["${MASKBENCH_GPU_ID:-0}"]
+                device_ids: ["${MASKBENCH_GPU_ID_4:-0}"]
                 capabilities: [ gpu ]
     
     openpose:
@@ -61,6 +61,6 @@ services:
           reservations:
             devices:
               - driver: nvidia
-                device_ids: ["${MASKBENCH_GPU_ID:-0}"]
+                device_ids: ["${MASKBENCH_GPU_ID_2:-0}"]
                 capabilities: [ gpu ]
 
