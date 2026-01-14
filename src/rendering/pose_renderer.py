@@ -1,8 +1,9 @@
-import logging
-import time
 from typing import Dict, List
 import cv2
 import os
+import logging
+import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from inference import FramePoseResult, VideoPoseResult
 from datasets import Dataset, VideoSample
@@ -17,28 +18,39 @@ class PoseRenderer:
         self.checkpointer = checkpointer
         self.line_thickness = line_thickness
 
-    def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]]):
+    def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]], max_workers: int = None):
         """
         Render all videos in the dataset with the provided pose results.
         Args:
             pose_results (Dict[str, Dict[str, List[VideoPoseResult]]]): Dictionary where keys are estimator names and values are dictionaries mapping video names to lists of VideoPoseResult objects.
         """
-        for video in self.dataset:
-            start_time = time.time()
-            video_name = video.get_filename()
+        if max_workers is None:
+            max_workers = mp.cpu_count()
+        print(f"Rendering videos using {max_workers} workers.")
 
-            video_pose_results = {}
-            for estimator in pose_results.keys():
-                if video_name not in pose_results[estimator]:
-                    print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
-                    logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
-                    continue
-                video_pose_results[estimator] = pose_results[estimator][video_name]
-                    
-            self.render_video(video, video_pose_results)
-
-            time_taken = time.time() - start_time
-            print(f"Rendered {video.path} - {time_taken:.2f} seconds")
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # add tasks - renders videos in parallel
+            future_to_estimator = {}
+            for video in self.dataset:
+                video_name = video.get_filename()
+                video_pose_results = {}
+                for estimator in pose_results.keys():
+                    if video_name not in pose_results[estimator]:
+                        print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
+                        logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
+                        continue
+                    video_pose_results[estimator] = pose_results[estimator][video_name]
+                future = executor.submit(self.render_video, video, video_pose_results)
+                future_to_estimator[future] = video
+            
+            # process result
+            for future in as_completed(future_to_estimator):
+                video = future_to_estimator[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f"Rendering video {video.get_filename()} generated an exception: {e}")
+                    logging.exception(e)
 
     def render_video(
         self,
