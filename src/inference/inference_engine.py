@@ -4,6 +4,7 @@ from typing import Dict, List
 from checkpointer import Checkpointer
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
 
 class InferenceEngine:
     """Class responsible for running the pose estimators on the videos and saving the results in the `poses` folder."""
@@ -62,6 +63,7 @@ class InferenceEngine:
             
         for video in self.dataset:
             if video.get_filename() in self.results[estimator.name]:
+                print(f"Skipping already processed video {video.get_filename()} for estimator {estimator.name}")
                 continue # if results already exist, skip inference
 
             print(f"Running estimator '{estimator.name}' on video {video.path}")
@@ -72,6 +74,9 @@ class InferenceEngine:
                 self.checkpointer.save_video_pose_result(video_pose_result, estimator.name)
                 self.checkpointer.save_inference_time(estimator.name, video.get_filename(), time.time() - start_time)
             except Exception as e:
-                raise Exception(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
+                print(f"Error processing video {video.get_filename()} with estimator {estimator.name}: {e}")
+                logging.error(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
+                continue
+                # raise Exception(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
 
         return {'estimator': estimator.name, 'results': estimator_results}

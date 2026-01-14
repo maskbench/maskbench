@@ -2,6 +2,11 @@ import importlib
 import os
 import yaml
 from typing import List
+import logging 
+import datetime
+
+current_session = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', filename=f'{current_session}_maskbench.log')
 
 from datasets import Dataset
 from inference import InferenceEngine
