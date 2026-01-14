@@ -63,6 +63,7 @@ class PoseRenderer:
             video (VideoSample): The video sample to render.
             video_pose_results (Dict[str, VideoPoseResult]): Dictionary of pose results for each estimator.
         """
+        print(f"Rendering video {video.get_filename()}")
         cap = cv2.VideoCapture(video.path)  # load the video
         if not cap.isOpened():
             print(f"Cannot open video file {video.path}")
@@ -105,6 +106,9 @@ class PoseRenderer:
                         self.hex_to_bgr(color_palette[idx]),
                     )  # draw keypoints on frame
                     writer.write(frame_copies[idx])  # write rendered frame
+                except KeyError as e:
+                    print(f"No pose results for estimator {estimator_name} in video {video_name}")
+                    logging.error(f"No pose results for estimator {estimator_name} in video {video_name}")
                 except IndexError as e:
                     print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
                     logging.error(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")                    

@@ -30,10 +30,10 @@ class InferenceEngine:
         if self.checkpointer.load_checkpoint:
             print(f"Loading results from checkpoint {self.checkpointer.checkpoint_dir}")
             self.results = self.checkpointer.load_pose_results(pose_estimator_names=list(map(lambda x: x.name, self.pose_estimators)))
-        
+
         for estimator in self.pose_estimators: # if user adds a new model, initialize its results dict
             if estimator.name not in self.results:
-                self.results[estimator.name] = {} 
+                self.results[estimator.name] = {}
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_estimator = {
@@ -41,12 +41,16 @@ class InferenceEngine:
                 for estimator in self.pose_estimators
             }
             for future in as_completed(future_to_estimator):
-                estimator = future_to_estimator[future]
                 try:
-                    estimator_results = future.result()
-                    self.results[estimator_results['estimator']] = estimator_results['results']
+                    results = future.result()
+                    estimator_name = results['estimator_name']
+                    estimator_results = results['estimator_results']
+                    for video_name, video_pose_result in estimator_results.items():
+                        logging.info(f"Storing results for estimator {estimator_name}, video {video_name}")
+                        self.results[estimator_name][video_name] = video_pose_result
                 except Exception as e:
                     print(f"Estimator {estimator.name} generated an exception: {e}")
+        
         return self.results
 
     def estimate_pose_keypoints(self, estimator) -> Dict:
@@ -58,15 +62,14 @@ class InferenceEngine:
         Returns:
             Dictionary mapping pose estimator names to video names and `VideoPoseResult` objects.
         """
-           
         estimator_results = {}
-            
+
         for video in self.dataset:
             if video.get_filename() in self.results[estimator.name]:
                 print(f"Skipping already processed video {video.get_filename()} for estimator {estimator.name}")
                 continue # if results already exist, skip inference
-
             print(f"Running estimator '{estimator.name}' on video {video.path}")
+
             start_time = time.time()
             try:
                 video_pose_result = estimator.estimate_pose(video.path)
@@ -77,6 +80,6 @@ class InferenceEngine:
                 print(f"Error processing video {video.get_filename()} with estimator {estimator.name}: {e}")
                 logging.error(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
                 continue
-                # raise Exception(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
-
-        return {'estimator': estimator.name, 'results': estimator_results}
+        
+        print(f"Completed estimator '{estimator.name}'")
+        return {'estimator_name': estimator.name, 'estimator_results': estimator_results}

@@ -17,8 +17,6 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         """
         super().__init__(name, config)
         self.docker_url = "http://maskanyone_api:8000/mask-video"
-        self.chunk_output_dir = "/tmp/chunks" # Temporary directory for video chunks
-        self.processed_output_dir = "/tmp/processed_chunks" # Temporary directory for processed chunks
         self.options = utils.maskanyone_get_config(self.config)
         self.model_keypoint_pairs = {"mp_pose": MEDIAPIPE_KEYPOINT_PAIRS, "openpose_body25b": OPENPOSE_BODY25B_KEYPOINT_PAIRS, "openpose": OPENPOSE_BODY25_KEYPOINT_PAIRS}
         self.model_to_coco_mapping = {"mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_OPENPOSE_BODY25B, "openpose": COCO_TO_OPENPOSE_BODY25}
@@ -40,13 +38,15 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
 
         """
         _, video_metadata = utils.get_video_metadata(video_path)
+        chunk_output_dir = '/tmp/chunks' + f"_{os.path.basename(video_path)}" + f"_{self.options.get("overlay_strategy")}"
+        processed_output_dir = '/tmp/processed_chunks' + f"_{os.path.basename(video_path)}" + f"_{self.options.get("overlay_strategy")}"
 
         print("MaskAnyoneAPI: Splitting video into chunks.")
-        video_chunk_paths = VideoChunker(chunk_length=600).chunk_video_using_opencv(video_path, self.chunk_output_dir)
+        video_chunk_paths = VideoChunker(chunk_length=600).chunk_video_using_opencv(video_path, chunk_output_dir)
         print("MaskAnyoneAPI: Processing chunks.")
-        self._process_chunks(video_chunk_paths, self.processed_output_dir)
+        self._process_chunks(video_chunk_paths, processed_output_dir)
         print("MaskAnyoneAPI: Combining chunk outputs into a single video result.")
-        frame_results = utils.maskanyone_combine_json_files(self.processed_output_dir, self.options.get("overlay_strategy"))
+        frame_results = utils.maskanyone_combine_json_files(processed_output_dir, self.options.get("overlay_strategy"))
         
         video_pose_result = VideoPoseResult(
             fps=video_metadata.get("fps"),
@@ -57,8 +57,8 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         )
 
         # Clean up temporary output directory
-        shutil.rmtree(self.chunk_output_dir)
-        shutil.rmtree(self.processed_output_dir)
+        shutil.rmtree(chunk_output_dir)
+        shutil.rmtree(processed_output_dir)
 
         self.assert_frame_count_is_correct(video_pose_result, video_metadata)
         video_pose_result = self.filter_low_confidence_keypoints(video_pose_result) # this call will have no effect, because MaskAnyone does not provide confidence scores
