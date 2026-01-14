@@ -3,8 +3,10 @@ import os
 import yaml
 from typing import List
 import logging 
+import datetime
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', filename='maskbench.log')
+current_session = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', filename=f'{current_session}_maskbench.log')
 
 from datasets import Dataset
 from inference import InferenceEngine
@@ -45,7 +47,7 @@ def main():
 def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool):
     inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer)
     gt_pose_results = dataset.get_gt_pose_results()
-    pose_results = inference_engine.estimate_pose_keypoints()
+    pose_results = inference_engine.run_parallel_tasks()
     
     if execute_evaluation:
         print("Executing evaluation.")
