@@ -1,11 +1,11 @@
 inference_checkpoint_name: None # comment out or set to "None" to run inference from scratch
-execute_evaluation: true        # set to false to skip calculating evaluation metrics and plotting
+execute_evaluation: false        # set to false to skip calculating evaluation metrics and plotting
 execute_rendering: true         # set to false to skip rendering the videos
 
 dataset:
   name: TedTalks
   code_file: datasets.dataset.Dataset
-  video_folder: /datasets/ted-talks/videos
+  video_folder: /datasets
 
 pose_estimators:
   - name: YoloPose
@@ -50,7 +50,7 @@ pose_estimators:
       confidence_threshold: 0
 
   - name: MaskAnyoneUI-MediaPipe
-    enabled: true
+    enabled: false
     code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
       dataset_poses_folder: /datasets/ted-talks/maskanyone_ui_mediapipe
@@ -59,7 +59,7 @@ pose_estimators:
       confidence_threshold: 0
 
   - name: MaskAnyoneUI-OpenPose
-    enabled: true
+    enabled: false
     code_file: models.maskanyone_ui_pose_estimator.MaskAnyoneUiPoseEstimator  
     config:
       dataset_poses_folder: /datasets/ted-talks/maskanyone_ui_openpose
