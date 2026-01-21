@@ -1,5 +1,6 @@
 from dataclasses import asdict, dataclass
 import json
+import logging
 from typing import List, Optional
 import numpy as np
 import numpy.ma as ma
@@ -58,7 +59,7 @@ class VideoPoseResult:
             "sample_frames": self.frames[:num_of_sample_frames] if len(self.frames) > num_of_sample_frames else self.frames,
         }
     
-    def to_numpy_ma(self) -> np.ndarray:
+    def to_numpy_ma(self, metric_name: str = None, model_name: str = None) -> np.ndarray:
         """
         Convert the video pose results from a nested object to a masked array.
         This method is useful for evaluation and plotting in order to work
@@ -72,7 +73,8 @@ class VideoPoseResult:
             in computations (e.g. evaluation or plotting).
         """
         if not self.frames:
-            print("Warning: No frames in video pose result.")
+            print(f"Warning: No frames in video pose result: {self.video_name}.")
+            logging.warning(f"Warning: No frames in video pose result: {self.video_name} {metric_name} {model_name}.")
             return ma.array(np.zeros((0, 0, 0, 2)))
             
         # Get dimensions
@@ -85,7 +87,8 @@ class VideoPoseResult:
         ) if any(frame.persons for frame in self.frames) else 0
         
         if max_persons == 0 or num_keypoints == 0:
-            print("Warning: No persons or keypoints found in video pose result.")
+            print(f"Warning: No persons or keypoints found in video pose result: {self.video_name}.")
+            logging.warning(f"Warning: No persons or keypoints found in video pose result: {self.video_name} {metric_name} {model_name}.")
             return ma.array(np.zeros((num_frames, 0, 0, 2)))
         
         # Initialize arrays - all values masked by default

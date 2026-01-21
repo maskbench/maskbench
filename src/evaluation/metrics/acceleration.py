@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.ma as ma
 from typing import Dict, Optional, Any
+import logging
 
 from inference.pose_result import VideoPoseResult
 from .metric import Metric
@@ -49,19 +50,21 @@ class AccelerationMetric(Metric):
             - time_unit="second": acceleration is computed per second (pixels/second²) by dividing by the time delta between frames
             - time_unit="frame": acceleration is computed per frame (pixels/frame²)
         """
-        pred_poses = video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
-
+        pred_poses = video_result.to_numpy_ma(self.name, model_name)  # shape: (frames, persons, keypoints, 2)
+        
+        if pred_poses.shape[1] == 0 or pred_poses.shape[2] == 0:
+            print(f"Warning: No persons or keypoints detected in the video. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            logging.warning(f"Warning: No persons or keypoints detected in the video. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            return None
+        
         if pred_poses.shape[0] <= 2:
-            print("Warning: Acceleration metric requires at least 3 frames to compute. Returning empty MetricResult.")
-            return MetricResult(
-                values=np.nan * np.ones((1, pred_poses.shape[1], pred_poses.shape[2], 2)),
-                axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS, COORDINATE_AXIS],
-                metric_name=self.name,
-                video_name=video_result.video_name,
-                model_name=model_name,
-            )
+            print(f"Warning: Acceleration metric requires at least 3 frames to compute. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            logging.warning(f"Warning: Acceleration metric requires at least 3 frames to compute. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            return None
 
         velocity_result = self.velocity_metric.compute(video_result, gt_video_result, model_name)
+        if velocity_result is None:
+            return None
         
         acceleration = ma.diff(velocity_result.values, axis=0)  # shape: (frames-2, persons, keypoints, 2)
         
@@ -71,6 +74,10 @@ class AccelerationMetric(Metric):
             acceleration = acceleration / timedelta
             
         acceleration.data[acceleration.mask] = np.nan
+
+        if ma.is_masked(acceleration) and np.all(ma.getmaskarray(acceleration)):
+            logging.warning(f"Warning: Acceleration MetricResult contains only NaN or masked values for video: {video_result.video_name}, model: {model_name}.")
+            return None
 
         return MetricResult(
             values=acceleration,

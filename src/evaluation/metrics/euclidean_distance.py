@@ -55,8 +55,8 @@ class EuclideanDistanceMetric(Metric):
         if gt_video_result is None:
             raise ValueError("Ground truth video result is required for Euclidean distance computation")
             
-        pred_poses = video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
-        gt_poses = gt_video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
+        pred_poses = video_result.to_numpy_ma(self.name, model_name)  # shape: (frames, persons, keypoints, 2)
+        gt_poses = gt_video_result.to_numpy_ma(self.name, model_name)  # shape: (frames, persons, keypoints, 2)
 
         frame_values = []
         for frame_idx in range(pred_poses.shape[0]):

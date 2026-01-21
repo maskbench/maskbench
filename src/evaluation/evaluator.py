@@ -38,7 +38,9 @@ class Evaluator:
                 video_metric_results = {}
                 for video_name, video_result in video_pose_results.items():
                     gt_result = gt_video_pose_results[video_name]
-                    video_metric_results[video_name] = metric.compute(video_result, gt_result, model_name)
+                    result = metric.compute(video_result, gt_result, model_name)
+                    if result is not None:
+                        video_metric_results[video_name] = result
 
                 model_results_dict[model_name] = video_metric_results
             

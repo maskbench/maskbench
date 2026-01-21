@@ -42,7 +42,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         processed_output_dir = '/tmp/processed_chunks' + f"_{os.path.basename(video_path)}" + f"_{self.options.get("overlay_strategy")}"
 
         print("MaskAnyoneAPI: Splitting video into chunks.")
-        video_chunk_paths = VideoChunker(chunk_length=600).chunk_video_using_opencv(video_path, chunk_output_dir)
+        video_chunk_paths = VideoChunker(chunk_length=120).chunk_video_using_opencv(video_path, chunk_output_dir)
         print("MaskAnyoneAPI: Processing chunks.")
         self._process_chunks(video_chunk_paths, processed_output_dir)
         print("MaskAnyoneAPI: Combining chunk outputs into a single video result.")
