@@ -39,12 +39,13 @@ def main():
 
     execute_evaluation = config.get("execute_evaluation", True)
     execute_rendering = config.get("execute_rendering", True)
+    render_poses_only = config.get("render_poses_only", False)
     
-    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering)
+    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering, render_poses_only)
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool):
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool):
     inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer)
     gt_pose_results = dataset.get_gt_pose_results()
     pose_results = inference_engine.run_parallel_tasks()
@@ -64,7 +65,7 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
             pose_results["GroundTruth"] = gt_pose_results
             estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
 
-        pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer)
+        pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer, render_poses_only)
         pose_renderer.render_all_videos(pose_results)
 
 

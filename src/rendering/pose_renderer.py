@@ -2,20 +2,22 @@ from typing import Dict, List
 import cv2
 import os
 import logging
+import numpy as np
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from inference import FramePoseResult, VideoPoseResult
 from datasets import Dataset, VideoSample
 from checkpointer import Checkpointer
-from utils import get_color_palette
+from utils import get_color_palette, get_video_metadata
 
 
 class PoseRenderer:
-    def __init__(self, dataset: Dataset, estimators_point_pairs: dict, checkpointer: Checkpointer, line_thickness: int = 6):
+    def __init__(self, dataset: Dataset, estimators_point_pairs: dict, checkpointer: Checkpointer, render_poses_only: bool = False, line_thickness: int = 6):
         self.dataset = dataset
         self.estimators_point_pairs = estimators_point_pairs
         self.checkpointer = checkpointer
+        self.render_poses_only = render_poses_only
         self.line_thickness = line_thickness
 
     def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]], max_workers: int = None):
@@ -64,15 +66,11 @@ class PoseRenderer:
             video_pose_results (Dict[str, VideoPoseResult]): Dictionary of pose results for each estimator.
         """
         print(f"Rendering video {video.get_filename()}")
-        cap = cv2.VideoCapture(video.path)  # load the video
-        if not cap.isOpened():
-            print(f"Cannot open video file {video.path}")
-            logging.error(f"Cannot open video file {video.path}")
-            return 
-
-        fps = int(cap.get(cv2.CAP_PROP_FPS))  # get video specs
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        cap, video_metadata = get_video_metadata(video.path)
+        fps = video_metadata["fps"]
+        width = video_metadata["width"]
+        height = video_metadata["height"]
+        frame_count = video_metadata["frame_count"]
 
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
@@ -88,10 +86,14 @@ class PoseRenderer:
         color_palette = get_color_palette()
 
         frame_number = 0
-        while cap.isOpened():  # for every frame
-            ret, frame = cap.read()
-            if not ret:
-                break
+        while frame_number < frame_count:  # for every frame
+            if self.render_poses_only:
+                frame = np.zeros((height, width, 3), dtype=np.uint8)  # black frame
+            else:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+            
             frame_copies = [
                 frame.copy() for _ in range(len(video_writers))
             ]  # deep copy of frames to avoid overwriting
@@ -111,7 +113,7 @@ class PoseRenderer:
                     logging.error(f"No pose results for estimator {estimator_name} in video {video_name}")
                 except IndexError as e:
                     print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
-                    logging.error(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")                    
+                    logging.error(f"Video: {video_name}, Estimator Name: {estimator_name}, frame {frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")                  
             frame_number += 1
 
         cap.release()
