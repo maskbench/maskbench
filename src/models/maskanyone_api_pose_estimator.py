@@ -18,6 +18,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         super().__init__(name, config)
         self.docker_url = "http://maskanyone_api:8000/mask-video"
         self.options = utils.maskanyone_get_config(self.config)
+        self.chunk_length = self.config.get("chunk_length", 120)  # default chunk length is 120 seconds
         self.model_keypoint_pairs = {"mp_pose": MEDIAPIPE_KEYPOINT_PAIRS, "openpose_body25b": OPENPOSE_BODY25B_KEYPOINT_PAIRS, "openpose": OPENPOSE_BODY25_KEYPOINT_PAIRS}
         self.model_to_coco_mapping = {"mp_pose": COCO_TO_MEDIAPIPE, "openpose_body25b": COCO_TO_OPENPOSE_BODY25B, "openpose": COCO_TO_OPENPOSE_BODY25}
 
@@ -42,7 +43,7 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         processed_output_dir = '/tmp/processed_chunks' + f"_{os.path.basename(video_path)}" + f"_{self.options.get("overlay_strategy")}"
 
         print("MaskAnyoneAPI: Splitting video into chunks.")
-        video_chunk_paths = VideoChunker(chunk_length=120).chunk_video_using_opencv(video_path, chunk_output_dir)
+        video_chunk_paths = VideoChunker(chunk_length=self.chunk_length).chunk_video_using_opencv(video_path, chunk_output_dir)
         print("MaskAnyoneAPI: Processing chunks.")
         self._process_chunks(video_chunk_paths, processed_output_dir)
         print("MaskAnyoneAPI: Combining chunk outputs into a single video result.")

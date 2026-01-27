@@ -41,6 +41,7 @@ pose_estimators:
       overlay_strategy: mp_pose
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
+      chunk_length: 120 # in seconds 
 
   - name: MaskAnyoneAPI-OpenPose
     enabled: true
@@ -49,6 +50,7 @@ pose_estimators:
       overlay_strategy: openpose # uses BODY_25 model
       save_keypoints_in_coco_format: true
       confidence_threshold: 0
+      chunk_length: 120 # in seconds 
 
   - name: MaskAnyoneUI-MediaPipe
     enabled: false
