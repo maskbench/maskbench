@@ -52,7 +52,6 @@ class InferenceEngine:
                     estimator_name = results['estimator_name']
                     estimator_results = results['estimator_results']
                     for video_name, video_pose_result in estimator_results.items():
-                        logging.info(f"Storing results for estimator {estimator_name}, video {video_name}")
                         self.results[estimator_name][video_name] = video_pose_result
                 except Exception as e:
                     print(f"Estimator {estimator.name} generated an exception: {e}")

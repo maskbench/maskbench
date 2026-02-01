@@ -3,9 +3,10 @@ import json
 import datetime
 import shutil
 import numpy as np
-from typing import Dict, Optional
 import logging
 import cv2 as cv
+from typing import Dict, Optional
+from filelock import FileLock
 
 from inference.pose_result import VideoPoseResult
 
@@ -96,23 +97,25 @@ class Checkpointer:
         Save the inference time for a specific estimator and video.
         """
         inference_file_path = os.path.join(self.checkpoint_dir, "inference_times.json")
+        lock = FileLock(inference_file_path + ".lock")  # to prevent concurrent access
         
         # Load existing inference times or create new dict if file doesn't exist
-        if os.path.exists(inference_file_path):
-            with open(inference_file_path, 'r') as f:
-                inference_times = json.load(f)
-        else:
-            inference_times = {}
+        with lock:
+            if os.path.exists(inference_file_path):
+                with open(inference_file_path, 'r') as f:
+                    inference_times = json.load(f)
+            else:
+                inference_times = {}
 
-        if estimator_name not in inference_times:
-            inference_times[estimator_name] = {}
+            if estimator_name not in inference_times:
+                inference_times[estimator_name] = {}
+                
+            inference_times[estimator_name][video_name] = inference_time # add new inference time
             
-        inference_times[estimator_name][video_name] = inference_time # add new inference time
-        
-        with open(inference_file_path, 'w') as f:
-            json.dump(inference_times, f, indent=4)
-            
-        print(f"Inference time for {estimator_name} on {video_name}: {inference_time:.3f}s")
+            with open(inference_file_path, 'w') as f:
+                json.dump(inference_times, f, indent=4)
+                
+            print(f"Inference time for {estimator_name} on {video_name}: {inference_time:.3f}s")
 
     def save_config(self, config_file_path: str):
         """
