@@ -9,12 +9,13 @@ import logging
 class InferenceEngine:
     """Class responsible for running the pose estimators on the videos and saving the results in the `poses` folder."""
     
-    def __init__(self, dataset: dict, pose_estimators: list, checkpointer: Checkpointer):
+    def __init__(self, dataset: dict, pose_estimators: list, checkpointer: Checkpointer, execute_processing: bool):
         self.dataset = dataset
         self.pose_estimators = pose_estimators
         self.estimator_point_pairs = dict()
         self.checkpointer = checkpointer
         self.results = dict()
+        self.execute_processing = execute_processing
     
     def run_parallel_tasks(self, max_workers: int = None) -> Dict:
         num_estimator = len(self.pose_estimators)
@@ -34,6 +35,11 @@ class InferenceEngine:
         for estimator in self.pose_estimators: # if user adds a new model, initialize its results dict
             if estimator.name not in self.results:
                 self.results[estimator.name] = {}
+
+        if not self.execute_processing:
+            print("Skipping processing as per configuration.")
+            logging.info("Skipping processing as per configuration.")
+            return self.results
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_estimator = {

@@ -1,6 +1,7 @@
 inference_checkpoint_name: None # comment out or set to "None" to run inference from scratch
 execute_evaluation: false        # set to false to skip calculating evaluation metrics and plotting
-execute_rendering: false         # set to false to skip rendering the videos
+execute_rendering: true         # set to false to skip rendering the videos
+execute_processing: false       # set to false to skip processing the dataset videos and loading existing processed data
 render_poses_only: true        # set to true to render the pose keypoints overlayed on the black video frames
 
 dataset:

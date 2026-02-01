@@ -40,13 +40,14 @@ def main():
     execute_evaluation = config.get("execute_evaluation", True)
     execute_rendering = config.get("execute_rendering", True)
     render_poses_only = config.get("render_poses_only", False)
+    execute_processing = config.get("execute_processing", True)
     
-    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering, render_poses_only)
+    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering, render_poses_only, execute_processing)
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool):
-    inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer)
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, execute_processing: bool):
+    inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer, execute_processing)
     gt_pose_results = dataset.get_gt_pose_results()
     pose_results = inference_engine.run_parallel_tasks()
     
