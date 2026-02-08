@@ -31,7 +31,7 @@ class JerkMetric(Metric):
         video_result: VideoPoseResult,
         gt_video_result: Optional[VideoPoseResult] = None,
         model_name: Optional[str] = None
-    ) -> MetricResult:
+    ) -> MetricResult | None:
         """
         Compute the jerk metric for a video result.
         Args:

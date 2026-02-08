@@ -19,15 +19,9 @@ class InferenceEngine:
     
     def run_parallel_tasks(self, max_workers: int = None) -> Dict:
         num_estimator = len(self.pose_estimators)
-        if max_workers is None:
-            max_workers = num_estimator
-
-        print('=' * 50)
-        print(f"Running {num_estimator} pose estimators with max_workers={max_workers}")
-        print(f"Using {mp.cpu_count()} CPU cores")
-        print(f"Total videos to process: {len(self.dataset)}")
-        print('=' * 50)
-
+        if num_estimator == 0:
+            raise ValueError("No pose estimators provided. Please provide at least one pose estimator to run the inference engine.")
+        
         if self.checkpointer.load_checkpoint:
             print(f"Loading results from checkpoint {self.checkpointer.checkpoint_dir}")
             self.results = self.checkpointer.load_pose_results(pose_estimator_names=list(map(lambda x: x.name, self.pose_estimators)))
@@ -40,6 +34,15 @@ class InferenceEngine:
             print("Skipping processing as per configuration.")
             logging.info("Skipping processing as per configuration.")
             return self.results
+        
+        if max_workers is None:
+                max_workers = num_estimator
+
+        print('=' * 50)
+        print(f"Running {num_estimator} pose estimators with max_workers={max_workers}")
+        print(f"Using {mp.cpu_count()} CPU cores")
+        print(f"Total videos to process: {len(self.dataset)}")
+        print('=' * 50)
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_estimator = {

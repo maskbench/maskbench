@@ -80,7 +80,7 @@ Follow the instructions below to install and run experiments with MaskBench:
     ```bash
     docker compose up
     ```
-    If you would like to automatically close docker run:
+    If you would like to automatically close docker compose stack when processing is completed run:
     ```bash
     docker compose up --exit-code-from runner
     ```
