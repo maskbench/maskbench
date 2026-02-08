@@ -161,7 +161,7 @@ class DummyMetric(Metric):
         Simply convert the pose data to a MetricResult without any computation.
         """
         # Convert pose data to masked array and take only x coordinates
-        values = video_result.to_numpy_ma()[:, :, :, 0]
+        values = video_result.to_numpy_ma(self.name, model_name)[:, :, :, 0]
 
         return MetricResult(
             values=values,

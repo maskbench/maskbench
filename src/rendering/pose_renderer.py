@@ -1,38 +1,58 @@
-import time
 from typing import Dict, List
 import cv2
 import os
+import logging
+import numpy as np
+import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from inference import FramePoseResult, VideoPoseResult
 from datasets import Dataset, VideoSample
 from checkpointer import Checkpointer
-from utils import get_color_palette
+from utils import get_color_palette, get_video_metadata
 
 
 class PoseRenderer:
-    def __init__(self, dataset: Dataset, estimators_point_pairs: dict, checkpointer: Checkpointer, line_thickness: int = 6):
+    def __init__(self, dataset: Dataset, estimators_point_pairs: dict, checkpointer: Checkpointer, render_poses_only: bool = False, line_thickness: int = 6):
         self.dataset = dataset
         self.estimators_point_pairs = estimators_point_pairs
         self.checkpointer = checkpointer
+        self.render_poses_only = render_poses_only
         self.line_thickness = line_thickness
 
-    def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]]):
+    def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]], max_workers: int = None):
         """
         Render all videos in the dataset with the provided pose results.
         Args:
             pose_results (Dict[str, Dict[str, List[VideoPoseResult]]]): Dictionary where keys are estimator names and values are dictionaries mapping video names to lists of VideoPoseResult objects.
         """
-        for video in self.dataset:
-            start_time = time.time()
-            video_name = video.get_filename()
+        if max_workers is None:
+            max_workers = mp.cpu_count()
+        print(f"Rendering videos using {max_workers} workers.")
 
-            video_pose_results = {
-                estimator: pose_results[estimator][video_name] for estimator in pose_results.keys()
-            }
-            self.render_video(video, video_pose_results)
-
-            time_taken = time.time() - start_time
-            print(f"Rendered {video.path} - {time_taken:.2f} seconds")
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # add tasks - renders videos in parallel
+            future_to_estimator = {}
+            for video in self.dataset:
+                video_name = video.get_filename()
+                video_pose_results = {}
+                for estimator in pose_results.keys():
+                    if video_name not in pose_results[estimator]:
+                        print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
+                        logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
+                        continue
+                    video_pose_results[estimator] = pose_results[estimator][video_name]
+                future = executor.submit(self.render_video, video, video_pose_results)
+                future_to_estimator[future] = video
+            
+            # process result
+            for future in as_completed(future_to_estimator):
+                video = future_to_estimator[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f"Rendering video {video.get_filename()} generated an exception: {e}")
+                    logging.exception(e)
 
     def render_video(
         self,
@@ -45,13 +65,12 @@ class PoseRenderer:
             video (VideoSample): The video sample to render.
             video_pose_results (Dict[str, VideoPoseResult]): Dictionary of pose results for each estimator.
         """
-        cap = cv2.VideoCapture(video.path)  # load the video
-        if not cap.isOpened():
-            raise IOError(f"Cannot open video file {video.path}")
-
-        fps = int(cap.get(cv2.CAP_PROP_FPS))  # get video specs
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        print(f"Rendering video {video.get_filename()}")
+        cap, video_metadata = get_video_metadata(video.path)
+        fps = video_metadata["fps"]
+        width = video_metadata["width"]
+        height = video_metadata["height"]
+        frame_count = video_metadata["frame_count"]
 
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
@@ -67,10 +86,14 @@ class PoseRenderer:
         color_palette = get_color_palette()
 
         frame_number = 0
-        while cap.isOpened():  # for every frame
-            ret, frame = cap.read()
-            if not ret:
-                break
+        while frame_number < frame_count:  # for every frame
+            if self.render_poses_only:
+                frame = np.zeros((height, width, 3), dtype=np.uint8)  # black frame
+            else:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+            
             frame_copies = [
                 frame.copy() for _ in range(len(video_writers))
             ]  # deep copy of frames to avoid overwriting
@@ -84,10 +107,16 @@ class PoseRenderer:
                         self.estimators_point_pairs[estimator_name],
                         self.hex_to_bgr(color_palette[idx]),
                     )  # draw keypoints on frame
+                    writer.write(frame_copies[idx])  # write rendered frame
+                except KeyError as e:
+                    print(f"No pose results for estimator {estimator_name} in video {video_name}")
+                    logging.error(f"No pose results for estimator {estimator_name} in video {video_name}")
+                    writer.write(np.zeros_like(frame))  # write blank frame if exception occurs
                 except IndexError as e:
                     print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
-                writer.write(frame_copies[idx])  # write rendered frame
-
+                    logging.error(f"Video: {video_name}, Estimator Name: {estimator_name}, frame {frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")                  
+                    writer.write(np.zeros_like(frame))  # write blank frame if exception occurs
+            
             frame_number += 1
 
         cap.release()

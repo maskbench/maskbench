@@ -3,11 +3,12 @@ import json
 import datetime
 import shutil
 import numpy as np
-from typing import Dict, Optional
-
+import logging
 import cv2 as cv
+from typing import Dict, Optional
+from filelock import FileLock
 
-from inference.pose_result import VideoPoseResult, FramePoseResult, PersonPoseResult, PoseKeypoint
+from inference.pose_result import VideoPoseResult
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -96,23 +97,25 @@ class Checkpointer:
         Save the inference time for a specific estimator and video.
         """
         inference_file_path = os.path.join(self.checkpoint_dir, "inference_times.json")
+        lock = FileLock(inference_file_path + ".lock")  # to prevent concurrent access
         
         # Load existing inference times or create new dict if file doesn't exist
-        if os.path.exists(inference_file_path):
-            with open(inference_file_path, 'r') as f:
-                inference_times = json.load(f)
-        else:
-            inference_times = {}
+        with lock:
+            if os.path.exists(inference_file_path):
+                with open(inference_file_path, 'r') as f:
+                    inference_times = json.load(f)
+            else:
+                inference_times = {}
 
-        if estimator_name not in inference_times:
-            inference_times[estimator_name] = {}
+            if estimator_name not in inference_times:
+                inference_times[estimator_name] = {}
+                
+            inference_times[estimator_name][video_name] = inference_time # add new inference time
             
-        inference_times[estimator_name][video_name] = inference_time # add new inference time
-        
-        with open(inference_file_path, 'w') as f:
-            json.dump(inference_times, f, indent=4)
-            
-        print(f"Inference time for {estimator_name} on {video_name}: {inference_time:.3f}s")
+            with open(inference_file_path, 'w') as f:
+                json.dump(inference_times, f, indent=4)
+                
+            print(f"Inference time for {estimator_name} on {video_name}: {inference_time:.3f}s")
 
     def save_config(self, config_file_path: str):
         """
@@ -130,14 +133,18 @@ class Checkpointer:
             mapping video names to their pose results.
         """
         if not os.path.exists(self.poses_dir):
-            raise ValueError(f"No pose results found in checkpoint {self.checkpoint_dir}")
+            print(f"No pose results found in checkpoint {self.checkpoint_dir}. Will run all models again.")
+            logging.error("No pose results found in checkpoint %s. Will run all models again.", self.checkpoint_dir)
+            return {}
             
         results = {}
         
         for estimator_name in pose_estimator_names:
             if estimator_name not in os.listdir(self.poses_dir):
-                raise ValueError(f"No pose results found for estimator {estimator_name}' in checkpoint {self.checkpoint_dir}")
-            
+                print(f"No pose results found for estimator {estimator_name} in checkpoint {self.checkpoint_dir}. Will run model again.")
+                logging.error(f"No pose results found for estimator {estimator_name} in checkpoint {self.checkpoint_dir}. Will run model again.")
+                continue
+
             estimator_dir = os.path.join(self.poses_dir, estimator_name)
             results[estimator_name] = {}
             

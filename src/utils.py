@@ -99,20 +99,18 @@ def maskanyone_convert_json_to_nested_arrays(json_pose_file: str, overlay_strate
             return frame_results
 
 
-def get_video_metadata(video: str | cv2.VideoCapture) -> dict:
+def get_video_metadata(video_path: str) -> tuple[cv2.VideoCapture, dict]:
     """
     Get metadata of a video capture object.
 
     Args:
-        cap (str | cv2.VideoCapture): The path to the video or the video capture object.
+        video_path (str): The path to the video file.
 
     Returns:
+        cap: cv2.VideoCapture object for the video file.
         dict: A dictionary containing the video's metadata such as width, height, fps, and duration.
     """
-    if isinstance(video, str):
-        cap = cv2.VideoCapture(video)
-    elif isinstance(video, cv2.VideoCapture):
-        cap = video
+    cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
         raise ValueError("Video capture is not opened.")
@@ -120,7 +118,7 @@ def get_video_metadata(video: str | cv2.VideoCapture) -> dict:
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
-    frame_count = get_frame_count_ffprobe(video)
+    frame_count = get_frame_count_ffprobe(video_path)
     duration = frame_count / fps if fps > 0 else 0
 
     metadata = {"width": width, "height": height, "fps": fps, "duration": duration, "frame_count": frame_count}

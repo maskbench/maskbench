@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import numpy.ma as ma
 from typing import Dict, Optional, Any
@@ -30,7 +31,7 @@ class VelocityMetric(Metric):
         video_result: VideoPoseResult,
         gt_video_result: Optional[VideoPoseResult] = None,
         model_name: Optional[str] = None
-    ) -> MetricResult:
+    ) -> MetricResult | None:
         """
         Compute the velocity metric for a video result.
         Args:
@@ -48,17 +49,16 @@ class VelocityMetric(Metric):
             - time_unit="second": velocity is computed per second (pixels/second) by dividing by the time delta between frames
             - time_unit="frame": velocity is computed per frame (pixels/frame)
         """
-        pred_poses = video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
+        pred_poses = video_result.to_numpy_ma(self.name, model_name)  # shape: (frames, persons, keypoints, 2)
+        if pred_poses.shape[1] == 0 or pred_poses.shape[2] == 0:
+            print(f"Warning: No persons or keypoints detected in the video. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            logging.warning(f"Warning: No persons or keypoints detected in the video. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            return None
 
         if pred_poses.shape[0] <= 1:
-            print("Warning: Velocity metric requires at least 2 frames to compute. Returning empty MetricResult.")
-            return MetricResult(
-                values=np.nan * np.ones((1, pred_poses.shape[1], pred_poses.shape[2], 2)),
-                axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS, COORDINATE_AXIS],
-                metric_name=self.name,
-                video_name=video_result.video_name,
-                model_name=model_name,
-            )
+            print(f"Warning: Velocity metric requires at least 2 frames to compute. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            logging.warning(f"Warning: Velocity metric requires at least 2 frames to compute. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            return None
 
         for frame_idx in range(pred_poses.shape[0] - 1):
             current_frame_poses = pred_poses[frame_idx]
@@ -79,6 +79,10 @@ class VelocityMetric(Metric):
             velocity = velocity / timedelta
 
         velocity.data[velocity.mask] = np.nan
+
+        if ma.is_masked(velocity) and np.all(ma.getmaskarray(velocity)):
+            logging.warning(f"Warning: Velocity MetricResult contains only NaN or masked values for video: {video_result.video_name}, model: {model_name}.")
+            return None
 
         return MetricResult(
             values=velocity,

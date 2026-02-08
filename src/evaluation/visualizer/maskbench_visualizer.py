@@ -15,38 +15,38 @@ class MaskBenchVisualizer(Visualizer):
     This class contains specific plots and tables for the MaskBench project evaluation. 
     """
         
-    def generate_all_plots(self, pose_results: Dict[str, Dict[str, Dict[str, MetricResult]]]):
+    def generate_all_plots(self, metric_results: Dict[str, Dict[str, Dict[str, MetricResult]]]):
         os.makedirs(self.plots_dir, exist_ok=True)
 
-        if "Velocity" in pose_results.keys():
+        if "Velocity" in metric_results.keys():
             velocity_distribution_plot = KinematicDistributionPlot(metric_name="Velocity")
-            fig, filename = velocity_distribution_plot.draw(pose_results, add_title=False)
+            fig, filename = velocity_distribution_plot.draw(metric_results, add_title=False)
             self._save_plot(fig, filename)
 
-        if "Acceleration" in pose_results.keys():
+        if "Acceleration" in metric_results.keys():
             acceleration_distribution_plot = KinematicDistributionPlot(metric_name="Acceleration")
-            fig, filename = acceleration_distribution_plot.draw(pose_results, add_title=False)
+            fig, filename = acceleration_distribution_plot.draw(metric_results, add_title=False)
             self._save_plot(fig, filename)
 
             coco_keypoint_plot = CocoKeypointPlot(metric_name="Acceleration")
-            fig, filename = coco_keypoint_plot.draw(pose_results, add_title=False)
+            fig, filename = coco_keypoint_plot.draw(metric_results, add_title=False)
             self._save_plot(fig, filename)
 
-        if "Jerk" in pose_results.keys():
+        if "Jerk" in metric_results.keys():
             jerk_distribution_plot = KinematicDistributionPlot(metric_name="Jerk")
-            fig, filename = jerk_distribution_plot.draw(pose_results, add_title=False)
+            fig, filename = jerk_distribution_plot.draw(metric_results, add_title=False)
             self._save_plot(fig, filename)
 
         inference_times = self.checkpointer.load_inference_times()
         if inference_times:
             inference_times = self.set_maskanyone_ui_inference_times(inference_times)
-            inference_times = self.sort_inference_times_pose_estimator_order(inference_times, pose_results)
+            inference_times = self.sort_inference_times_pose_estimator_order(inference_times, metric_results)
             inference_time_plot = InferenceTimePlot()
             fig, filename = inference_time_plot.draw(inference_times)
             self._save_plot(fig, filename)
 
-        pose_results = self.calculate_kinematic_magnitudes(pose_results)
-        table_df = generate_result_table(pose_results)
+        metric_results = self.calculate_kinematic_magnitudes(metric_results)
+        table_df = generate_result_table(metric_results)
         self._save_table(table_df, "result_table.csv")
 
         
@@ -70,32 +70,32 @@ class MaskBenchVisualizer(Visualizer):
                     
         return mapped_times
 
-    def calculate_kinematic_magnitudes(self, pose_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, Dict[str, MetricResult]]]:
+    def calculate_kinematic_magnitudes(self, metric_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, Dict[str, MetricResult]]]:
         """
         Calculate the magnitude of the kinematic metrics.
         """
         for metric_name in ["Velocity", "Acceleration", "Jerk"]:
-            if metric_name in pose_results.keys():
-                for model_name, video_results in pose_results[metric_name].items():
+            if metric_name in metric_results.keys():
+                for model_name, video_results in metric_results[metric_name].items():
                     for video_name, metric_result in video_results.items():
                         magnitude_values = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
-                        pose_results[metric_name][model_name][video_name] = magnitude_values
-        return pose_results
+                        metric_results[metric_name][model_name][video_name] = magnitude_values
+        return metric_results
 
-    def sort_inference_times_pose_estimator_order(self, inference_times: Dict[str, Dict[str, float]], pose_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, float]]:
+    def sort_inference_times_pose_estimator_order(self, inference_times: Dict[str, Dict[str, float]], metric_results: Dict[str, Dict[str, Dict[str, MetricResult]]]) -> Dict[str, Dict[str, float]]:
         """
-        Sort the inference times according to the order in pose_results.
+        Sort the inference times according to the order in metric_results.
         
         Args:
             inference_times: Dictionary containing inference times for each pose estimator
-            pose_results: Dictionary containing pose estimation results, used to determine the order
+            metric_results: Dictionary containing pose estimation results, used to determine the order
             
         Returns:
             Dictionary containing sorted inference times
         """
-        # Get the list of pose estimators from any metric in pose_results
-        first_metric = next(iter(pose_results))
-        pose_estimator_order = list(pose_results[first_metric].keys())
+        # Get the list of pose estimators from any metric in metric_results
+        first_metric = next(iter(metric_results))
+        pose_estimator_order = list(metric_results[first_metric].keys())
         
         sorted_inference_times = {}
         for pose_estimator in pose_estimator_order:

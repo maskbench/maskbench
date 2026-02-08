@@ -2,6 +2,11 @@ import importlib
 import os
 import yaml
 from typing import List
+import logging 
+import datetime
+
+current_session = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(funcName)s:%(lineno)d - %(message)s', filename=f'{current_session}_maskbench.log')
 
 from datasets import Dataset
 from inference import InferenceEngine
@@ -34,15 +39,17 @@ def main():
 
     execute_evaluation = config.get("execute_evaluation", True)
     execute_rendering = config.get("execute_rendering", True)
+    render_poses_only = config.get("render_poses_only", False)
+    execute_processing = config.get("execute_processing", True)
     
-    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering)
+    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering, render_poses_only, execute_processing)
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool):
-    inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer)
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, execute_processing: bool):
+    inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer, execute_processing)
     gt_pose_results = dataset.get_gt_pose_results()
-    pose_results = inference_engine.estimate_pose_keypoints()
+    pose_results = inference_engine.run_parallel_tasks()
     
     if execute_evaluation:
         print("Executing evaluation.")
@@ -59,7 +66,7 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
             pose_results["GroundTruth"] = gt_pose_results
             estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
 
-        pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer)
+        pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer, render_poses_only)
         pose_renderer.render_all_videos(pose_results)
 
 

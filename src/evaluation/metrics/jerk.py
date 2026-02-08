@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.ma as ma
 from typing import Dict, Optional, Any
+import logging
 
 from inference.pose_result import VideoPoseResult
 from .metric import Metric
@@ -30,7 +31,7 @@ class JerkMetric(Metric):
         video_result: VideoPoseResult,
         gt_video_result: Optional[VideoPoseResult] = None,
         model_name: Optional[str] = None
-    ) -> MetricResult:
+    ) -> MetricResult | None:
         """
         Compute the jerk metric for a video result.
         Args:
@@ -48,19 +49,21 @@ class JerkMetric(Metric):
             - time_unit="second": jerk is computed per second (pixels/second³) by dividing by the time delta between frames
             - time_unit="frame": jerk is computed per frame (pixels/frame³)
         """
-        pred_poses = video_result.to_numpy_ma()  # shape: (frames, persons, keypoints, 2)
+        pred_poses = video_result.to_numpy_ma(self.name, model_name)  # shape: (frames, persons, keypoints, 2)
 
+        if pred_poses.shape[1] == 0 or pred_poses.shape[2] == 0:
+            print(f"Warning: No persons or keypoints detected in the video. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            logging.warning(f"Warning: No persons or keypoints detected in the video. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            return None
+        
         if pred_poses.shape[0] <= 3:
-            print("Warning: Jerk metric requires at least 4 frames to compute. Returning empty MetricResult.")
-            return MetricResult(
-                values=np.nan * np.ones((1, pred_poses.shape[1], pred_poses.shape[2], 2)),
-                axis_names=[FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS, COORDINATE_AXIS],
-                metric_name=self.name,
-                video_name=video_result.video_name,
-                model_name=model_name,
-            )
+            print(f"Warning: Jerk metric requires at least 4 frames to compute. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            logging.warning(f"Warning: Jerk metric requires at least 4 frames to compute. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
+            return None
 
         acceleration_result = self.acceleration_metric.compute(video_result, gt_video_result, model_name)
+        if acceleration_result is None:
+            return None
         
         jerk = ma.diff(acceleration_result.values, axis=0)  # shape: (frames-3, persons, keypoints, 2)
         
@@ -70,6 +73,10 @@ class JerkMetric(Metric):
             jerk = jerk / timedelta
             
         jerk.data[jerk.mask] = np.nan
+        
+        if ma.is_masked(jerk) and np.all(ma.getmaskarray(jerk)):
+            logging.warning(f"Warning: Jerk MetricResult contains only NaN or masked values for video: {video_result.video_name}, model: {model_name}.")
+            return None
 
         return MetricResult(
             values=jerk,

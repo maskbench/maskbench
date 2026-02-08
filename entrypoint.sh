@@ -1,33 +1,15 @@
 #!/bin/bash
 
-# Initialize trap handlers
 cleanup() {
   echo "Fixing permissions..."
   chmod -R a+rw /output
+  echo "Cleanup complete."
 }
 
-handle_sigterm() {
-  kill -TERM "$child" 2>/dev/null
-  wait "$child"
-  cleanup
-  exit 0
-}
-
-handle_sigint() {
-  kill -INT "$child" 2>/dev/null
-  wait "$child"
-  cleanup
-  exit 0
-}
-
-# Set up signal handlers
-trap handle_sigterm SIGTERM
-trap handle_sigint SIGINT
 trap cleanup EXIT
 
-# Start the Python process in the background and get its PID
-python3 main.py &
-child=$!
+python3 -u main.py
+exit_code=$?
 
-# Wait for the Python process to complete
-wait "$child"
+echo "Process completed with exit code $exit_code"
+exit $exit_code
