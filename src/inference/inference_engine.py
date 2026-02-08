@@ -54,7 +54,8 @@ class InferenceEngine:
                     for video_name, video_pose_result in estimator_results.items():
                         self.results[estimator_name][video_name] = video_pose_result
                 except Exception as e:
-                    print(f"Estimator {estimator.name} generated an exception: {e}")
+                    logging.error(f"Faced Exception: {e} while processing estimator: {future_to_estimator[future].name}")
+                    print(f"Faced Exception: {e} while processing estimator: {future_to_estimator[future].name}")
         
         return self.results
 

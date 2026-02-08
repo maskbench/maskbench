@@ -111,9 +111,12 @@ class PoseRenderer:
                 except KeyError as e:
                     print(f"No pose results for estimator {estimator_name} in video {video_name}")
                     logging.error(f"No pose results for estimator {estimator_name} in video {video_name}")
+                    writer.write(np.zeros_like(frame))  # write blank frame if exception occurs
                 except IndexError as e:
                     print(f"{frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")
                     logging.error(f"Video: {video_name}, Estimator Name: {estimator_name}, frame {frame_number} is not in list, length of list is {len(video_pose_results[estimator_name].frames)}")                  
+                    writer.write(np.zeros_like(frame))  # write blank frame if exception occurs
+            
             frame_number += 1
 
         cap.release()

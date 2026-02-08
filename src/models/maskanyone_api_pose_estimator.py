@@ -38,9 +38,11 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
             VideoPoseResult: A standardized result object containing the pose estimation results for the video.
 
         """
-        _, video_metadata = utils.get_video_metadata(video_path)
-        chunk_output_dir = '/tmp/chunks' + f"_{os.path.basename(video_path)}" + f"_{self.options.get("overlay_strategy")}"
-        processed_output_dir = '/tmp/processed_chunks' + f"_{os.path.basename(video_path)}" + f"_{self.options.get("overlay_strategy")}"
+        cap, video_metadata = utils.get_video_metadata(video_path)
+        cap.release()  # release the video capture object as we only needed it to get the metadata, the actual processing will be done by the MaskAnyone API
+
+        chunk_output_dir = '/tmp/chunks' + f"_{os.path.basename(video_path)}" + f'_{self.options.get("overlay_strategy")}'
+        processed_output_dir = '/tmp/processed_chunks' + f"_{os.path.basename(video_path)}" + f'_{self.options.get("overlay_strategy")}'
 
         print("MaskAnyoneAPI: Splitting video into chunks.")
         video_chunk_paths = VideoChunker(chunk_length=self.chunk_length).chunk_video_using_opencv(video_path, chunk_output_dir)
