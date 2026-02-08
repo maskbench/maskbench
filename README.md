@@ -80,6 +80,11 @@ Follow the instructions below to install and run experiments with MaskBench:
     ```bash
     docker compose up
     ```
+    If you would like to automatically close docker run:
+    ```bash
+    docker compose up --exit-code-from runner
+    ```
+
     If multiple users run MaskBench simultaneously, use `docker compose -p $USER up`.
 9. **Install MaskAnyone**. If you plan on using the UI version of MaskAnyone to create smooth poses, masked videos and improve raw pose estimation models, follow the installation instructions [here](https://github.com/MaskAnyone/MaskAnyone).
 
