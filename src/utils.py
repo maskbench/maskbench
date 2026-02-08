@@ -99,7 +99,7 @@ def maskanyone_convert_json_to_nested_arrays(json_pose_file: str, overlay_strate
             return frame_results
 
 
-def get_video_metadata(video_path: str) -> dict:
+def get_video_metadata(video_path: str) -> tuple[cv2.VideoCapture, dict]:
     """
     Get metadata of a video capture object.
 
@@ -107,6 +107,7 @@ def get_video_metadata(video_path: str) -> dict:
         video_path (str): The path to the video file.
 
     Returns:
+        cap: cv2.VideoCapture object for the video file.
         dict: A dictionary containing the video's metadata such as width, height, fps, and duration.
     """
     cap = cv2.VideoCapture(video_path)
