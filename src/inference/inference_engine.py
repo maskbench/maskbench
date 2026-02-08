@@ -36,7 +36,7 @@ class InferenceEngine:
             return self.results
         
         if max_workers is None:
-                max_workers = num_estimator
+            max_workers = num_estimator
 
         print('=' * 50)
         print(f"Running {num_estimator} pose estimators with max_workers={max_workers}")
