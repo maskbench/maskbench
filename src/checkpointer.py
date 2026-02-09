@@ -2,6 +2,7 @@ import os
 import json
 import datetime
 import shutil
+import subprocess
 import numpy as np
 import logging
 import cv2 as cv
@@ -66,6 +67,21 @@ class Checkpointer:
         output_path = os.path.join(video_dir, f"{video_name}_{estimator_name}.mp4")
 
         video_writer.release()
+
+        # add ffmpeg command to ensure correct encoding and metadata
+        temp_output_path = os.path.join(video_dir, f"{video_name}_{estimator_name}_temp.mp4")
+        command = [
+            "ffmpeg",
+            "-y",  # Overwrite output file if it exists
+            "-i", output_path,
+            "-c:v", "libx264",
+            "-preset", "fast",
+            "-c:a", "aac",
+            "-b:a", "128k",
+            temp_output_path
+        ]
+        subprocess.run(command, check=True)
+        os.replace(temp_output_path, output_path)  # replace original file with re-encoded file
         
         return output_path
         
