@@ -3,9 +3,12 @@
 
 set -e
 
-# Source environment variables
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
+env_file_path="../.env"
+
+if [ -f "$env_file_path" ]; then
+        set -a
+        source "$env_file_path"
+        set +a
 fi
 
 echo "=== Starting runner container ==="
@@ -41,11 +44,12 @@ fi
 # Start runner interactively
 # Note: Adjust the image filename based on what enroot creates
 enroot start \
+        --env-file ${env_file_path} \
     --env NVIDIA_VISIBLE_DEVICES=${MASKBENCH_GPU_ID_1} \
-    --mount ./src:/src \
-    --mount ./poetry.lock:/poetry.lock \
-    --mount ./pyproject.toml:/pyproject.toml \
-    --mount ./config:/config \
+    --mount ../src:/src \
+    --mount ../poetry.lock:/poetry.lock \
+    --mount ../pyproject.toml:/pyproject.toml \
+    --mount ../config:/config \
     --mount ${MASKBENCH_WEIGHTS_DIR}:/weights/user_weights \
     --mount ${MASKBENCH_DATASET_DIR}:/datasets \
     --mount ${MASKBENCH_OUTPUT_DIR}:/output \

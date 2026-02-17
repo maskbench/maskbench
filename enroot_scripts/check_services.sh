@@ -6,7 +6,7 @@ PID_DIR=./enroot_pids
 echo "=== Service Status ==="
 echo ""
 
-for service in sam2 maskanyone_api openpose maskbench-runner; do
+for service in sam2 maskanyone_api openpose; do
     if [ -f ${PID_DIR}/${service}.pid ]; then
         pid=$(cat ${PID_DIR}/${service}.pid)
         if ps -p $pid > /dev/null 2>&1; then
@@ -14,7 +14,7 @@ for service in sam2 maskanyone_api openpose maskbench-runner; do
         else
             echo "✗ ${service} is STOPPED (stale PID: ${pid})"
         fi
-        
+
         # Show last few log lines
         if [ -f ${PID_DIR}/${service}.log ]; then
             echo "  Last log lines:"

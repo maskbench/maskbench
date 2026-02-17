@@ -25,11 +25,14 @@ services:
                 - driver: nvidia
                   device_ids: ["${MASKBENCH_GPU_ID_1:-0}"]
                   capabilities: [ gpu ]
+    
     openpose:
       image: ghcr.io/maskanyone/maskanyone/openpose:${MASK_ANYONE_VERSION}
       restart: on-failure
       environment:
         OPENPOSE_MODEL_DIR: "/workspace/openpose/models"
+        OPENPOSE_PORT: ${OPENPOSE_PORT:-8000}
+        OPENPOSE_HOST: ${OPENPOSE_HOST:-openpose}
       deploy:
         resources:
           reservations:
@@ -44,6 +47,8 @@ services:
       environment:
         SAM2_OFFLOAD_VIDEO_TO_CPU: false
         SAM2_OFFLOAD_STATE_TO_CPU: false
+        SAM2_PORT: ${SAM2_PORT:-8000}
+        SAM2_HOST: ${SAM2_HOST:-sam2}
       deploy:
         resources:
           reservations:
@@ -55,6 +60,9 @@ services:
     maskanyone_api:
       image: ghcr.io/maskanyone/maskanyone/api:${MASK_ANYONE_VERSION}
       restart: on-failure
+      environment:
+        WORKER_PORT: ${WORKER_PORT:-8000}
+        WORKER_HOST: ${WORKER_HOST:-maskanyone_api}
       deploy:
         resources:
           reservations:
