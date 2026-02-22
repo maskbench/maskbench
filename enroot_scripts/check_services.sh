@@ -4,7 +4,6 @@
 PID_DIR=./enroot_pids
 
 echo "=== Service Status ==="
-echo ""
 
 for service in sam2 maskanyone_api openpose; do
     if [ -f ${PID_DIR}/${service}.pid ]; then
