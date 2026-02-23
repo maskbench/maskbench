@@ -74,7 +74,7 @@ Follow the instructions below to install and run experiments with MaskBench:
     ```
 8. **Build and run the MaskBench Docker container**.
 
-    **Note:** To use Enroot follow the ReadMe [here](/maskbench/README.md)
+    **Note:** To use Enroot follow the ReadMe [here](./enroot_scripts/readme.md)
     ```bash
     docker compose build
     ```
