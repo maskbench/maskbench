@@ -30,7 +30,7 @@ services:
       image: ghcr.io/maskanyone/maskanyone/openpose:${MASK_ANYONE_VERSION}
       restart: on-failure
       environment:
-        OPENPOSE_MODEL_DIR: "/workspace/openpose/models"
+        OPENPOSE_MODEL_DIR: ${OPENPOSE_MODEL_DIR:-/workspace/openpose/models}
         OPENPOSE_PORT: ${OPENPOSE_PORT:-8000}
         OPENPOSE_HOST: ${OPENPOSE_HOST:-openpose}
       deploy:
@@ -45,8 +45,8 @@ services:
       image: ghcr.io/maskanyone/maskanyone/sam2:${MASK_ANYONE_VERSION}
       restart: on-failure
       environment:
-        SAM2_OFFLOAD_VIDEO_TO_CPU: false
-        SAM2_OFFLOAD_STATE_TO_CPU: false
+        SAM2_OFFLOAD_VIDEO_TO_CPU: ${SAM2_OFFLOAD_VIDEO_TO_CPU:-false}
+        SAM2_OFFLOAD_STATE_TO_CPU: ${SAM2_OFFLOAD_STATE_TO_CPU:-false}
         SAM2_PORT: ${SAM2_PORT:-8000}
         SAM2_HOST: ${SAM2_HOST:-sam2}
       deploy:
