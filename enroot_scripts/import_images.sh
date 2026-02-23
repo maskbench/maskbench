@@ -4,21 +4,33 @@ set -e
 echo "=== Importing images to Enroot ==="
 
 # Source environment variables
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
+env_file_path="../.env"
+
+if [ -f "$env_file_path" ]; then
+        set -a
+        source "$env_file_path"
+        set +a
 fi
 
-# Import service images
-echo "Importing sam2..."
-enroot import docker://ghcr.io/maskanyone/maskanyone/sam2:${MASK_ANYONE_VERSION}
+echo "MASKANYONE VERSION: ${MASK_ANYONE_VERSION}"
 
-echo "Importing maskanyone_api..."
-enroot import docker://ghcr.io/maskanyone/maskanyone/api:${MASK_ANYONE_VERSION}
+import_image() {
+    local name=$1
+    local image=$2
+    local sqsh_file="${name}.sqsh"
 
-echo "Importing openpose..."
-enroot import docker://ghcr.io/maskanyone/maskanyone/openpose:${MASK_ANYONE_VERSION}
+    if [ -f "$sqsh_file" ]; then
+        echo "Skipping ${name}, already exists (${sqsh_file})"
+        echo "Delete file to redownload it"
+    else
+        echo "Importing ${name}..."
+        enroot import docker://${image}
+    fi
+}
 
-echo "Importing runner..."
-enroot import docker://ghcr.io/shaddahmed19/maskbench_runner:latest
+import_image "shaddahmed14+sam2+test" "ghcr.io/shaddahmed14/sam2:test"
+import_image "shaddahmed14+maskanyone_api+test" "ghcr.io/shaddahmed14/maskanyone_api:test"
+import_image "shaddahmed14+openpose+test" "ghcr.io/shaddahmed14/openpose:test"
+import_image "shaddahmed14+maskbench_runner+test" "ghcr.io/shaddahmed14/maskbench_runner:test"
 
-echo "Images are stored in: ~/.local/share/enroot/"
+echo "Done."

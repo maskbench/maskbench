@@ -46,8 +46,10 @@ class OpenPoseEstimator(PoseEstimator):
         return video_pose_result
 
     def _query_openpose_container(self, video_path: str):
+        port = os.getenv("OPENPOSE_PORT", 8000)
+        host = os.getenv("OPENPOSE_HOST", "openpose")
         url = (
-            "http://openpose:8000/openpose/estimate-pose-on-video"  # docker image link
+            f"http://{host}:{port}/openpose/estimate-pose-on-video"  # docker image link
         )
         options = {"model_pose": self.overlay_strategy, "multi_person_detection": True}
 
