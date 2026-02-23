@@ -23,7 +23,7 @@ More details can be found in our report: https://maskbench.github.io/maskbench/
 
 Follow the instructions below to install and run experiments with MaskBench:
 
-1. **Install Docker** and ensure the daemon is running.
+1. **Install Docker** and ensure the daemon is running. You can also use **Enroot**.
 2. **Clone this repo**:
    ```bash
    git clone https://github.com/maskbench/maskbench.git
@@ -73,6 +73,8 @@ Follow the instructions below to install and run experiments with MaskBench:
         video_folder: /datasets/<your-dataset-name>/videos  # Edit this line to point to the videos folder of your dataset.
     ```
 8. **Build and run the MaskBench Docker container**.
+
+    **Note:** To use Enroot follow the ReadMe [here](/maskbench/README.md)
     ```bash
     docker compose build
     ```
@@ -125,8 +127,11 @@ We provide four sample configuration files from our experiments. Feel free to co
 # A directory name (MaskBench run name) inside the output directory from which to load existing results.
 # If set, inference is skipped and results are loaded. To run inference from scratch, comment out or set to "None".
 inference_checkpoint_name: None
+execute_processing: true       # set to false to skip processing the dataset videos and loading existing processed data from checkpoint
 execute_evaluation: true                    # Set to false to skip calculating evaluation metrics and plotting.
 execute_rendering: true                     # Set to false to skip rendering the videos.
+render_poses_only: true        # set to true to render the pose keypoints on a black canvas for anonymity.
+
 
 dataset:
   name: TragicTalkers                                               # User-definable name of the dataset
@@ -144,6 +149,15 @@ pose_estimators:                            # List of pose estimators (specificy
       weights: yolo11l-pose.pt              # Weights file name inside the specified weights directory.
       save_keypoints_in_coco_format: true   # Whether to store keypoints in COCO format (18 keypoints) or not)
       confidence_threshold: 0.3             # Confidence threshold below which keyopints are considered undetected.
+
+- name: MaskAnyoneAPI-MediaPipe
+    enabled: true
+    code_file: models.maskanyone_api_pose_estimator.MaskAnyoneApiPoseEstimator
+    config:
+      overlay_strategy: mp_pose
+      save_keypoints_in_coco_format: true
+      confidence_threshold: 0               # Confidence thresholds not supported by MaskAnyone
+      chunk_length: 120 # Chunking is required for longer videos. You can set length (in seconds) of each chunk to be processed.
 
   - name: MaskAnyoneUI-MediaPipe
     enabled: true
