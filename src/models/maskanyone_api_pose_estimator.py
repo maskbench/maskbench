@@ -16,7 +16,9 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
         Initialize the MaskAnyoneApiPoseEstimator with a name and configuration.
         """
         super().__init__(name, config)
-        self.docker_url = "http://maskanyone_api:8000/mask-video"
+        self.port = os.getenv("WORKER_PORT", 8000)
+        self.host = os.getenv("WORKER_HOST", "maskanyone_api")
+        self.docker_url = f"http://{self.host}:{self.port}/mask-video"
         self.options = utils.maskanyone_get_config(self.config)
         self.chunk_length = self.config.get("chunk_length", 120)  # default chunk length is 120 seconds
         self.model_keypoint_pairs = {"mp_pose": MEDIAPIPE_KEYPOINT_PAIRS, "openpose_body25b": OPENPOSE_BODY25B_KEYPOINT_PAIRS, "openpose": OPENPOSE_BODY25_KEYPOINT_PAIRS}

@@ -23,7 +23,7 @@ More details can be found in our report: https://maskbench.github.io/maskbench/
 
 Follow the instructions below to install and run experiments with MaskBench:
 
-1. **Install Docker** and ensure the daemon is running.
+1. **Install Docker** and ensure the daemon is running. You can also use **Enroot**.
 2. **Clone this repo**:
    ```bash
    git clone https://github.com/maskbench/maskbench.git
@@ -73,6 +73,8 @@ Follow the instructions below to install and run experiments with MaskBench:
         video_folder: /datasets/<your-dataset-name>/videos  # Edit this line to point to the videos folder of your dataset.
     ```
 8. **Build and run the MaskBench Docker container**.
+
+    **Note:** To use Enroot follow the ReadMe [here](/maskbench/README.md)
     ```bash
     docker compose build
     ```

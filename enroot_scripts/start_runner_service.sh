@@ -3,9 +3,12 @@
 
 set -e
 
-# Source environment variables
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
+env_file_path="../.env"
+
+if [ -f "$env_file_path" ]; then
+        set -a
+        source "$env_file_path"
+        set +a
 fi
 
 echo "=== Starting runner container ==="
@@ -42,15 +45,21 @@ fi
 # Note: Adjust the image filename based on what enroot creates
 enroot start \
     --env NVIDIA_VISIBLE_DEVICES=${MASKBENCH_GPU_ID_1} \
-    --mount ./src:/src \
-    --mount ./poetry.lock:/poetry.lock \
-    --mount ./pyproject.toml:/pyproject.toml \
-    --mount ./config:/config \
-    --mount ${MASKBENCH_WEIGHTS_DIR}:/weights/user_weights \
+    --env SAM2_PORT=${SAM2_PORT} \
+    --env SAM2_HOST=${SAM2_HOST} \
+    --env OPENPOSE_PORT=${OPENPOSE_PORT} \
+    --env OPENPOSE_HOST=${OPENPOSE_HOST} \
+    --env WORKER_PORT=${WORKER_PORT} \
+    --env WORKER_HOST=${WORKER_HOST} \
+    --env MASKBENCH_CONFIG_FILE=${MASKBENCH_CONFIG_FILE} \
+    --mount ../src:/src \
+    --mount ../poetry.lock:/poetry.lock \
+    --mount ../pyproject.toml:/pyproject.toml \
+    --mount ../config:/config \
     --mount ${MASKBENCH_DATASET_DIR}:/datasets \
     --mount ${MASKBENCH_OUTPUT_DIR}:/output \
     --rw \
-    ghcr.io+shaddahmed19+maskbench_runner+latest.sqsh
+    shaddahmed14+maskbench_runner+test.sqsh
 
 # When you exit the runner, this script ends
 echo ""

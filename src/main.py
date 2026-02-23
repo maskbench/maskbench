@@ -6,7 +6,6 @@ import logging
 import datetime
 
 current_session = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(funcName)s:%(lineno)d - %(message)s', filename=f'{current_session}_maskbench.log')
 
 from datasets import Dataset
 from inference import InferenceEngine
@@ -24,6 +23,14 @@ def main():
     dataset = load_dataset(dataset_specification)
     print("Dataset:", dataset.name)
 
+    checkpoint_name = config.get("inference_checkpoint_name", None)
+    checkpoint_name = checkpoint_name if checkpoint_name != "None" else None
+    checkpointer = Checkpointer(dataset.name, checkpoint_name)
+    checkpointer.save_config(config_file_path)
+
+    log_folder =  checkpointer.checkpoint_dir or "/output"
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(funcName)s:%(lineno)d - %(message)s', filename=f'{log_folder}/{current_session}_maskbench.log')
+
     pose_estimator_specifications = config.get("pose_estimators", [])
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
     print("Available pose estimators:", [est.name for est in pose_estimators])
@@ -31,11 +38,6 @@ def main():
     metric_specifications = config.get("metrics", [])
     metrics = load_metrics(metric_specifications)
     print("Available metrics:", [metric.name for metric in metrics])
-
-    checkpoint_name = config.get("inference_checkpoint_name", None)
-    checkpoint_name = checkpoint_name if checkpoint_name != "None" else None
-    checkpointer = Checkpointer(dataset.name, checkpoint_name)
-    checkpointer.save_config(config_file_path)
 
     execute_evaluation = config.get("execute_evaluation", True)
     execute_rendering = config.get("execute_rendering", True)

@@ -5,7 +5,7 @@ PID_DIR=./enroot_pids
 
 echo "=== Stopping services ==="
 
-for service in sam2 maskanyone_api openpose maskbench-runner; do
+for service in sam2 maskanyone_api openpose; do
     if [ -f ${PID_DIR}/${service}.pid ]; then
         pid=$(cat ${PID_DIR}/${service}.pid)
         if ps -p $pid > /dev/null 2>&1; then
