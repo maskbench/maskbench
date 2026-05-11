@@ -1,0 +1,9 @@
+- add mediapipe world landmarks
+- focus on upper body keypoints
+- save npz per file along with metadata (check envisionhgdetector for info)
+- show some metadata on the pose animated video
+- optionally comment extra models for a smaller and faster install
+- deliverable is npz and animation per video
+- review https://hpiaiintellsystems.slack.com/archives/C0AJN6GL3LY/p1778491220287059
+- make sure videos dont exceed 100MB -- wims requirement
+- 
