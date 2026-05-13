@@ -20,6 +20,62 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
+    
+
+# this is specific to envision gesture challenge, we can modify this to be more general if needed
+# note: not keeping this in utils to avoid circular imports
+def parse_filename(video_name: str):
+        """Parse video filename to extract metadata.
+            Example filename: MULTISIMO_S07_0007_gesture_move
+            Returns:
+                dict: A dictionary containing the extracted metadata fields:
+                    - corpus: The corpus name (e.g., "MULTISIMO")
+                    - speaker: The speaker identifier (e.g., "S07")
+                    - clip_id: The clip identifier (e.g., "0007")
+                    - category: The category of the gesture (e.g., "gesture" or "nogesture")
+                    - subtype: The subtype of the gesture (e.g., "move", "hold", "other", or "NA" if not specified)
+                    - is_mirror: A boolean indicating whether the video is a mirror version (True if "_mirror" is in the filename, False otherwise)
+        """   
+        is_mirror = "_mirror" in video_name
+        clean_name = video_name.replace("_mirror", "").replace(".mp4", "")
+        
+        parts = clean_name.split("_")
+        
+        if len(parts) < 4:
+            print(f"Warning: Cannot parse filename (too few parts): {video_name}")
+            return None
+        
+        corpus = parts[0]
+        
+        # Find category index
+        category_idx = None
+        for i, p in enumerate(parts):
+            if p.lower() in ['gesture', 'nogesture']:
+                category_idx = i
+                break
+        
+        if category_idx is None or category_idx < 2:
+            print(f"Warning: Cannot find category in: {video_name}")
+            return None
+        
+        clip_id = parts[category_idx - 1]
+        
+        if category_idx > 2:
+            speaker = "_".join(parts[1:category_idx-1])
+        else:
+            speaker = parts[1]
+        
+        category = parts[category_idx].lower()
+        subtype = parts[category_idx + 1] if category_idx + 1 < len(parts) else "NA"
+        
+        return dict(
+            corpus=corpus,
+            speaker=speaker,
+            clip_id=clip_id,
+            category=category,
+            subtype=subtype,
+            is_mirror=is_mirror
+        )
 
 class Checkpointer:
     def __init__(self, dataset_name: str, checkpoint_name: Optional[str] = None):
@@ -47,6 +103,7 @@ class Checkpointer:
         # Create subdirectories
         self.poses_dir = os.path.join(self.checkpoint_dir, "poses")
         self.plots_dir = os.path.join(self.checkpoint_dir, "plots")
+        self.npz_dir = os.path.join(self.checkpoint_dir, "npz")
         self.renderings_dir = os.path.join(self.checkpoint_dir, "renderings")
         
     def save_rendered_video(self, video_name: str, estimator_name: str, video_writer: cv.VideoWriter) -> str:
@@ -84,7 +141,51 @@ class Checkpointer:
         os.replace(temp_output_path, output_path)  # replace original file with re-encoded file
         
         return output_path
-        
+    
+    # This is specific to envision gesture challenge, we can modify this to be more general if needed
+    def save_world_landmark_npz(self, video_pose_result: VideoPoseResult, estimator_name: str) -> str:
+        os.makedirs(self.npz_dir, exist_ok=True)
+        estimator_dir = os.path.join(self.npz_dir, estimator_name)
+        os.makedirs(estimator_dir, exist_ok=True)
+
+        video_name = video_pose_result.video_name
+        output_path = os.path.join(estimator_dir, f"{video_name}.npz")
+
+        fps = video_pose_result.fps
+        frame_width = video_pose_result.frame_width
+        frame_height = video_pose_result.frame_height
+        video_name = video_pose_result.video_name
+        corpus, speaker, clip_id, category, subtype, is_mirror = parse_filename(video_name).values()
+        frames = video_pose_result.frames
+        persons_world_landmark = [frame.persons_world_landmark for frame in frames]
+
+        # This assumes single person video
+        # we convert None/ NULL to nan for convinience
+        landmarks_array = np.array([
+            [[kp.x if kp.x is not None else np.nan,
+            kp.y if kp.y is not None else np.nan,
+            kp.z if kp.z is not None else np.nan]
+            for kp in frame[0].keypoints] if frame and frame[0] and frame[0].keypoints else []
+            for frame in persons_world_landmark
+        ], dtype=float)
+
+        np.savez(
+            output_path,
+            video_name=video_name,
+            is_mirror=is_mirror,
+            corpus=corpus,
+            speaker=speaker,
+            clip_id=clip_id,
+            category=category,
+            subtype=subtype,
+            fps=fps,
+            frame_width=frame_width,
+            frame_height=frame_height,
+            landmarks=landmarks_array,
+        )
+    
+        return output_path
+
     def save_video_pose_result(self, video_pose_result: VideoPoseResult, estimator_name: str) -> str:
         """
         Save pose estimation results for a video.

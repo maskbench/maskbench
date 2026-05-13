@@ -1,6 +1,5 @@
 import time
-from .pose_result import VideoPoseResult
-from typing import Dict, List
+from typing import Dict
 from checkpointer import Checkpointer
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -84,6 +83,7 @@ class InferenceEngine:
                 video_pose_result = estimator.estimate_pose(video.path)
                 estimator_results[video.get_filename()] = video_pose_result
                 self.checkpointer.save_video_pose_result(video_pose_result, estimator.name)
+                self.checkpointer.save_world_landmark_npz(video_pose_result, estimator.name)
                 self.checkpointer.save_inference_time(estimator.name, video.get_filename(), time.time() - start_time)
             except Exception as e:
                 print(f"Error processing video {video.get_filename()} with estimator {estimator.name}: {e}")

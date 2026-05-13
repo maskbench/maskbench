@@ -12,6 +12,7 @@ np.set_printoptions(threshold=np.inf)
 class PoseKeypoint:
     x: float
     y: float
+    z: Optional[float] = None  # for 3D keypoints, otherwise None
     confidence: Optional[float] = None
 
 
@@ -25,6 +26,7 @@ class PersonPoseResult:
 class FramePoseResult:
     persons: List[PersonPoseResult]
     frame_idx: int
+    persons_world_landmark: Optional[List[PersonPoseResult]] = None  # for Mediapipe World Landmarker, otherwise None
 
 
 class VideoPoseResult:

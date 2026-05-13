@@ -39,8 +39,8 @@ def main():
     metrics = load_metrics(metric_specifications)
     print("Available metrics:", [metric.name for metric in metrics])
 
-    execute_evaluation = config.get("execute_evaluation", True)
-    execute_rendering = config.get("execute_rendering", True)
+    execute_evaluation = config.get("execute_evaluation", False)
+    execute_rendering = config.get("execute_rendering", False)
     render_poses_only = config.get("render_poses_only", False)
     execute_processing = config.get("execute_processing", True)
     

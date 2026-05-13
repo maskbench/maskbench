@@ -1,0 +1,19 @@
+inference_checkpoint_name: None # comment out or set to "None" to run inference from scratch
+execute_processing: true       # set to false to skip processing the dataset videos and loading existing processed data
+execute_rendering: true         # set to false to skip rendering the videos
+render_poses_only: true        # set to true to render the pose keypoints overlayed on the black video frames
+
+dataset:
+  name: EnvisionGestureChallenge
+  code_file: datasets.dataset.Dataset
+  video_folder: /datasets/
+
+pose_estimators:
+  - name: MediaPipePoseWorldLandmarker
+    enabled: true
+    code_file: models.mediapipe_worldlandmarker_pose_estimator.MediaPipeWorldLandmarkerPoseEstimator
+    config:
+      weights: pose_landmarker_heavy.task
+      max_num_poses: 3
+      save_keypoints_in_coco_format: false # COCO has 17 keypoints. MediaPipe has 33 keypoints
+      confidence_threshold: 0.3

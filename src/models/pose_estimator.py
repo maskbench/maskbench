@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import cv2
 
 from inference.pose_result import VideoPoseResult
 
@@ -74,7 +73,15 @@ class PoseEstimator(ABC):
             for person_result in frame_result.persons:
                 for keypoint in person_result.keypoints:
                     if keypoint.confidence is not None and keypoint.confidence < self.confidence_threshold:
-                        keypoint.x = 0
-                        keypoint.y = 0
+                        keypoint.x = None
+                        keypoint.y = None
                         keypoint.confidence = None
+            if frame_result.persons_world_landmark: # for mediapipe world landmarker results
+                for person_result in frame_result.persons_world_landmark:
+                      for keypoint in person_result.keypoints:
+                        if keypoint.confidence is not None and keypoint.confidence < self.confidence_threshold:
+                            keypoint.x = None
+                            keypoint.y = None
+                            keypoint.z = None
+                            keypoint.confidence = None
         return video_pose_result
