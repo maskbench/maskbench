@@ -7,7 +7,7 @@ import utils
 import shutil
 from models import PoseEstimator
 from video_chunker import VideoChunker
-from inference import VideoPoseResult
+from pose_result_class import VideoPoseResult
 from keypoint_pairs import *
 
 class MaskAnyoneApiPoseEstimator(PoseEstimator):

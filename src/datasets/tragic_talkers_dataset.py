@@ -3,7 +3,7 @@ import json
 import glob
 from typing import Dict, List
 
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from pose_result_class import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from keypoint_pairs import COCO_KEYPOINT_PAIRS, COCO_TO_OPENPOSE_BODY25, OPENPOSE_BODY25_KEYPOINT_PAIRS
 from utils import convert_keypoints_to_coco_format
 from .dataset import Dataset

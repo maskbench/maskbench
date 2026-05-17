@@ -5,7 +5,7 @@ from typing import Dict, Optional, Any
 
 
 from evaluation.utils import DISTANCE_FILL_VALUE, calculate_bbox_sizes_for_persons_in_frame
-from inference.pose_result import VideoPoseResult
+from pose_result_class import VideoPoseResult
 from .metric import Metric
 from .metric_result import COORDINATE_AXIS, FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
 

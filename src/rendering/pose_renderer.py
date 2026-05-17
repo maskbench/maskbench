@@ -6,10 +6,10 @@ import numpy as np
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from inference import FramePoseResult, VideoPoseResult
+from pose_result_class import FramePoseResult, VideoPoseResult
 from datasets import Dataset, VideoSample
 from checkpointer import Checkpointer
-from utils import get_color_palette, get_video_metadata
+from utils import get_color_palette, get_video_metadata, parse_filename
 
 
 class PoseRenderer:

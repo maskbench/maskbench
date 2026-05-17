@@ -1,6 +1,6 @@
 from typing import Dict, List
 from evaluation.metrics import MetricResult, Metric
-from inference.pose_result import VideoPoseResult
+from pose_result_class import VideoPoseResult
 
 
 class Evaluator:

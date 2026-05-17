@@ -10,7 +10,7 @@ from mediapipe.tasks.python.vision import (
     RunningMode,
 )
 
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from pose_result_class import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
 from keypoint_pairs import COCO_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS, COCO_TO_MEDIAPIPE
 

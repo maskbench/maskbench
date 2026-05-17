@@ -5,7 +5,7 @@ import numpy as np
 import numpy.ma as ma
 from scipy.optimize import linear_sum_assignment
 
-from inference.pose_result import VideoPoseResult
+from pose_result_class import VideoPoseResult
 from evaluation.metrics.metric_result import MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
 
 

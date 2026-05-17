@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from inference.pose_result import VideoPoseResult
+from pose_result_class import VideoPoseResult
 
 
 class PoseEstimator(ABC):

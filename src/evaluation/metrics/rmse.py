@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Any
 
 
-from inference.pose_result import VideoPoseResult
+from pose_result_class import VideoPoseResult
 from .euclidean_distance import EuclideanDistanceMetric
 from .metric import Metric
 from .metric_result import MetricResult

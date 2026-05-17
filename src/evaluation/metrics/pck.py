@@ -2,7 +2,7 @@ import numpy as np
 import numpy.ma as ma
 from typing import Dict, Optional, Any
 
-from inference.pose_result import VideoPoseResult
+from pose_result_class import VideoPoseResult
 from .metric import Metric
 from .metric_result import FRAME_AXIS, MetricResult
 from .euclidean_distance import EuclideanDistanceMetric

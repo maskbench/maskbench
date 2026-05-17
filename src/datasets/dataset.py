@@ -4,7 +4,7 @@ from abc import ABC
 from typing import Dict, List
 
 from .video_sample import VideoSample
-from inference import VideoPoseResult
+from pose_result_class import VideoPoseResult
 from keypoint_pairs import COCO_KEYPOINT_PAIRS
 
 

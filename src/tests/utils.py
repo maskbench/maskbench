@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List
 
-from inference.pose_result import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from pose_result_class import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 
 
 def create_example_video_pose_result(keypoints_data, video_name="example_video", fps: int = 30):

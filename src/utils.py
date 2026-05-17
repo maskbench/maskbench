@@ -4,7 +4,7 @@ import glob
 import os
 import json
 from typing import List
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
+from pose_result_class import FramePoseResult, PersonPoseResult, PoseKeypoint
 
 def get_color_palette() -> list:
     return [
@@ -98,7 +98,6 @@ def maskanyone_convert_json_to_nested_arrays(json_pose_file: str, overlay_strate
             
             return frame_results
 
-
 def get_video_metadata(video_path: str) -> tuple[cv2.VideoCapture, dict]:
     """
     Get metadata of a video capture object.
@@ -153,3 +152,58 @@ def get_frame_count_ffprobe(video_path: str) -> int:
         raise RuntimeError(f"ffprobe failed: {e.stderr.strip()}")
     except ValueError:
         raise RuntimeError("Could not parse frame count from ffprobe output.")
+
+# this is specific to envision gesture challenge, we can modify this to be more general if needed
+# note: not keeping this in utils to avoid circular imports
+def parse_filename(video_name: str):
+        """Parse video filename to extract metadata.
+            Example filename: MULTISIMO_S07_0007_gesture_move
+            Returns:
+                dict: A dictionary containing the extracted metadata fields:
+                    - corpus: The corpus name (e.g., "MULTISIMO")
+                    - speaker: The speaker identifier (e.g., "S07")
+                    - clip_id: The clip identifier (e.g., "0007")
+                    - category: The category of the gesture (e.g., "gesture" or "nogesture")
+                    - subtype: The subtype of the gesture (e.g., "move", "hold", "other", or "NA" if not specified)
+                    - is_mirror: A boolean indicating whether the video is a mirror version (True if "_mirror" is in the filename, False otherwise)
+        """   
+        is_mirror = "_mirror" in video_name
+        clean_name = video_name.replace("_mirror", "").replace(".mp4", "")
+        
+        parts = clean_name.split("_")
+        
+        if len(parts) < 4:
+            print(f"Warning: Cannot parse filename (too few parts): {video_name}")
+            return None
+        
+        corpus = parts[0]
+        
+        # Find category index
+        category_idx = None
+        for i, p in enumerate(parts):
+            if p.lower() in ['gesture', 'nogesture']:
+                category_idx = i
+                break
+        
+        if category_idx is None or category_idx < 2:
+            print(f"Warning: Cannot find category in: {video_name}")
+            return None
+        
+        clip_id = parts[category_idx - 1]
+        
+        if category_idx > 2:
+            speaker = "_".join(parts[1:category_idx-1])
+        else:
+            speaker = parts[1]
+        
+        category = parts[category_idx].lower()
+        subtype = parts[category_idx + 1] if category_idx + 1 < len(parts) else "NA"
+        
+        return dict(
+            corpus=corpus,
+            speaker=speaker,
+            clip_id=clip_id,
+            category=category,
+            subtype=subtype,
+            is_mirror=is_mirror
+        )
