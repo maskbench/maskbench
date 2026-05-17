@@ -66,6 +66,7 @@ class PoseRenderer:
             video_pose_results (Dict[str, VideoPoseResult]): Dictionary of pose results for each estimator.
         """
         print(f"Rendering video {video.get_filename()}")
+        video_name = video.get_filename()
         cap, video_metadata = get_video_metadata(video.path)
         fps = video_metadata["fps"]
         width = video_metadata["width"]
@@ -102,6 +103,7 @@ class PoseRenderer:
                 try:
                     frame_keypoints = video_pose_results[estimator_name].frames[frame_number]
                     frame_copies[idx] = self.draw_keypoints(
+                        video_name,
                         frame_copies[idx],
                         frame_keypoints,
                         self.estimators_point_pairs[estimator_name],
@@ -124,7 +126,7 @@ class PoseRenderer:
             self.checkpointer.save_rendered_video(video_name, estimator_name, writer)
 
     def draw_keypoints(
-        self, frame, frame_pose_result: FramePoseResult, point_pairs, color
+        self, video_name: str, frame, frame_pose_result: FramePoseResult, point_pairs, color
     ):
         """Draw keypoints and join keypoint pairs on 1 frame"""
         if not frame_pose_result.persons:  # if this frame has no keypoints
@@ -155,6 +157,33 @@ class PoseRenderer:
                 point2 = (int(point2.x), int(point2.y))
                 cv2.line(frame, point1, point2, color=color, thickness=self.line_thickness)
 
+        self.add_text_to_frame(frame, video_name)
+
+        return frame
+    
+    def add_text_to_frame(self, frame, text, position=(5, 15)):
+        """Add text to a frame at the specified position.
+            Text can be split into multiple lines using the specified delimeter. Each line will be rendered below the previous one with a fixed spacing.
+        """
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.5
+        color = (255, 255, 255)  # white color
+        thickness = 1
+        corpus, speaker, clip_id, category, subtype, is_mirror = parse_filename(text).values()
+        parts = {
+            "Corpus": corpus,
+            "Speaker": speaker,
+            "Clip ID": clip_id,
+            "Category": category,
+            "Subtype": subtype,
+            "Mirror Video": True if is_mirror else False
+        }
+
+        # This is specific to envision gesture challenge
+        for idx, (key, value) in enumerate(parts.items()):
+            text_part = f"{key}: {value}"
+            text_part_position = (position[0], position[1] + idx * 15)  # adjust y position for each part
+            cv2.putText(frame, text_part, text_part_position, font, font_scale, color, thickness)
         return frame
 
     def hex_to_bgr(self, hex_color: str) -> tuple[int, int, int]:
