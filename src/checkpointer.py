@@ -105,9 +105,50 @@ class Checkpointer:
         corpus, speaker, clip_id, category, subtype, is_mirror = parse_filename(video_name).values()
         frames = video_pose_result.frames
         persons_world_landmark = [frame.persons_world_landmark for frame in frames]
+        hand_world_landmark = [frame.hands_world_landmark for frame in frames]
 
         # This assumes single person video
         # we convert None/ NULL to nan for convinience
+        # frame[0] represents person[0]
+
+        # hand landmarks - if they exist
+        left_hand_landmarks = []
+        right_hand_landmarks = []
+        num_keypoints = next(
+            (len(hand.keypoints) for frame in hand_world_landmark 
+                if frame 
+                for hand in frame if hand.keypoints),
+            21
+        )
+        nan_keypoints = [[np.nan, np.nan, np.nan]] * num_keypoints
+
+        for frame in hand_world_landmark:
+            left_kps = [
+                [kp.x if kp.x is not None else np.nan,
+                kp.y if kp.y is not None else np.nan,
+                kp.z if kp.z is not None else np.nan]
+                for hand in frame
+                for kp in hand.keypoints if kp.hand == 0 # left hand
+            ] if frame else []
+            left_kps = left_kps if left_kps else nan_keypoints
+
+            right_kps = [
+                [kp.x if kp.x is not None else np.nan,
+                kp.y if kp.y is not None else np.nan,
+                kp.z if kp.z is not None else np.nan]
+                for hand in frame
+                for kp in hand.keypoints if kp.hand == 1 # right hand
+            ] if frame else []
+            right_kps = right_kps if right_kps else nan_keypoints
+
+            left_hand_landmarks.append(left_kps)
+            right_hand_landmarks.append(right_kps)
+        
+        left_hand_landmarks = np.array(left_hand_landmarks, dtype=float)
+        right_hand_landmarks = np.array(right_hand_landmarks, dtype=float)
+  
+        # body landmarks
+        landmarks_array = []
         landmarks_array = np.array([
             [[kp.x if kp.x is not None else np.nan,
             kp.y if kp.y is not None else np.nan,
@@ -128,7 +169,9 @@ class Checkpointer:
             fps=fps,
             frame_width=frame_width,
             frame_height=frame_height,
-            landmarks=landmarks_array,
+            body_landmarks=landmarks_array,
+            left_hand_landmarks=left_hand_landmarks,
+            right_hand_landmarks=right_hand_landmarks
         )
     
         return output_path

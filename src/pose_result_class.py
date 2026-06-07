@@ -13,8 +13,8 @@ class PoseKeypoint:
     x: float
     y: float
     z: Optional[float] = None  # for 3D keypoints, otherwise None
+    hand: Optional[int] = None # 0 for left hand, 1 for right hand, None for non-hand keypoints
     confidence: Optional[float] = None
-
 
 @dataclass
 class PersonPoseResult:
@@ -24,10 +24,11 @@ class PersonPoseResult:
 
 @dataclass
 class FramePoseResult:
-    persons: List[PersonPoseResult]
     frame_idx: int
+    persons: List[PersonPoseResult]
     persons_world_landmark: Optional[List[PersonPoseResult]] = None  # for Mediapipe World Landmarker, otherwise None
-
+    hands: Optional[List[PersonPoseResult]] = None  # for Mediapipe Hands, otherwise None
+    hands_world_landmark: Optional[List[PersonPoseResult]] = None  # for Mediapipe Hands World Landmarker, otherwise None
 
 class VideoPoseResult:
     """

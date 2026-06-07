@@ -6,7 +6,7 @@ import numpy as np
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from pose_result_class import FramePoseResult, VideoPoseResult
+from pose_result_class import PersonPoseResult, VideoPoseResult
 from datasets import Dataset, VideoSample
 from checkpointer import Checkpointer
 from utils import get_color_palette, get_video_metadata, parse_filename
@@ -102,11 +102,25 @@ class PoseRenderer:
             for idx, (estimator_name, writer) in enumerate(video_writers):  # for every model
                 try:
                     frame_keypoints = video_pose_results[estimator_name].frames[frame_number]
+                    point_pairs = self.estimators_point_pairs[estimator_name]
+                    # if we have both hand and body keypoints. we additionally draw hand.
+                    if type(point_pairs) == tuple:
+                        body_point_pairs, hand_point_pairs = point_pairs
+                        frame_copies[idx] = self.draw_keypoints(
+                            video_name,
+                            frame_copies[idx],
+                            frame_keypoints.hands,
+                            hand_point_pairs,
+                            self.hex_to_bgr(color_palette[idx]),
+                        )
+                        point_pairs = body_point_pairs
+
+                    # default drawing with body keypoints
                     frame_copies[idx] = self.draw_keypoints(
                         video_name,
                         frame_copies[idx],
-                        frame_keypoints,
-                        self.estimators_point_pairs[estimator_name],
+                        frame_keypoints.persons,
+                        point_pairs,
                         self.hex_to_bgr(color_palette[idx]),
                     )  # draw keypoints on frame
                     writer.write(frame_copies[idx])  # write rendered frame
@@ -126,13 +140,14 @@ class PoseRenderer:
             self.checkpointer.save_rendered_video(video_name, estimator_name, writer)
 
     def draw_keypoints(
-        self, video_name: str, frame, frame_pose_result: FramePoseResult, point_pairs, color
+        self, video_name: str, frame, frame_pose_result: List[PersonPoseResult], point_pairs, color
     ):
         """Draw keypoints and join keypoint pairs on 1 frame"""
-        if not frame_pose_result.persons:  # if this frame has no keypoints
+        if not frame_pose_result:  # if this frame has no keypoints
             return frame
 
-        for person in frame_pose_result.persons:
+        # for hands - person 0 is and person 1 is hand 0 and hand 1
+        for person in frame_pose_result:
             if not person or not person.keypoints: # if there are no keypoints for this person
                 continue
             # Note: This is for 2D keypoints
@@ -140,7 +155,7 @@ class PoseRenderer:
                 if keypoint and keypoint.x is not None and keypoint.y is not None:
                     center = (int(keypoint.x), int(keypoint.y))
                     cv2.circle(frame, center, self.line_thickness, color, -1)
-                
+            
             for pair in point_pairs:  # iterate over point pairs to add lines between keypoints
                 try: # some keypoints might be missing, which would lead to an IndexError
                     point1 = person.keypoints[pair[0]]
@@ -176,7 +191,6 @@ class PoseRenderer:
             "Clip ID": clip_id,
             "Category": category,
             "Subtype": subtype,
-            "Mirror Video": True if is_mirror else False
         }
 
         # This is specific to envision gesture challenge

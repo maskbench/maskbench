@@ -13,7 +13,7 @@ pose_estimators:
     enabled: true
     code_file: models.mediapipe_worldlandmarker_pose_estimator.MediaPipeWorldLandmarkerPoseEstimator
     config:
-      weights: pose_landmarker_heavy.task
+      body_weights: pose_landmarker_heavy.task
+      hand_weights: mediapipe_hand_landmarker.task
       max_num_poses: 3
-      save_keypoints_in_coco_format: false # COCO has 17 keypoints. MediaPipe has 33 keypoints
       confidence_threshold: 0.3
