@@ -293,7 +293,7 @@
           <a class="sidebar-step" data-goto="1"><span class="step-bullet">2</span> Pose extraction</a>
           <a class="sidebar-step" data-goto="2"><span class="step-bullet">3</span> Run pipeline</a>
           <a class="sidebar-step" data-goto="3"><span class="step-bullet">4</span> Quality &amp; integrity</a>
-          <a class="sidebar-step" data-goto="4"><span class="step-bullet">5</span> Labels &amp; metadata</a>
+          <a class="sidebar-step" data-goto="4"><span class="step-bullet">5</span> Metadata &amp; standards</a>
           <a class="sidebar-step" data-goto="5"><span class="step-bullet">6</span> Train / test split</a>
           <a class="sidebar-step" data-goto="6"><span class="step-bullet">7</span> Export bundle</a>
         </div>
@@ -325,7 +325,7 @@
           <div class="progress-step-line"></div>
           <div class="progress-step"><span class="progress-step-number">4</span><span class="progress-step-text">Quality</span></div>
           <div class="progress-step-line"></div>
-          <div class="progress-step"><span class="progress-step-number">5</span><span class="progress-step-text">Labels</span></div>
+          <div class="progress-step"><span class="progress-step-number">5</span><span class="progress-step-text">Metadata</span></div>
           <div class="progress-step-line"></div>
           <div class="progress-step"><span class="progress-step-number">6</span><span class="progress-step-text">Split</span></div>
           <div class="progress-step-line"></div>
@@ -578,10 +578,19 @@
           </div>
         </section>
 
-        <!-- STEP 5: LABELS -->
+        <!-- STEP 5: METADATA & STANDARDS -->
         <section class="step-pane" data-step="4">
-          <h2 class="section-title">Labels &amp; <strong>metadata</strong></h2>
-          <p class="section-desc">Confirm the class mapping and per-clip metadata that ships with the release CSV.</p>
+          <h2 class="section-title">Metadata &amp; <strong>standards</strong></h2>
+          <p class="section-desc">The <span class="mono">metadata.csv</span> manifest — not the filename — is the source of truth. Values are normalised to controlled vocabularies and validated before export.</p>
+
+          <div class="parse-grid" style="margin-bottom:16px;">
+            <span class="tag tag-info">FAIR</span>
+            <span class="tag tag-default">Datasheet</span>
+            <span class="tag tag-default">Croissant</span>
+            <span class="tag tag-default">PROV-O</span>
+            <span class="tag tag-default">DataCite <span class="text-xs">(at archival)</span></span>
+            <a href="METADATA_STANDARD.md" class="text-xs text-secondary" style="align-self:center; margin-left:4px;">view standard →</a>
+          </div>
 
           <div class="field-row">
             <div class="panel" style="margin:0;">
@@ -592,19 +601,50 @@
                 <div class="toggle-row"><div class="toggle-label"><span class="tag tag-warning" style="margin-right:8px;">Move</span></div><div class="mono text-sm">24 clips &middot; 2%</div></div>
                 <div class="callout warn" style="margin:14px 0 0;">
                   <i class="fas fa-exclamation-triangle" style="color:#735f00;"></i>
-                  <div class="t"><strong>Move is heavily under-represented.</strong> Consider merging into Gesture or excluding for a 2-class challenge.</div>
+                  <div class="t"><strong>Move is under-represented (2%).</strong> Merge into Gesture or exclude for a 2-class challenge.</div>
                 </div>
               </div>
             </div>
             <div class="panel" style="margin:0;">
-              <div class="panel-header"><span class="panel-title"><i class="fas fa-table"></i> metadata.csv columns</span></div>
-              <div class="panel-content" style="padding-top:6px;">
-                <div class="toggle-row"><div><div class="toggle-label">clip_id, corpus, speaker_id</div><div class="toggle-desc">identity &amp; grouping</div></div><span class="tag tag-success">required</span></div>
-                <div class="toggle-row"><div><div class="toggle-label">label, subtype</div><div class="toggle-desc">target + fine-grained type</div></div><span class="tag tag-success">required</span></div>
-                <div class="toggle-row"><div><div class="toggle-label">n_frames, fps, is_mirror</div><div class="toggle-desc">clip shape &amp; augmentation flag</div></div><div class="switch on" data-switch></div></div>
-                <div class="toggle-row"><div><div class="toggle-label">language, setting</div><div class="toggle-desc">corpus-level attributes</div></div><div class="switch on" data-switch></div></div>
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-list-check"></i> Controlled vocabularies</span></div>
+              <div class="panel-content" style="padding-top:14px;">
+                <div style="font-size:11px; font-weight:600; color:var(--carbon-text-secondary); margin-bottom:6px;">label</div>
+                <div class="parse-grid" style="margin-bottom:12px;"><span class="parse-chip"><b>Gesture</b></span><span class="parse-chip"><b>NoGesture</b></span><span class="parse-chip"><b>Move</b></span></div>
+                <div style="font-size:11px; font-weight:600; color:var(--carbon-text-secondary); margin-bottom:6px;">corpus <span style="font-weight:400;">(canonical casing)</span></div>
+                <div class="parse-grid"><span class="parse-chip">Ecolang</span><span class="parse-chip">MULTISIMO</span><span class="parse-chip">SaGA</span><span class="parse-chip">SAGAplus</span><span class="parse-chip">ZHUBO</span><span class="parse-chip">GESRES</span><span class="parse-chip">TEDM3D</span></div>
+                <div class="helper">Off-vocabulary values are a hard error; new values are added by PR, not inline.</div>
               </div>
             </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="fas fa-table"></i> manifest preview <span class="text-xs text-secondary" style="font-weight:400;">— metadata.csv · source of truth</span></span><span class="text-xs text-secondary">6 of 1,204</span></div>
+            <div class="table-head">
+              <div style="flex:2;">clip_id</div><div style="width:90px;">corpus</div><div style="width:120px;">speaker_id</div><div style="width:90px;">label</div><div style="width:130px;">subtype</div><div style="width:150px;">validation</div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">Ecolang_ad01_34_Gesture_ObjMan</div><div style="width:90px;" class="text-sm">Ecolang</div><div style="width:120px;" class="mono text-xs">Ecolang_ad01</div><div style="width:90px;"><span class="tag tag-info">Gesture</span></div><div style="width:130px;" class="mono text-xs">ObjMan</div><div style="width:150px;"><span class="tag tag-success"><i class="fas fa-check"></i> valid</span></div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">SAGAplus_V8K2_35_Gesture_iconic_deictic</div><div style="width:90px;" class="text-sm">SAGAplus</div><div style="width:120px;" class="mono text-xs">SAGAplus_V8K2</div><div style="width:90px;"><span class="tag tag-info">Gesture</span></div><div style="width:130px;" class="mono text-xs">iconic_deictic</div><div style="width:150px;"><span class="tag tag-success"><i class="fas fa-check"></i> multi-token kept</span></div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">MULTISIMO_S07_0007_gesture_move</div><div style="width:90px;" class="text-sm">MULTISIMO</div><div style="width:120px;" class="mono text-xs">MULTISIMO_S07</div><div style="width:90px;"><span class="tag tag-info">Gesture</span></div><div style="width:130px;" class="mono text-xs">move</div><div style="width:150px;"><span class="tag tag-warning"><i class="fas fa-wand-magic-sparkles"></i> normalised case</span></div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">ZHUBO_9_070_26_Gesture_NA</div><div style="width:90px;" class="text-sm">ZHUBO</div><div style="width:120px;" class="mono text-xs">ZHUBO_9_070</div><div style="width:90px;"><span class="tag tag-info">Gesture</span></div><div style="width:130px;" class="mono text-xs">NA</div><div style="width:150px;"><span class="tag tag-success"><i class="fas fa-check"></i> speaker kept</span></div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">SAGA_pp_03_0042_Gesture_hold_mirror</div><div style="width:90px;" class="text-sm">SaGA</div><div style="width:120px;" class="mono text-xs">SaGA_pp_03</div><div style="width:90px;"><span class="tag tag-info">Gesture</span></div><div style="width:130px;" class="mono text-xs">hold <span class="tag tag-default" style="padding:0 6px;">mirror</span></div><div style="width:150px;"><span class="tag tag-success"><i class="fas fa-link"></i> linked → same split</span></div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">clip_final_v2</div><div style="width:90px;" class="text-secondary">—</div><div style="width:120px;" class="text-secondary">—</div><div style="width:90px;" class="text-secondary">—</div><div style="width:130px;" class="text-secondary">—</div><div style="width:150px;"><span class="tag tag-error"><i class="fas fa-xmark"></i> no manifest row</span></div>
+            </div>
+          </div>
+
+          <div class="callout warn" style="margin-bottom:16px;">
+            <i class="fas fa-shield-halved" style="color:#735f00;"></i>
+            <div class="t"><strong>Validation gate — 1 error, 2 warnings.</strong> Export is blocked until the error clears: <span class="mono">clip_final_v2</span> has no manifest row (off-pattern filename). Warnings: 1 label case-normalised, Move under-represented. <span class="text-secondary">Rules in METADATA_STANDARD §9.</span></div>
           </div>
 
           <div class="panel">
@@ -772,8 +812,8 @@
       { name: 'Source videos',       next: 'Next: Pose extraction' },
       { name: 'Pose extraction',     next: 'Next: Run pipeline' },
       { name: 'Run pipeline',        next: 'Next: Quality & integrity' },
-      { name: 'Quality & integrity', next: 'Next: Labels & metadata' },
-      { name: 'Labels & metadata',   next: 'Next: Train / test split' },
+      { name: 'Quality & integrity', next: 'Next: Metadata & standards' },
+      { name: 'Metadata & standards',next: 'Next: Train / test split' },
       { name: 'Train / test split',  next: 'Next: Export bundle' },
       { name: 'Export bundle',       next: 'Finish & export' },
     ];
