@@ -83,7 +83,7 @@ class InferenceEngine:
                 video_pose_result = estimator.estimate_pose(video.path)
                 estimator_results[video.get_filename()] = video_pose_result
                 self.checkpointer.save_video_pose_result(video_pose_result, estimator.name)
-                self.checkpointer.save_world_landmark_npz(video_pose_result, estimator.name)
+                self.checkpointer.save_npz(video_pose_result, estimator.name)
                 self.checkpointer.save_inference_time(estimator.name, video.get_filename(), time.time() - start_time)
             except Exception as e:
                 print(f"Error processing video {video.get_filename()} with estimator {estimator.name}: {e}")

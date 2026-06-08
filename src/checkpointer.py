@@ -89,31 +89,9 @@ class Checkpointer:
         
         return output_path
     
-    # This is specific to envision gesture challenge, we can modify this to be more general if needed
-    def save_world_landmark_npz(self, video_pose_result: VideoPoseResult, estimator_name: str) -> str:
-        os.makedirs(self.npz_dir, exist_ok=True)
-        estimator_dir = os.path.join(self.npz_dir, estimator_name)
-        os.makedirs(estimator_dir, exist_ok=True)
-
-        video_name = video_pose_result.video_name
-        output_path = os.path.join(estimator_dir, f"{video_name}.npz")
-
-        fps = video_pose_result.fps
-        frame_width = video_pose_result.frame_width
-        frame_height = video_pose_result.frame_height
-        video_name = video_pose_result.video_name
-        corpus, speaker, clip_id, category, subtype, is_mirror = parse_filename(video_name).values()
-        frames = video_pose_result.frames
-        persons_world_landmark = [frame.persons_world_landmark for frame in frames]
-        hand_world_landmark = [frame.hands_world_landmark for frame in frames]
-
-        # This assumes single person video
-        # we convert None/ NULL to nan for convinience
-        # frame[0] represents person[0]
-
-        # hand landmarks - if they exist
-        left_hand_landmarks = []
-        right_hand_landmarks = []
+    def return_hand_world_landmarks(self, hand_world_landmark):
+        world_left_hand_landmarks = []
+        world_right_hand_landmarks = []
         num_keypoints = next(
             (len(hand.keypoints) for frame in hand_world_landmark 
                 if frame 
@@ -141,20 +119,91 @@ class Checkpointer:
             ] if frame else []
             right_kps = right_kps if right_kps else nan_keypoints
 
-            left_hand_landmarks.append(left_kps)
-            right_hand_landmarks.append(right_kps)
+            world_left_hand_landmarks.append(left_kps)
+            world_right_hand_landmarks.append(right_kps)
+
+        world_left_hand_landmarks = np.array(world_left_hand_landmarks, dtype=float)
+        world_right_hand_landmarks = np.array(world_right_hand_landmarks, dtype=float)
+
+        return world_left_hand_landmarks, world_right_hand_landmarks
+    
+    def return_hand_image_landmarks(self, hand_image_landmark):
+        image_left_hand_landmarks = []
+        image_right_hand_landmarks = []
+        num_keypoints = next(
+            (len(hand.keypoints) for frame in hand_image_landmark 
+                if frame 
+                for hand in frame if hand.keypoints),
+            21
+        )
+        nan_keypoints = [[np.nan, np.nan]] * num_keypoints
+
+        for frame in hand_image_landmark:
+            left_kps = [
+                [kp.x if kp.x is not None else np.nan,
+                kp.y if kp.y is not None else np.nan]
+                for hand in frame
+                for kp in hand.keypoints if kp.hand == 0 # left hand
+            ] if frame else []
+            left_kps = left_kps if left_kps else nan_keypoints
+
+            right_kps = [
+                [kp.x if kp.x is not None else np.nan,
+                kp.y if kp.y is not None else np.nan]
+                for hand in frame
+                for kp in hand.keypoints if kp.hand == 1 # right hand
+            ] if frame else []
+            right_kps = right_kps if right_kps else nan_keypoints
+
+            image_left_hand_landmarks.append(left_kps)
+            image_right_hand_landmarks.append(right_kps)
+
+        image_left_hand_landmarks = np.array(image_left_hand_landmarks, dtype=float)
+        image_right_hand_landmarks = np.array(image_right_hand_landmarks, dtype=float)
+
+        return image_left_hand_landmarks, image_right_hand_landmarks
+
+    # This is specific to envision gesture challenge, we can modify this to be more general if needed
+    def save_npz(self, video_pose_result: VideoPoseResult, estimator_name: str) -> str:
+        os.makedirs(self.npz_dir, exist_ok=True)
+        estimator_dir = os.path.join(self.npz_dir, estimator_name)
+        os.makedirs(estimator_dir, exist_ok=True)
+
+        video_name = video_pose_result.video_name
+        output_path = os.path.join(estimator_dir, f"{video_name}.npz")
+
+        fps = video_pose_result.fps
+        frame_width = video_pose_result.frame_width
+        frame_height = video_pose_result.frame_height
+        video_name = video_pose_result.video_name
+        corpus, speaker, clip_id, category, subtype, is_mirror = parse_filename(video_name).values()
+        frames = video_pose_result.frames
+        persons_world_landmark = [frame.persons_world_landmark for frame in frames] # 3d
+        hand_world_landmark = [frame.hands_world_landmark for frame in frames] # 3d
+        hands = [frame.hands for frame in frames] # 2d
+        persons = [frame.persons for frame in frames] # 2d
+
+        # This assumes single person video
+        # we convert None/ NULL to nan for convinience
+
+        # hand landmarks - if they exist
+        # frame[0] represents person[0]
+        world_left_hand_landmarks, world_right_hand_landmarks = self.return_hand_world_landmarks(hand_world_landmark)
+        image_left_hand_landmarks, image_right_hand_landmarks = self.return_hand_image_landmarks(hands)
         
-        left_hand_landmarks = np.array(left_hand_landmarks, dtype=float)
-        right_hand_landmarks = np.array(right_hand_landmarks, dtype=float)
-  
         # body landmarks
-        landmarks_array = []
-        landmarks_array = np.array([
+        world_landmarks_array = np.array([
             [[kp.x if kp.x is not None else np.nan,
             kp.y if kp.y is not None else np.nan,
             kp.z if kp.z is not None else np.nan]
             for kp in frame[0].keypoints] if frame and frame[0] and frame[0].keypoints else []
             for frame in persons_world_landmark
+        ], dtype=float)
+        image_landmarks_array = np.array([
+            [[kp.x if kp.x is not None else np.nan,
+            kp.y if kp.y is not None else np.nan]
+            for kp in frame[0].keypoints] if frame and frame[0] and frame[0].keypoints else []
+            for frame in persons
         ], dtype=float)
 
         np.savez(
@@ -169,9 +218,12 @@ class Checkpointer:
             fps=fps,
             frame_width=frame_width,
             frame_height=frame_height,
-            body_landmarks=landmarks_array,
-            left_hand_landmarks=left_hand_landmarks,
-            right_hand_landmarks=right_hand_landmarks
+            world_body_landmarks=world_landmarks_array,
+            image_body_landmarks=image_landmarks_array,
+            world_left_hand_landmarks=world_left_hand_landmarks,
+            world_right_hand_landmarks=world_right_hand_landmarks,
+            image_left_hand_landmarks=image_left_hand_landmarks,
+            image_right_hand_landmarks=image_right_hand_landmarks
         )
     
         return output_path
