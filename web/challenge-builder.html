@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaskingOPS — Challenge Dataset Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+
+    :root {
+      --carbon-bg: #ffffff;
+      --carbon-bg-hover: #f4f4f4;
+      --carbon-bg-dark: #f5f5f5;
+      --carbon-border: #e0e0e0;
+      --carbon-text: #161616;
+      --carbon-text-secondary: #393939;
+      --carbon-focus: #0f62fe;
+      --carbon-success: #198038;
+      --carbon-success-light: #defbe6;
+      --carbon-warning: #f1c21b;
+      --carbon-warning-light: #fff8e1;
+      --carbon-error: #da1e28;
+      --carbon-error-light: #fff1f1;
+      --carbon-info: #0f62fe;
+      --carbon-info-light: #edf5ff;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: var(--carbon-bg-dark);
+      color: var(--carbon-text);
+      line-height: 1.5;
+      overflow: hidden;
+    }
+    *:focus-visible { outline: 2px solid var(--carbon-focus); outline-offset: 2px; }
+
+    .skip-link { position:absolute; top:-40px; left:0; background:var(--carbon-text); color:#fff; padding:8px 16px; z-index:100; }
+    .skip-link:focus { top:0; }
+
+    /* ── Buttons ── */
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:40px; padding:8px 20px; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; border:none; text-decoration:none; }
+    .btn-primary { background:var(--carbon-text); color:#fff; }
+    .btn-primary:hover { background:#393939; }
+    .btn-primary:disabled { background:#c6c6c6; cursor:not-allowed; }
+    .btn-secondary { background:#fff; color:var(--carbon-text); border:1px solid var(--carbon-text); }
+    .btn-secondary:hover { background:var(--carbon-bg-hover); }
+    .btn-ghost { background:transparent; color:var(--carbon-text-secondary); }
+    .btn-ghost:hover { background:var(--carbon-bg-hover); color:var(--carbon-text); }
+    .btn-sm { min-height:32px; padding:4px 12px; font-size:12px; }
+    .btn-icon { width:36px; height:36px; padding:0; }
+
+    /* ── Tags ── */
+    .tag { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; font-size:11px; font-weight:500; }
+    .tag-success { background:var(--carbon-success-light); color:var(--carbon-success); }
+    .tag-warning { background:var(--carbon-warning-light); color:#735f00; }
+    .tag-error { background:var(--carbon-error-light); color:var(--carbon-error); }
+    .tag-info { background:var(--carbon-info-light); color:var(--carbon-info); }
+    .tag-default { background:var(--carbon-bg-hover); color:var(--carbon-text-secondary); }
+    .tag-processing { background:var(--carbon-text); color:#fff; }
+
+    /* ── Progress bar ── */
+    .progress-bar { height:4px; background:var(--carbon-border); overflow:hidden; }
+    .progress-fill { height:100%; transition:width 1s ease-out; }
+    .progress-fill.success { background:var(--carbon-success); }
+    .progress-fill.info { background:var(--carbon-info); }
+    .progress-fill.warning { background:var(--carbon-warning); }
+
+    /* ── App frame ── */
+    .app-frame { height:100vh; display:flex; flex-direction:column; }
+    .accent-bar { height:3px; background:var(--carbon-text); }
+    .app-header { display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:48px; background:var(--carbon-text); color:#f4f4f4; flex-shrink:0; }
+    .app-logo { font-size:14px; font-weight:600; display:flex; align-items:center; gap:10px; letter-spacing:0.5px; color:#f4f4f4; text-decoration:none; }
+    .app-logo i { font-size:16px; }
+    .header-nav { display:flex; align-items:center; gap:0; height:100%; }
+    .header-nav a { display:flex; align-items:center; gap:6px; height:100%; padding:0 16px; font-size:13px; font-weight:400; color:#c6c6c6; text-decoration:none; transition:all 0.15s; border-bottom:2px solid transparent; }
+    .header-nav a:hover { color:#fff; background:rgba(255,255,255,0.08); }
+    .header-nav a.active { color:#fff; border-bottom-color:#fff; font-weight:500; }
+    .header-actions { display:flex; align-items:center; gap:8px; }
+    .header-actions button { width:36px; height:36px; background:transparent; border:none; color:#c6c6c6; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+    .header-actions button:hover { color:#fff; background:rgba(255,255,255,0.08); }
+
+    /* ── Sidebar ── */
+    .app-body { display:flex; flex:1; overflow:hidden; }
+    .sidebar { width:240px; background:#fff; border-right:1px solid var(--carbon-border); display:flex; flex-direction:column; flex-shrink:0; }
+    .sidebar-section { padding:16px 0; border-bottom:1px solid var(--carbon-border); }
+    .sidebar-label { font-family:'IBM Plex Mono', monospace; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--carbon-text-secondary); padding:0 16px 8px; }
+    .sidebar-step { display:flex; align-items:center; gap:10px; padding:10px 16px; font-size:13px; font-weight:400; color:var(--carbon-text-secondary); cursor:pointer; transition:all 0.15s; text-decoration:none; border-left:3px solid transparent; }
+    .sidebar-step:hover { background:var(--carbon-bg-hover); color:var(--carbon-text); }
+    .sidebar-step.active { background:var(--carbon-bg-hover); color:var(--carbon-text); font-weight:500; border-left-color:var(--carbon-text); }
+    .sidebar-step.done { color:var(--carbon-text); }
+    .step-bullet { width:20px; height:20px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--carbon-border); font-family:'IBM Plex Mono', monospace; font-size:10px; font-weight:600; color:var(--carbon-text-secondary); }
+    .sidebar-step.active .step-bullet { background:var(--carbon-text); border-color:var(--carbon-text); color:#fff; }
+    .sidebar-step.done .step-bullet { background:var(--carbon-success); border-color:var(--carbon-success); color:#fff; }
+    .sidebar-footer { margin-top:auto; padding:16px; border-top:1px solid var(--carbon-border); }
+    .sidebar-footer-item { display:flex; align-items:center; gap:8px; padding:8px 0; font-size:12px; color:var(--carbon-text-secondary); cursor:pointer; text-decoration:none; }
+    .sidebar-footer-item:hover { color:var(--carbon-text); }
+
+    /* ── Main content ── */
+    .main-content { flex:1; overflow-y:auto; padding:24px 32px 96px; }
+
+    /* ── Page header / wizard rail ── */
+    .page-header { margin-bottom:20px; }
+    .page-label { font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--carbon-text-secondary); margin-bottom:4px; }
+    .page-title { font-size:28px; font-weight:300; }
+    .page-title strong { font-weight:600; }
+    .page-desc { font-size:14px; color:var(--carbon-text-secondary); margin-top:4px; }
+
+    .progress-steps { display:flex; align-items:center; gap:0; margin-bottom:24px; background:#fff; border:1px solid var(--carbon-border); padding:16px 20px; }
+    .progress-step { flex:1; display:flex; align-items:center; gap:10px; position:relative; }
+    .progress-step-number { width:28px; height:28px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:2px solid var(--carbon-border); background:#fff; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; color:var(--carbon-text-secondary); transition:all 0.25s; }
+    .progress-step.active .progress-step-number { background:var(--carbon-text); border-color:var(--carbon-text); color:#fff; }
+    .progress-step.completed .progress-step-number { background:var(--carbon-success); border-color:var(--carbon-success); color:#fff; }
+    .progress-step-text { font-size:12px; font-weight:500; color:var(--carbon-text-secondary); white-space:nowrap; }
+    .progress-step.active .progress-step-text, .progress-step.completed .progress-step-text { color:var(--carbon-text); font-weight:600; }
+    .progress-step-line { flex:1; height:2px; background:var(--carbon-border); margin:0 12px; }
+    .progress-step.completed .progress-step-line { background:var(--carbon-success); }
+
+    /* ── Panels ── */
+    .panel { background:#fff; border:1px solid var(--carbon-border); margin-bottom:16px; }
+    .panel-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--carbon-border); }
+    .panel-title { font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; }
+    .panel-content { padding:20px; }
+    .section-title { font-size:22px; font-weight:300; margin-bottom:4px; }
+    .section-title strong { font-weight:600; }
+    .section-desc { font-size:13px; color:var(--carbon-text-secondary); margin-bottom:20px; }
+    .helper { font-size:12px; color:var(--carbon-text-secondary); margin-top:6px; }
+
+    /* ── Forms ── */
+    .field { margin-bottom:18px; }
+    .field-label { display:block; font-size:12px; font-weight:500; margin-bottom:6px; }
+    .field-label .req { color:var(--carbon-error); }
+    .input, .select { width:100%; height:40px; padding:0 12px; font-family:inherit; font-size:13px; color:var(--carbon-text); background:var(--carbon-bg-hover); border:none; border-bottom:1px solid var(--carbon-text-secondary); }
+    .input:focus, .select:focus { background:#fff; }
+    .input-readonly { background:var(--carbon-bg-hover); border-bottom-color:var(--carbon-border); color:var(--carbon-text-secondary); font-family:'IBM Plex Mono', monospace; }
+    .field-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .field-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+
+    input[type="range"] { width:100%; accent-color:var(--carbon-text); }
+
+    /* ── Checkable cards ── */
+    .estimator-card { display:flex; align-items:flex-start; gap:12px; padding:16px; border:1px solid var(--carbon-border); cursor:pointer; transition:all 0.15s; margin-bottom:10px; }
+    .estimator-card:hover { border-color:var(--carbon-text); }
+    .estimator-card.selected { border-color:var(--carbon-text); background:var(--carbon-info-light); border-left:3px solid var(--carbon-text); }
+    .estimator-check { width:20px; height:20px; flex-shrink:0; border:1.5px solid var(--carbon-text-secondary); display:flex; align-items:center; justify-content:center; color:#fff; margin-top:2px; }
+    .estimator-card.selected .estimator-check { background:var(--carbon-text); border-color:var(--carbon-text); }
+    .estimator-card:not(.selected) .estimator-check i { display:none; }
+    .estimator-name { font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; }
+    .estimator-meta { font-size:12px; color:var(--carbon-text-secondary); margin-top:2px; }
+
+    .toggle-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--carbon-border); }
+    .toggle-row:last-child { border-bottom:none; }
+    .toggle-label { font-size:13px; font-weight:500; }
+    .toggle-desc { font-size:12px; color:var(--carbon-text-secondary); }
+    .switch { width:40px; height:20px; background:var(--carbon-border); position:relative; cursor:pointer; flex-shrink:0; transition:background 0.2s; }
+    .switch::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; background:#fff; transition:left 0.2s; }
+    .switch.on { background:var(--carbon-text); }
+    .switch.on::after { left:22px; }
+
+    /* ── Tables ── */
+    .table-head { display:flex; align-items:center; padding:10px 20px; background:var(--carbon-bg-hover); border-bottom:1px solid var(--carbon-border); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--carbon-text-secondary); }
+    .table-row { display:flex; align-items:center; padding:12px 20px; border-bottom:1px solid var(--carbon-border); transition:background 0.1s; }
+    .table-row:last-child { border-bottom:none; }
+    .table-row:hover { background:var(--carbon-bg-hover); }
+    .mono { font-family:'IBM Plex Mono', monospace; }
+    .text-secondary { color:var(--carbon-text-secondary); }
+    .text-xs { font-size:11px; }
+    .text-sm { font-size:13px; }
+
+    /* parse preview chips */
+    .parse-grid { display:flex; flex-wrap:wrap; gap:6px; }
+    .parse-chip { font-family:'IBM Plex Mono', monospace; font-size:11px; padding:2px 8px; background:var(--carbon-bg-hover); border:1px solid var(--carbon-border); }
+    .parse-chip b { color:var(--carbon-info); }
+
+    /* ── Pipeline run ── */
+    .run-row { display:flex; align-items:center; gap:14px; padding:12px 20px; border-bottom:1px solid var(--carbon-border); }
+    .run-row:last-child { border-bottom:none; }
+    .run-name { flex:1; font-size:13px; font-weight:500; min-width:0; }
+    .run-track { width:240px; }
+    .mini-pipeline { display:flex; align-items:center; gap:2px; }
+    .mini-step { width:30px; height:6px; background:var(--carbon-border); transition:all 0.2s; }
+    .mini-step.done { background:var(--carbon-success); }
+    .mini-step.active { background:var(--carbon-text); animation:dotPulse 1.2s ease-in-out infinite; }
+
+    /* split preview */
+    .split-bar { display:flex; height:36px; border:1px solid var(--carbon-border); overflow:hidden; }
+    .split-seg { display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#fff; transition:width 0.6s ease; }
+    .split-train { background:var(--carbon-text); }
+    .split-test { background:var(--carbon-info); }
+    .stat-mini { display:flex; gap:24px; margin-top:16px; }
+    .stat-mini-item .v { font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:600; line-height:1; }
+    .stat-mini-item .l { font-size:11px; color:var(--carbon-text-secondary); margin-top:4px; }
+
+    /* code/export */
+    .code-block { background:var(--carbon-text); color:#f4f4f4; font-family:'IBM Plex Mono', monospace; font-size:12px; line-height:1.7; padding:16px 20px; overflow-x:auto; white-space:pre; }
+    .code-block .k { color:#78a9ff; }
+    .code-block .s { color:#a7f0ba; }
+    .code-block .c { color:#8d8d8d; }
+    .file-tree { font-family:'IBM Plex Mono', monospace; font-size:12px; line-height:1.9; }
+    .file-tree .dir { color:var(--carbon-info); font-weight:500; }
+    .file-tree .muted { color:var(--carbon-text-secondary); }
+
+    .callout { display:flex; gap:12px; padding:14px 16px; border:1px solid var(--carbon-border); border-left:3px solid var(--carbon-info); background:var(--carbon-info-light); margin-bottom:16px; }
+    .callout.warn { border-left-color:var(--carbon-warning); background:var(--carbon-warning-light); }
+    .callout.ok { border-left-color:var(--carbon-success); background:var(--carbon-success-light); }
+    .callout i { margin-top:2px; }
+    .callout .t { font-size:13px; }
+    .callout .t strong { font-weight:600; }
+
+    /* ── QA integrity grid ── */
+    .qa-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .qa-stat { border:1px solid var(--carbon-border); padding:14px 16px; }
+    .qa-stat .v { font-family:'IBM Plex Mono', monospace; font-size:26px; font-weight:600; line-height:1; }
+    .qa-stat .l { font-size:11px; color:var(--carbon-text-secondary); margin-top:6px; }
+    .qa-stat.warn { border-left:3px solid var(--carbon-warning); }
+    .qa-stat.err  { border-left:3px solid var(--carbon-error); }
+    .qa-stat.ok   { border-left:3px solid var(--carbon-success); }
+    .qa-check-row { display:flex; align-items:center; gap:12px; padding:12px 20px; border-bottom:1px solid var(--carbon-border); }
+    .qa-check-row:last-child { border-bottom:none; }
+    .qa-check-row .name { flex:1; font-size:13px; }
+    .qa-icon { width:18px; flex-shrink:0; text-align:center; }
+
+    /* ── Researcher checklist + popover notes ── */
+    .checklist-item { display:flex; align-items:flex-start; gap:12px; padding:14px 0; border-bottom:1px solid var(--carbon-border); }
+    .checklist-item:last-child { border-bottom:none; }
+    .check-box { width:20px; height:20px; flex-shrink:0; border:1.5px solid var(--carbon-text-secondary); display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; margin-top:1px; transition:all 0.15s; }
+    .checklist-item.checked .check-box { background:var(--carbon-success); border-color:var(--carbon-success); }
+    .checklist-item:not(.checked) .check-box i { display:none; }
+    .checklist-item.checked .check-title { text-decoration:line-through; color:var(--carbon-text-secondary); }
+    .check-main { flex:1; min-width:0; }
+    .check-title { font-size:13px; font-weight:500; }
+    .check-sub { font-size:12px; color:var(--carbon-text-secondary); margin-top:1px; }
+    .note-wrap { position:relative; flex-shrink:0; }
+    .note-btn { width:24px; height:24px; border:none; background:transparent; color:var(--carbon-info); cursor:pointer; font-size:14px; }
+    .note-btn:hover { color:var(--carbon-text); }
+    .note-pop { position:absolute; top:28px; right:0; width:320px; background:var(--carbon-text); color:#f4f4f4; padding:14px 16px; font-size:12px; line-height:1.65; z-index:50; box-shadow:0 6px 24px rgba(0,0,0,0.28); display:none; text-align:left; }
+    .note-pop.open { display:block; animation:fadeInUp 0.15s ease-out both; }
+    .note-pop::before { content:''; position:absolute; top:-6px; right:8px; width:12px; height:12px; background:var(--carbon-text); transform:rotate(45deg); }
+    .note-pop strong { color:#78a9ff; }
+    .note-pop .mono { font-family:'IBM Plex Mono', monospace; color:#a7f0ba; }
+    .note-pop .label-why { font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#8d8d8d; display:block; margin-bottom:4px; }
+    .checklist-progress { font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--carbon-text-secondary); }
+
+    /* ── Wizard footer ── */
+    .wizard-footer { position:fixed; bottom:0; left:240px; right:0; height:64px; background:#fff; border-top:1px solid var(--carbon-border); display:flex; align-items:center; justify-content:space-between; padding:0 32px; z-index:20; }
+    .footer-status { font-size:12px; color:var(--carbon-text-secondary); display:flex; align-items:center; gap:8px; }
+
+    .step-pane { display:none; animation:fadeInUp 0.3s ease-out both; }
+    .step-pane.active { display:block; }
+
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(12px);} to { opacity:1; transform:translateY(0);} }
+    @keyframes dotPulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; } }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+  <div class="app-frame">
+    <div class="accent-bar"></div>
+
+    <!-- Top bar -->
+    <div class="app-header">
+      <a href="#" class="app-logo"><i class="fas fa-shield-alt" aria-hidden="true"></i> MASKINGOPS</a>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="#"><i class="fas fa-th-large"></i> Dashboard</a>
+        <a href="#"><i class="fas fa-mask"></i> MaskAnyone</a>
+        <a href="runs.html"><i class="fas fa-chart-bar"></i> MaskBench</a>
+        <a href="#" class="active"><i class="fas fa-trophy"></i> Challenge Builder</a>
+        <a href="#"><i class="fas fa-archive"></i> Archive</a>
+      </nav>
+      <div class="header-actions">
+        <button title="Help" aria-label="Help"><i class="fas fa-question-circle"></i></button>
+        <button title="Settings" aria-label="Settings"><i class="fas fa-cog"></i></button>
+      </div>
+    </div>
+
+    <div class="app-body">
+      <!-- Sidebar: wizard steps -->
+      <aside class="sidebar" aria-label="Builder steps">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Challenge</div>
+          <div class="sidebar-step" style="cursor:default; padding:12px 16px;">
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:13px; font-weight:600;">EnvisionGestureChallenge</div>
+              <div style="font-size:11px; color:var(--carbon-text-secondary);">7 corpora &middot; draft</div>
+            </div>
+          </div>
+        </div>
+        <div class="sidebar-section" style="flex:0;">
+          <div class="sidebar-label">Build steps</div>
+          <a class="sidebar-step active" data-goto="0"><span class="step-bullet">1</span> Source videos</a>
+          <a class="sidebar-step" data-goto="1"><span class="step-bullet">2</span> Pose extraction</a>
+          <a class="sidebar-step" data-goto="2"><span class="step-bullet">3</span> Run pipeline</a>
+          <a class="sidebar-step" data-goto="3"><span class="step-bullet">4</span> Quality &amp; integrity</a>
+          <a class="sidebar-step" data-goto="4"><span class="step-bullet">5</span> Labels &amp; metadata</a>
+          <a class="sidebar-step" data-goto="5"><span class="step-bullet">6</span> Train / test split</a>
+          <a class="sidebar-step" data-goto="6"><span class="step-bullet">7</span> Export bundle</a>
+        </div>
+        <div class="sidebar-footer">
+          <a class="sidebar-footer-item"><i class="fas fa-book"></i> Builder docs</a>
+          <a class="sidebar-footer-item"><i class="fas fa-code"></i> Show generated config</a>
+          <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--carbon-border);">
+            <div class="mono" style="font-size:10px; color:var(--carbon-text-secondary);">MaskingOPS v0.1.0-alpha</div>
+            <div style="font-size:10px; color:var(--carbon-text-secondary); margin-top:2px;">SYNAPSIS &middot; NWO TDCC-SSH</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main id="main" class="main-content">
+        <div class="page-header">
+          <p class="page-label">MaskBench &middot; Challenge Builder</p>
+          <h1 class="page-title">Build a <strong>challenge dataset</strong></h1>
+          <p class="page-desc">Turn raw videos into a release-ready, speaker-independent gesture benchmark — no YAML required.</p>
+        </div>
+
+        <!-- Wizard rail -->
+        <div class="progress-steps" id="rail">
+          <div class="progress-step active"><span class="progress-step-number">1</span><span class="progress-step-text">Source</span></div>
+          <div class="progress-step-line"></div>
+          <div class="progress-step"><span class="progress-step-number">2</span><span class="progress-step-text">Extraction</span></div>
+          <div class="progress-step-line"></div>
+          <div class="progress-step"><span class="progress-step-number">3</span><span class="progress-step-text">Run</span></div>
+          <div class="progress-step-line"></div>
+          <div class="progress-step"><span class="progress-step-number">4</span><span class="progress-step-text">Quality</span></div>
+          <div class="progress-step-line"></div>
+          <div class="progress-step"><span class="progress-step-number">5</span><span class="progress-step-text">Labels</span></div>
+          <div class="progress-step-line"></div>
+          <div class="progress-step"><span class="progress-step-number">6</span><span class="progress-step-text">Split</span></div>
+          <div class="progress-step-line"></div>
+          <div class="progress-step"><span class="progress-step-number">7</span><span class="progress-step-text">Export</span></div>
+        </div>
+
+        <!-- STEP 1: SOURCE VIDEOS -->
+        <section class="step-pane active" data-step="0">
+          <h2 class="section-title">Source <strong>videos</strong></h2>
+          <p class="section-desc">Point the builder at a folder of videos. Filenames are parsed for corpus / speaker / clip / label automatically.</p>
+
+          <div class="panel">
+            <div class="panel-content">
+              <div class="field">
+                <label class="field-label">Dataset folder <span class="req">*</span></label>
+                <input class="input input-readonly" value="/datasets/envision_gesture/  (mounted from assets/datasets)" readonly>
+                <div class="helper">Mounted into the container as <span class="mono">/datasets</span>. Subfolders are scanned recursively.</div>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label class="field-label">Challenge name <span class="req">*</span></label>
+                  <input class="input" value="EnvisionGestureChallenge">
+                </div>
+                <div class="field">
+                  <label class="field-label">Filename convention</label>
+                  <select class="select">
+                    <option>CORPUS_speaker_clip_category_subtype</option>
+                    <option>Custom regex…</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout ok">
+            <i class="fas fa-check-circle" style="color:var(--carbon-success);"></i>
+            <div class="t"><strong>1,204 videos</strong> found across <strong>7 corpora</strong> &middot; 152 speakers detected &middot; <strong>3 filenames</strong> couldn't be parsed (skipped).</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title"><i class="fas fa-film"></i> Detected videos &amp; parsed metadata</span>
+              <span class="text-xs text-secondary">showing 5 of 1,204</span>
+            </div>
+            <div class="table-head">
+              <div style="flex:2;">File</div>
+              <div style="flex:3;">Parsed</div>
+              <div style="width:90px;">Status</div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">MULTISIMO_S07_0007_gesture_move.mp4</div>
+              <div style="flex:3;"><div class="parse-grid"><span class="parse-chip"><b>corpus</b> MULTISIMO</span><span class="parse-chip"><b>speaker</b> S07</span><span class="parse-chip"><b>clip</b> 0007</span><span class="parse-chip"><b>cat</b> gesture</span><span class="parse-chip"><b>sub</b> move</span></div></div>
+              <div style="width:90px;"><span class="tag tag-success"><i class="fas fa-check"></i> OK</span></div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">ECOLANG_012_0005_nogesture.mp4</div>
+              <div style="flex:3;"><div class="parse-grid"><span class="parse-chip"><b>corpus</b> ECOLANG</span><span class="parse-chip"><b>speaker</b> 012</span><span class="parse-chip"><b>clip</b> 0005</span><span class="parse-chip"><b>cat</b> nogesture</span><span class="parse-chip"><b>sub</b> NA</span></div></div>
+              <div style="width:90px;"><span class="tag tag-success"><i class="fas fa-check"></i> OK</span></div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">SaGA_pp_03_0042_gesture_hold_mirror.mp4</div>
+              <div style="flex:3;"><div class="parse-grid"><span class="parse-chip"><b>corpus</b> SaGA</span><span class="parse-chip"><b>speaker</b> pp_03</span><span class="parse-chip"><b>clip</b> 0042</span><span class="parse-chip"><b>cat</b> gesture</span><span class="parse-chip"><b>sub</b> hold</span><span class="parse-chip"><b>mirror</b> true</span></div></div>
+              <div style="width:90px;"><span class="tag tag-success"><i class="fas fa-check"></i> OK</span></div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">ZHUBO_S21_0114_gesture_other.mp4</div>
+              <div style="flex:3;"><div class="parse-grid"><span class="parse-chip"><b>corpus</b> ZHUBO</span><span class="parse-chip"><b>speaker</b> S21</span><span class="parse-chip"><b>clip</b> 0114</span><span class="parse-chip"><b>cat</b> gesture</span><span class="parse-chip"><b>sub</b> other</span></div></div>
+              <div style="width:90px;"><span class="tag tag-success"><i class="fas fa-check"></i> OK</span></div>
+            </div>
+            <div class="table-row">
+              <div style="flex:2; min-width:0;" class="mono text-sm">clip_final_v2.mp4</div>
+              <div style="flex:3;"><span class="text-sm text-secondary">Too few parts — expected <span class="mono">CORPUS_speaker_clip_category</span></span></div>
+              <div style="width:90px;"><span class="tag tag-warning"><i class="fas fa-exclamation"></i> Skipped</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 2: POSE EXTRACTION -->
+        <section class="step-pane" data-step="1">
+          <h2 class="section-title">Pose <strong>extraction</strong></h2>
+          <p class="section-desc">Choose which estimators run and how. This replaces the <span class="mono">pose_estimators:</span> block in the config YAML.</p>
+
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="fas fa-network-wired"></i> Estimators</span></div>
+            <div class="panel-content">
+              <div class="estimator-card selected" data-estimator>
+                <div class="estimator-check"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                <div>
+                  <div class="estimator-name">MediaPipe World Landmarker <span class="tag tag-info">recommended</span></div>
+                  <div class="estimator-meta">3D body + hands &middot; pose_landmarker_heavy.task &middot; the format the challenge release uses</div>
+                </div>
+              </div>
+              <div class="estimator-card" data-estimator>
+                <div class="estimator-check"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                <div>
+                  <div class="estimator-name">YOLOv11-Pose</div>
+                  <div class="estimator-meta">2D body &middot; yolo11l-pose.pt &middot; fast baseline for comparison</div>
+                </div>
+              </div>
+              <div class="estimator-card" data-estimator>
+                <div class="estimator-check"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                <div>
+                  <div class="estimator-name">OpenPose (BODY_25B)</div>
+                  <div class="estimator-meta">2D body + hands &middot; via MaskAnyone API</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="panel" style="margin:0;">
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-sliders-h"></i> Parameters</span></div>
+              <div class="panel-content">
+                <div class="field">
+                  <label class="field-label">Max persons per frame</label>
+                  <input class="input" value="3">
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                  <label class="field-label">Confidence threshold <span class="mono text-secondary" id="confVal">0.30</span></label>
+                  <input type="range" min="0" max="1" step="0.05" value="0.3" id="confSlider">
+                  <div class="helper">Keypoints below this visibility are written as <span class="mono">null</span>.</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel" style="margin:0;">
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-toggle-on"></i> Outputs</span></div>
+              <div class="panel-content" style="padding-top:6px;">
+                <div class="toggle-row"><div><div class="toggle-label">Detect hands</div><div class="toggle-desc">21 keypoints per hand</div></div><div class="switch on" data-switch></div></div>
+                <div class="toggle-row"><div><div class="toggle-label">Save world landmarks (.npz)</div><div class="toggle-desc">3D metric coordinates</div></div><div class="switch on" data-switch></div></div>
+                <div class="toggle-row"><div><div class="toggle-label">Render overlay videos</div><div class="toggle-desc">skeleton on black frames</div></div><div class="switch on" data-switch></div></div>
+                <div class="toggle-row"><div><div class="toggle-label">Compute evaluation metrics</div><div class="toggle-desc">PCK, RMSE, velocity, jerk</div></div><div class="switch" data-switch></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 3: RUN -->
+        <section class="step-pane" data-step="2">
+          <h2 class="section-title">Run <strong>pipeline</strong></h2>
+          <p class="section-desc">Pose extraction across all videos. Resumable — finished videos are checkpointed and skipped on re-run.</p>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title"><i class="fas fa-microchip"></i> Inference progress</span>
+              <span class="tag tag-processing" id="runTag"><i class="fas fa-spinner fa-spin"></i> Running</span>
+            </div>
+            <div class="panel-content" style="padding-bottom:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+                <span class="text-sm"><span class="mono" id="runDone" style="font-weight:600;">812</span> / 1,204 videos &middot; MediaPipe World Landmarker</span>
+                <span class="mono text-sm text-secondary" id="runPct">67%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill info" id="runBar" style="width:67%;"></div></div>
+              <div class="helper">Elapsed 00:42:18 &middot; ~21 min remaining &middot; 8 worker threads &middot; avg 3.1s / video</div>
+            </div>
+            <div class="run-row"><div class="run-name mono">MULTISIMO_S07_0007_gesture_move</div><div class="run-track"><div class="mini-pipeline"><div class="mini-step done"></div><div class="mini-step done"></div><div class="mini-step done"></div><div class="mini-step done"></div></div></div><span class="tag tag-success" style="width:84px;"><i class="fas fa-check"></i> Done</span></div>
+            <div class="run-row"><div class="run-name mono">ECOLANG_012_0005_nogesture</div><div class="run-track"><div class="mini-pipeline"><div class="mini-step done"></div><div class="mini-step done"></div><div class="mini-step done"></div><div class="mini-step done"></div></div></div><span class="tag tag-success" style="width:84px;"><i class="fas fa-check"></i> Done</span></div>
+            <div class="run-row"><div class="run-name mono">ZHUBO_S21_0114_gesture_other</div><div class="run-track"><div class="mini-pipeline"><div class="mini-step done"></div><div class="mini-step done"></div><div class="mini-step active"></div><div class="mini-step"></div></div></div><span class="tag tag-processing" style="width:84px;"><i class="fas fa-spinner fa-spin"></i> Pose</span></div>
+            <div class="run-row"><div class="run-name mono">GESRES_p14_0088_gesture_hold</div><div class="run-track"><div class="mini-pipeline"><div class="mini-step done"></div><div class="mini-step active"></div><div class="mini-step"></div><div class="mini-step"></div></div></div><span class="tag tag-processing" style="width:84px;"><i class="fas fa-spinner fa-spin"></i> Decode</span></div>
+            <div class="run-row"><div class="run-name mono">SAGA_pp_03_0042_gesture_hold</div><div class="run-track"><div class="mini-pipeline"><div class="mini-step"></div><div class="mini-step"></div><div class="mini-step"></div><div class="mini-step"></div></div></div><span class="tag tag-default" style="width:84px;">Queued</span></div>
+          </div>
+
+          <div class="callout">
+            <i class="fas fa-info-circle" style="color:var(--carbon-info);"></i>
+            <div class="t">Outputs are written to a timestamped checkpoint: <span class="mono">/output/EnvisionGestureChallenge-20260608-153000/</span> — <span class="mono">poses/</span>, <span class="mono">npz/</span>, <span class="mono">renderings/</span>, <span class="mono">inference_times.json</span>.</div>
+          </div>
+        </section>
+
+        <!-- STEP 4: QUALITY & INTEGRITY -->
+        <section class="step-pane" data-step="3">
+          <h2 class="section-title">Quality &amp; <strong>integrity</strong></h2>
+          <p class="section-desc">A benchmark is only as trustworthy as its weakest clip. The builder reconciles inputs against outputs and flags low-quality pose data before it reaches participants.</p>
+
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="fas fa-clipboard-check"></i> Dataset reconciliation</span><span class="text-xs text-secondary">1,204 videos in</span></div>
+            <div class="panel-content">
+              <div class="qa-grid">
+                <div class="qa-stat err"><div class="v" style="color:var(--carbon-error);">6</div><div class="l">videos with no .npz <br>(silent processing failures)</div></div>
+                <div class="qa-stat warn"><div class="v" style="color:#735f00;">37</div><div class="l">clips &lt; 60% frames detected <br>(mostly NaN)</div></div>
+                <div class="qa-stat warn"><div class="v" style="color:#735f00;">11</div><div class="l">clips with multi-person frames <br>(single-person assumed)</div></div>
+                <div class="qa-stat ok"><div class="v" style="color:var(--carbon-success);">1,198</div><div class="l">clips passed integrity</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-row" style="align-items:start;">
+            <div class="panel" style="margin:0;">
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-heart-pulse"></i> Automated checks</span></div>
+              <div class="qa-check-row"><span class="qa-icon"><i class="fas fa-check-circle" style="color:var(--carbon-success);"></i></span><span class="name">Every <span class="mono">.npz</span> has shape <span class="mono">(n_frames, 23, 4)</span> — no ragged arrays</span></div>
+              <div class="qa-check-row"><span class="qa-icon"><i class="fas fa-check-circle" style="color:var(--carbon-success);"></i></span><span class="name">Frame counts match source video (ffprobe)</span></div>
+              <div class="qa-check-row"><span class="qa-icon"><i class="fas fa-exclamation-circle" style="color:var(--carbon-warning);"></i></span><span class="name">2 clips have <span class="mono">fps = 0</span> in metadata — excluded</span></div>
+              <div class="qa-check-row"><span class="qa-icon"><i class="fas fa-check-circle" style="color:var(--carbon-success);"></i></span><span class="name">Jerk outliers within bounds (no joint teleports / ID swaps)</span></div>
+              <div class="qa-check-row"><span class="qa-icon"><i class="fas fa-check-circle" style="color:var(--carbon-success);"></i></span><span class="name">No duplicate clips (source checksum)</span></div>
+            </div>
+
+            <div class="panel" style="margin:0;">
+              <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-list-check"></i> SSH researcher checklist</span>
+                <span class="checklist-progress" id="clProgress">2 / 6 ready</span>
+              </div>
+              <div class="panel-content" id="checklist">
+                <div class="checklist-item checked">
+                  <div class="check-box"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                  <div class="check-main"><div class="check-title">Dataset mounted &amp; <span class="mono">MASKBENCH_DATASET_DIR</span> set</div><div class="check-sub">resolves to <span class="mono">/datasets</span> in container</div></div>
+                  <div class="note-wrap"><button class="note-btn" aria-label="Note"><i class="fas fa-circle-info"></i></button>
+                    <div class="note-pop"><span class="label-why">why it bites</span>On a cluster the bind-mount is the #1 silent failure. In <span class="mono">.env</span> set <span class="mono">MASKBENCH_DATASET_DIR=/scratch/$USER/videos</span>; docker-compose maps it to <span class="mono">/datasets</span>. With <strong>enroot/pyxis</strong> use <span class="mono">--container-mounts</span> instead — see <span class="mono">enroot_scripts/</span>.</div>
+                  </div>
+                </div>
+                <div class="checklist-item checked">
+                  <div class="check-box"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                  <div class="check-main"><div class="check-title">Model weights present in <span class="mono">/weights/pre_built</span></div><div class="check-sub">pose_landmarker_heavy.task + hand_landmarker.task</div></div>
+                  <div class="note-wrap"><button class="note-btn" aria-label="Note"><i class="fas fa-circle-info"></i></button>
+                    <div class="note-pop"><span class="label-why">why it bites</span>The Dockerfile pulls from <span class="mono">.../latest/</span> URLs with no checksum, so two builds can ship <strong>different weights</strong>. Pin the version and record its hash here so the release is reproducible — participants need to know exactly which model produced the landmarks.</div>
+                  </div>
+                </div>
+                <div class="checklist-item">
+                  <div class="check-box"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                  <div class="check-main"><div class="check-title">All filenames follow the convention</div><div class="check-sub"><span class="mono">CORPUS_speaker_clip_category[_subtype]</span></div></div>
+                  <div class="note-wrap"><button class="note-btn" aria-label="Note"><i class="fas fa-circle-info"></i></button>
+                    <div class="note-pop"><span class="label-why">why it bites</span>A name with too few parts, or missing the <span class="mono">gesture/nogesture</span> token, returns <span class="mono">None</span> from the parser and the clip is dropped (or crashes rendering). <strong>3 files</strong> were skipped on this run — rename them before release or they vanish from the dataset silently.</div>
+                  </div>
+                </div>
+                <div class="checklist-item">
+                  <div class="check-box"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                  <div class="check-main"><div class="check-title">Output directory is writable</div><div class="check-sub">checkpoint + permissions on shared FS</div></div>
+                  <div class="note-wrap"><button class="note-btn" aria-label="Note"><i class="fas fa-circle-info"></i></button>
+                    <div class="note-pop"><span class="label-why">why it bites</span>The container runs as <strong>root</strong> and <span class="mono">entrypoint.sh</span> does <span class="mono">chmod -R a+rw /output</span> — on a shared cluster FS that can fail or leave files you can't delete. Point <span class="mono">MASKBENCH_OUTPUT_DIR</span> at scratch you own.</div>
+                  </div>
+                </div>
+                <div class="checklist-item">
+                  <div class="check-box"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                  <div class="check-main"><div class="check-title">Reviewed the 6 missing-output videos</div><div class="check-sub">input → output reconciliation above</div></div>
+                  <div class="note-wrap"><button class="note-btn" aria-label="Note"><i class="fas fa-circle-info"></i></button>
+                    <div class="note-pop"><span class="label-why">why it bites</span>Per-video exceptions are caught and logged, then processing <strong>continues</strong> — so a crash looks like success. Always reconcile counts: <span class="mono">1,204 in → 1,198 npz</span>. The 6 gaps are usually ragged arrays from frames with no detection. Check the run log.</div>
+                  </div>
+                </div>
+                <div class="checklist-item">
+                  <div class="check-box"><i class="fas fa-check" style="font-size:11px;"></i></div>
+                  <div class="check-main"><div class="check-title">GPU / enroot allocation confirmed</div><div class="check-sub">interactive vs batch (srun / sbatch)</div></div>
+                  <div class="note-wrap"><button class="note-btn" aria-label="Note"><i class="fas fa-circle-info"></i></button>
+                    <div class="note-pop"><span class="label-why">why it bites</span>MediaPipe falls back to CPU silently if no GPU is visible — a 1,200-video run then takes hours. Verify the device inside the container, and for batch use the scripts in <span class="mono">enroot_scripts/</span> rather than an interactive <span class="mono">docker compose up</span>.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout warn">
+            <i class="fas fa-triangle-exclamation" style="color:#735f00;"></i>
+            <div class="t"><strong>54 clips flagged.</strong> They are excluded from the release by default. Lower the detection-coverage threshold or fix sources to include them.</div>
+          </div>
+        </section>
+
+        <!-- STEP 5: LABELS -->
+        <section class="step-pane" data-step="4">
+          <h2 class="section-title">Labels &amp; <strong>metadata</strong></h2>
+          <p class="section-desc">Confirm the class mapping and per-clip metadata that ships with the release CSV.</p>
+
+          <div class="field-row">
+            <div class="panel" style="margin:0;">
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-tags"></i> Class distribution</span></div>
+              <div class="panel-content">
+                <div class="toggle-row"><div class="toggle-label"><span class="tag tag-info" style="margin-right:8px;">Gesture</span></div><div class="mono text-sm">591 clips &middot; 49%</div></div>
+                <div class="toggle-row"><div class="toggle-label"><span class="tag tag-default" style="margin-right:8px;">NoGesture</span></div><div class="mono text-sm">589 clips &middot; 49%</div></div>
+                <div class="toggle-row"><div class="toggle-label"><span class="tag tag-warning" style="margin-right:8px;">Move</span></div><div class="mono text-sm">24 clips &middot; 2%</div></div>
+                <div class="callout warn" style="margin:14px 0 0;">
+                  <i class="fas fa-exclamation-triangle" style="color:#735f00;"></i>
+                  <div class="t"><strong>Move is heavily under-represented.</strong> Consider merging into Gesture or excluding for a 2-class challenge.</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel" style="margin:0;">
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-table"></i> metadata.csv columns</span></div>
+              <div class="panel-content" style="padding-top:6px;">
+                <div class="toggle-row"><div><div class="toggle-label">clip_id, corpus, speaker_id</div><div class="toggle-desc">identity &amp; grouping</div></div><span class="tag tag-success">required</span></div>
+                <div class="toggle-row"><div><div class="toggle-label">label, subtype</div><div class="toggle-desc">target + fine-grained type</div></div><span class="tag tag-success">required</span></div>
+                <div class="toggle-row"><div><div class="toggle-label">n_frames, fps, is_mirror</div><div class="toggle-desc">clip shape &amp; augmentation flag</div></div><div class="switch on" data-switch></div></div>
+                <div class="toggle-row"><div><div class="toggle-label">language, setting</div><div class="toggle-desc">corpus-level attributes</div></div><div class="switch on" data-switch></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="fas fa-fingerprint"></i> Provenance &amp; schema <span class="text-xs text-secondary" style="font-weight:400;">— ships with every release for reproducibility</span></span></div>
+            <div class="panel-content">
+              <div class="field-row-3">
+                <div class="field"><label class="field-label">MaskBench version</label><input class="input input-readonly" value="uihack @ 1e15335" readonly></div>
+                <div class="field"><label class="field-label">Body weights (sha256)</label><input class="input input-readonly" value="pose_landmarker_heavy · a3f1…9c" readonly></div>
+                <div class="field"><label class="field-label">Hand weights (sha256)</label><input class="input input-readonly" value="hand_landmarker · 7be0…42" readonly></div>
+              </div>
+              <div class="field-row-3">
+                <div class="field" style="margin-bottom:0;"><label class="field-label">Coordinate space</label><input class="input input-readonly" value="world (metric, 3D) + image (px)" readonly></div>
+                <div class="field" style="margin-bottom:0;"><label class="field-label">Keypoint schema</label><input class="input input-readonly" value="23 body + 21×2 hand · [x,y,z,vis]" readonly></div>
+                <div class="field" style="margin-bottom:0;"><label class="field-label">Missing keypoints</label><input class="input input-readonly" value="encoded as NaN" readonly></div>
+              </div>
+              <div class="callout" style="margin:18px 0 0;">
+                <i class="fas fa-scale-balanced" style="color:var(--carbon-info);"></i>
+                <div class="t"><strong>Consent &amp; licence per corpus</strong> — 7 / 7 corpora marked approved for release &middot; de-identification verified (no face mesh, no audio). Required for the DANS / FAIR archive package.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 6: SPLIT -->
+        <section class="step-pane" data-step="5">
+          <h2 class="section-title">Train / test <strong>split</strong></h2>
+          <p class="section-desc">Speaker-independent by construction — no speaker appears in both splits, preventing identity leakage.</p>
+
+          <div class="panel">
+            <div class="panel-content">
+              <div class="field-row-3">
+                <div class="field">
+                  <label class="field-label">Test fraction (by speaker) <span class="mono text-secondary" id="splitVal">0.20</span></label>
+                  <input type="range" min="0.1" max="0.5" step="0.05" value="0.2" id="splitSlider">
+                </div>
+                <div class="field">
+                  <label class="field-label">Random seed</label>
+                  <input class="input" value="42">
+                </div>
+                <div class="field">
+                  <label class="field-label">Grouping key</label>
+                  <select class="select"><option>speaker_id (recommended)</option><option>corpus + speaker_id</option></select>
+                </div>
+              </div>
+
+              <div style="margin-top:8px;">
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+                  <span><i class="fas fa-circle" style="color:var(--carbon-text); font-size:8px;"></i> Train</span>
+                  <span><i class="fas fa-circle" style="color:var(--carbon-info); font-size:8px;"></i> Test</span>
+                </div>
+                <div class="split-bar">
+                  <div class="split-seg split-train" id="segTrain" style="width:70%;">Train 70%</div>
+                  <div class="split-seg split-test" id="segTest" style="width:30%;">Test 30%</div>
+                </div>
+                <div class="helper">122 train speakers / 30 test speakers &middot; split by clips skews from the speaker fraction due to class imbalance.</div>
+              </div>
+
+              <div class="stat-mini">
+                <div class="stat-mini-item"><div class="v" id="trainClips">843</div><div class="l">train clips</div></div>
+                <div class="stat-mini-item"><div class="v" id="testClips">361</div><div class="l">test clips</div></div>
+                <div class="stat-mini-item"><div class="v" style="color:var(--carbon-success);">0</div><div class="l">leaked speakers</div></div>
+                <div class="stat-mini-item"><div class="v">7 / 7</div><div class="l">corpora in both</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-row" style="align-items:start;">
+            <div class="panel" style="margin:0;">
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-clone"></i> Mirror pairs</span></div>
+              <div class="qa-check-row"><span class="qa-icon"><i class="fas fa-check-circle" style="color:var(--carbon-success);"></i></span><span class="name">148 mirror pairs kept in the <strong>same</strong> split</span>
+                <div class="note-wrap"><button class="note-btn" aria-label="Note"><i class="fas fa-circle-info"></i></button>
+                  <div class="note-pop"><span class="label-why">why it bites</span>A clip flagged <span class="mono">is_mirror</span> is an augmentation of an original. If the original lands in train and its mirror in test, the model has effectively <strong>seen the test clip</strong> — silent leakage that inflates scores. Grouping pins both to the same side.</div>
+                </div>
+              </div>
+              <div class="qa-check-row"><span class="qa-icon"><i class="fas fa-check-circle" style="color:var(--carbon-success);"></i></span><span class="name">Mirrors grouped with their speaker</span></div>
+            </div>
+            <div class="panel" style="margin:0;">
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-layer-group"></i> Per-corpus coverage</span></div>
+              <div class="qa-check-row"><span class="qa-icon"><i class="fas fa-check-circle" style="color:var(--carbon-success);"></i></span><span class="name">All 7 corpora present in <strong>both</strong> splits</span>
+                <div class="note-wrap"><button class="note-btn" aria-label="Note"><i class="fas fa-circle-info"></i></button>
+                  <div class="note-pop"><span class="label-why">why it bites</span>If the test set is dominated by one corpus, a model can score well by learning <strong>corpus shortcuts</strong> (camera, lighting, language) instead of gesture. Stratifying by corpus keeps the benchmark measuring what you intend.</div>
+                </div>
+              </div>
+              <div class="qa-check-row"><span class="qa-icon"><i class="fas fa-exclamation-circle" style="color:var(--carbon-warning);"></i></span><span class="name">SaGA: only 4 test speakers — thin coverage</span></div>
+            </div>
+          </div>
+
+          <div class="callout ok">
+            <i class="fas fa-shield-alt" style="color:var(--carbon-success);"></i>
+            <div class="t"><strong>Leakage check passed.</strong> Every speaker — and every mirror pair — is assigned to exactly one split; class balance is preserved within ±3% across train/test.</div>
+          </div>
+        </section>
+
+        <!-- STEP 7: EXPORT -->
+        <section class="step-pane" data-step="6">
+          <h2 class="section-title">Export <strong>bundle</strong></h2>
+          <p class="section-desc">Review the generated config and the release layout, then export. This is what participants download.</p>
+
+          <div class="field-row" style="align-items:start;">
+            <div class="panel" style="margin:0;">
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-file-code"></i> Generated config.yml</span><span class="text-xs text-secondary">read-only preview</span></div>
+              <div class="code-block"><span class="c"># auto-generated by Challenge Builder — do not hand-edit</span>
+<span class="k">dataset</span>:
+  <span class="k">name</span>: <span class="s">EnvisionGestureChallenge</span>
+  <span class="k">code_file</span>: <span class="s">datasets.dataset.Dataset</span>
+  <span class="k">video_folder</span>: <span class="s">/datasets/</span>
+
+<span class="k">execute_processing</span>: <span class="s">true</span>
+<span class="k">execute_rendering</span>:  <span class="s">true</span>
+<span class="k">render_poses_only</span>:  <span class="s">true</span>
+
+<span class="k">pose_estimators</span>:
+  - <span class="k">name</span>: <span class="s">MediaPipePoseWorldLandmarker</span>
+    <span class="k">enabled</span>: <span class="s">true</span>
+    <span class="k">code_file</span>: <span class="s">models.mediapipe_worldlandmarker_pose_estimator.MediaPipeWorldLandmarkerPoseEstimator</span>
+    <span class="k">config</span>:
+      <span class="k">body_weights</span>: <span class="s">pose_landmarker_heavy.task</span>
+      <span class="k">hand_weights</span>: <span class="s">mediapipe_hand_landmarker.task</span>
+      <span class="k">max_num_poses</span>: <span class="s">3</span>
+      <span class="k">confidence_threshold</span>: <span class="s">0.3</span></div>
+            </div>
+
+            <div class="panel" style="margin:0;">
+              <div class="panel-header"><span class="panel-title"><i class="fas fa-folder-tree"></i> Release layout</span></div>
+              <div class="panel-content">
+                <div class="file-tree">
+<span class="dir">EnvisionGestureChallenge_release/</span>
+├── <span class="dir">train/</span> <span class="muted">843 × .npy  (n_frames, 23, 4)</span>
+├── <span class="dir">test/</span>  <span class="muted">361 × .npy  (held out)</span>
+├── challenge_data.npz <span class="muted">all clips + labels</span>
+├── train_metadata.csv
+├── test_metadata.csv  <span class="muted">labels withheld</span>
+├── corpus_stats.json
+├── config.yml         <span class="muted">provenance</span>
+├── example_submission.py
+└── README.md          <span class="muted">format + rules</span>
+                </div>
+                <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
+                  <button class="btn btn-primary btn-sm"><i class="fas fa-download"></i> Export bundle (.zip)</button>
+                  <button class="btn btn-secondary btn-sm"><i class="fas fa-file-export"></i> config.yml only</button>
+                  <button class="btn btn-ghost btn-sm"><i class="fas fa-terminal"></i> Copy run command</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout ok">
+            <i class="fas fa-circle-check" style="color:var(--carbon-success);"></i>
+            <div class="t"><strong>Ready to release.</strong> 1,204 clips &middot; speaker-independent &middot; 3-class &middot; MediaPipe world landmarks. Submissions scored on balanced accuracy.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Wizard footer -->
+    <div class="wizard-footer">
+      <button class="btn btn-secondary" id="backBtn" disabled><i class="fas fa-arrow-left"></i> Back</button>
+      <div class="footer-status"><i class="fas fa-circle" style="font-size:7px; color:var(--carbon-warning);"></i> <span id="statusText">Step 1 of 6 — Source videos</span></div>
+      <button class="btn btn-primary" id="nextBtn">Next: Pose extraction <i class="fas fa-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <script>
+    const STEPS = [
+      { name: 'Source videos',       next: 'Next: Pose extraction' },
+      { name: 'Pose extraction',     next: 'Next: Run pipeline' },
+      { name: 'Run pipeline',        next: 'Next: Quality & integrity' },
+      { name: 'Quality & integrity', next: 'Next: Labels & metadata' },
+      { name: 'Labels & metadata',   next: 'Next: Train / test split' },
+      { name: 'Train / test split',  next: 'Next: Export bundle' },
+      { name: 'Export bundle',       next: 'Finish & export' },
+    ];
+    let cur = 0;
+    const panes = [...document.querySelectorAll('.step-pane')];
+    const railSteps = [...document.querySelectorAll('#rail .progress-step')];
+    const sideSteps = [...document.querySelectorAll('.sidebar-step[data-goto]')];
+    const backBtn = document.getElementById('backBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const statusText = document.getElementById('statusText');
+
+    function render() {
+      panes.forEach((p, i) => p.classList.toggle('active', i === cur));
+      railSteps.forEach((s, i) => {
+        s.classList.toggle('active', i === cur);
+        s.classList.toggle('completed', i < cur);
+      });
+      sideSteps.forEach((s, i) => {
+        s.classList.toggle('active', i === cur);
+        s.classList.toggle('done', i < cur);
+        const b = s.querySelector('.step-bullet');
+        b.innerHTML = i < cur ? '<i class="fas fa-check" style="font-size:9px;"></i>' : (i + 1);
+      });
+      backBtn.disabled = cur === 0;
+      nextBtn.innerHTML = STEPS[cur].next + (cur === STEPS.length - 1 ? ' <i class="fas fa-download"></i>' : ' <i class="fas fa-arrow-right"></i>');
+      statusText.textContent = `Step ${cur + 1} of ${STEPS.length} — ${STEPS[cur].name}`;
+      document.querySelector('.main-content').scrollTop = 0;
+    }
+    function goto(i) { cur = Math.max(0, Math.min(STEPS.length - 1, i)); render(); }
+
+    nextBtn.addEventListener('click', () => cur < STEPS.length - 1 ? goto(cur + 1) : null);
+    backBtn.addEventListener('click', () => goto(cur - 1));
+    sideSteps.forEach(s => s.addEventListener('click', () => goto(+s.dataset.goto)));
+
+    // Estimator cards
+    document.querySelectorAll('[data-estimator]').forEach(c =>
+      c.addEventListener('click', () => c.classList.toggle('selected')));
+    // Switches
+    document.querySelectorAll('[data-switch]').forEach(s =>
+      s.addEventListener('click', () => s.classList.toggle('on')));
+
+    // Researcher checklist toggles + progress
+    const clProgress = document.getElementById('clProgress');
+    function updateChecklist() {
+      if (!clProgress) return;
+      const items = document.querySelectorAll('#checklist .checklist-item');
+      const done = document.querySelectorAll('#checklist .checklist-item.checked').length;
+      clProgress.textContent = `${done} / ${items.length} ready`;
+    }
+    document.querySelectorAll('#checklist .check-box').forEach(b =>
+      b.addEventListener('click', () => { b.closest('.checklist-item').classList.toggle('checked'); updateChecklist(); }));
+
+    // Popover notes (click to open, click-away / second-click to close)
+    document.querySelectorAll('.note-btn').forEach(btn =>
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const pop = btn.nextElementSibling;
+        const wasOpen = pop.classList.contains('open');
+        document.querySelectorAll('.note-pop.open').forEach(p => p.classList.remove('open'));
+        if (!wasOpen) pop.classList.add('open');
+      }));
+    document.addEventListener('click', () =>
+      document.querySelectorAll('.note-pop.open').forEach(p => p.classList.remove('open')));
+    document.querySelectorAll('.note-pop').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+
+    // Confidence slider
+    const conf = document.getElementById('confSlider');
+    conf && conf.addEventListener('input', e =>
+      document.getElementById('confVal').textContent = (+e.target.value).toFixed(2));
+
+    // Split slider → live preview
+    const split = document.getElementById('splitSlider');
+    split && split.addEventListener('input', e => {
+      const t = +e.target.value;                       // speaker test fraction
+      const testPctClips = Math.round(t * 100 + 10);   // canned skew from class imbalance
+      const trainPctClips = 100 - testPctClips;
+      document.getElementById('splitVal').textContent = t.toFixed(2);
+      document.getElementById('segTrain').style.width = trainPctClips + '%';
+      document.getElementById('segTrain').textContent = 'Train ' + trainPctClips + '%';
+      document.getElementById('segTest').style.width = testPctClips + '%';
+      document.getElementById('segTest').textContent = 'Test ' + testPctClips + '%';
+      document.getElementById('trainClips').textContent = Math.round(1204 * trainPctClips / 100);
+      document.getElementById('testClips').textContent = Math.round(1204 * testPctClips / 100);
+    });
+
+    render();
+  </script>
+</body>
+</html>

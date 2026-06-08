@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaskingOPS — MaskBench Run Log</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root {
+      --carbon-bg:#fff; --carbon-bg-hover:#f4f4f4; --carbon-bg-dark:#f5f5f5; --carbon-border:#e0e0e0;
+      --carbon-text:#161616; --carbon-text-secondary:#393939; --carbon-focus:#0f62fe;
+      --carbon-success:#198038; --carbon-success-light:#defbe6; --carbon-warning:#f1c21b; --carbon-warning-light:#fff8e1;
+      --carbon-error:#da1e28; --carbon-error-light:#fff1f1; --carbon-info:#0f62fe; --carbon-info-light:#edf5ff;
+    }
+    body { font-family:'IBM Plex Sans', sans-serif; background:var(--carbon-bg-dark); color:var(--carbon-text); line-height:1.5; overflow:hidden; }
+    *:focus-visible { outline:2px solid var(--carbon-focus); outline-offset:2px; }
+    .skip-link { position:absolute; top:-40px; left:0; background:var(--carbon-text); color:#fff; padding:8px 16px; z-index:100; }
+    .skip-link:focus { top:0; }
+
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:40px; padding:8px 20px; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; border:none; text-decoration:none; }
+    .btn-primary { background:var(--carbon-text); color:#fff; } .btn-primary:hover { background:#393939; }
+    .btn-secondary { background:#fff; color:var(--carbon-text); border:1px solid var(--carbon-text); } .btn-secondary:hover { background:var(--carbon-bg-hover); }
+    .btn-ghost { background:transparent; color:var(--carbon-text-secondary); } .btn-ghost:hover { background:var(--carbon-bg-hover); color:var(--carbon-text); }
+    .btn-sm { min-height:32px; padding:4px 12px; font-size:12px; } .btn-icon { width:36px; height:36px; padding:0; }
+
+    .tag { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; font-size:11px; font-weight:500; }
+    .tag-success { background:var(--carbon-success-light); color:var(--carbon-success); }
+    .tag-warning { background:var(--carbon-warning-light); color:#735f00; }
+    .tag-error { background:var(--carbon-error-light); color:var(--carbon-error); }
+    .tag-info { background:var(--carbon-info-light); color:var(--carbon-info); }
+    .tag-default { background:var(--carbon-bg-hover); color:var(--carbon-text-secondary); }
+    .tag-processing { background:var(--carbon-text); color:#fff; }
+
+    .progress-bar { height:4px; background:var(--carbon-border); overflow:hidden; }
+    .progress-fill { height:100%; transition:width 1s ease-out; } .progress-fill.info { background:var(--carbon-info); } .progress-fill.success { background:var(--carbon-success); }
+
+    .app-frame { height:100vh; display:flex; flex-direction:column; }
+    .accent-bar { height:3px; background:var(--carbon-text); }
+    .app-header { display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:48px; background:var(--carbon-text); color:#f4f4f4; flex-shrink:0; }
+    .app-logo { font-size:14px; font-weight:600; display:flex; align-items:center; gap:10px; letter-spacing:0.5px; color:#f4f4f4; text-decoration:none; }
+    .app-logo i { font-size:16px; }
+    .header-nav { display:flex; align-items:center; height:100%; }
+    .header-nav a { display:flex; align-items:center; gap:6px; height:100%; padding:0 16px; font-size:13px; color:#c6c6c6; text-decoration:none; transition:all 0.15s; border-bottom:2px solid transparent; }
+    .header-nav a:hover { color:#fff; background:rgba(255,255,255,0.08); }
+    .header-nav a.active { color:#fff; border-bottom-color:#fff; font-weight:500; }
+    .header-actions { display:flex; align-items:center; gap:8px; }
+    .header-actions button { width:36px; height:36px; background:transparent; border:none; color:#c6c6c6; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+    .header-actions button:hover { color:#fff; background:rgba(255,255,255,0.08); }
+
+    .app-body { display:flex; flex:1; overflow:hidden; }
+
+    /* ── Runs list (sidebar) ── */
+    .runs-sidebar { width:300px; background:#fff; border-right:1px solid var(--carbon-border); display:flex; flex-direction:column; flex-shrink:0; overflow-y:auto; }
+    .runs-sidebar-head { padding:16px; border-bottom:1px solid var(--carbon-border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#fff; z-index:2; }
+    .runs-title { font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--carbon-text-secondary); }
+    .run-item { padding:14px 16px; border-bottom:1px solid var(--carbon-border); cursor:pointer; border-left:3px solid transparent; transition:all 0.15s; }
+    .run-item:hover { background:var(--carbon-bg-hover); }
+    .run-item.active { background:var(--carbon-bg-hover); border-left-color:var(--carbon-text); }
+    .run-item-top { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+    .run-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .run-dot.running { background:var(--carbon-info); animation:dotPulse 1.2s ease-in-out infinite; }
+    .run-dot.done { background:var(--carbon-success); }
+    .run-dot.failed { background:var(--carbon-error); }
+    .run-dot.partial { background:var(--carbon-warning); }
+    .run-name { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .run-meta { font-size:11px; color:var(--carbon-text-secondary); display:flex; gap:10px; }
+    .run-meta .mono { font-family:'IBM Plex Mono', monospace; }
+
+    /* ── Main ── */
+    .main-content { flex:1; overflow-y:auto; padding:20px 28px 28px; display:flex; flex-direction:column; }
+    .detail-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+    .page-label { font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--carbon-text-secondary); margin-bottom:4px; }
+    .page-title { font-size:24px; font-weight:300; } .page-title strong { font-weight:600; }
+    .detail-sub { font-size:13px; color:var(--carbon-text-secondary); margin-top:4px; display:flex; gap:14px; flex-wrap:wrap; }
+    .detail-sub .mono { font-family:'IBM Plex Mono', monospace; }
+    .detail-actions { display:flex; gap:8px; flex-shrink:0; }
+
+    .recon { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:16px; }
+    .recon-tile { background:#fff; border:1px solid var(--carbon-border); padding:14px 16px; }
+    .recon-tile.err { border-left:3px solid var(--carbon-error); }
+    .recon-tile.warn { border-left:3px solid var(--carbon-warning); }
+    .recon-tile.ok { border-left:3px solid var(--carbon-success); }
+    .recon-v { font-family:'IBM Plex Mono', monospace; font-size:26px; font-weight:600; line-height:1; }
+    .recon-l { font-size:11px; color:var(--carbon-text-secondary); margin-top:6px; }
+
+    /* tabs */
+    .tabs { display:flex; gap:0; border-bottom:1px solid var(--carbon-border); background:#fff; }
+    .tab { padding:12px 18px; font-size:13px; font-weight:500; color:var(--carbon-text-secondary); cursor:pointer; border-bottom:2px solid transparent; display:flex; align-items:center; gap:8px; }
+    .tab:hover { background:var(--carbon-bg-hover); color:var(--carbon-text); }
+    .tab.active { color:var(--carbon-text); border-bottom-color:var(--carbon-text); }
+    .tab .count { font-family:'IBM Plex Mono', monospace; font-size:11px; background:var(--carbon-bg-hover); padding:0 6px; }
+    .tab .count.err { background:var(--carbon-error-light); color:var(--carbon-error); }
+
+    .tabpane { display:none; flex:1; flex-direction:column; min-height:0; }
+    .tabpane.active { display:flex; }
+
+    /* ── Log console ── */
+    .log-toolbar { display:flex; align-items:center; gap:10px; padding:12px 16px; background:#fff; border:1px solid var(--carbon-border); border-top:none; flex-wrap:wrap; }
+    .filter-pill { padding:4px 12px; font-size:12px; font-weight:500; background:var(--carbon-bg-hover); color:var(--carbon-text-secondary); border:1px solid transparent; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center; gap:6px; }
+    .filter-pill:hover { border-color:var(--carbon-text); color:var(--carbon-text); }
+    .filter-pill.active { background:var(--carbon-text); color:#fff; }
+    .filter-pill .n { font-family:'IBM Plex Mono', monospace; opacity:0.7; }
+    .log-search { flex:1; min-width:180px; height:32px; padding:0 10px; font-family:'IBM Plex Mono', monospace; font-size:12px; background:var(--carbon-bg-hover); border:none; border-bottom:1px solid var(--carbon-text-secondary); color:var(--carbon-text); }
+    .log-search:focus { background:#fff; }
+
+    .log-console { flex:1; min-height:0; overflow-y:auto; background:#161616; color:#c6c6c6; font-family:'IBM Plex Mono', monospace; font-size:12px; line-height:1.7; padding:12px 0; border:1px solid var(--carbon-border); border-top:none; }
+    .log-line { display:flex; gap:14px; padding:1px 16px; white-space:nowrap; }
+    .log-line:hover { background:rgba(255,255,255,0.05); }
+    .log-ts { color:#6f6f6f; flex-shrink:0; }
+    .log-lvl { width:48px; flex-shrink:0; font-weight:600; }
+    .log-stage { width:74px; flex-shrink:0; color:#8d8d8d; }
+    .log-msg { white-space:pre-wrap; }
+    .log-line.info .log-lvl { color:#78a9ff; }
+    .log-line.warn .log-lvl { color:#f1c21b; }
+    .log-line.error { background:rgba(218,30,40,0.12); }
+    .log-line.error .log-lvl { color:#ff8389; }
+    .log-msg .v { color:#a7f0ba; }
+    .log-msg .hl { color:#ffd6a0; }
+    .log-empty { padding:20px 16px; color:#6f6f6f; }
+
+    /* ── Per-video table ── */
+    .vtable { background:#fff; border:1px solid var(--carbon-border); border-top:none; overflow-y:auto; flex:1; min-height:0; }
+    .vhead, .vrow { display:flex; align-items:center; padding:10px 16px; }
+    .vhead { background:var(--carbon-bg-hover); border-bottom:1px solid var(--carbon-border); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--carbon-text-secondary); position:sticky; top:0; }
+    .vrow { border-bottom:1px solid var(--carbon-border); font-size:13px; }
+    .vrow:hover { background:var(--carbon-bg-hover); }
+    .c-name { flex:2; min-width:0; font-family:'IBM Plex Mono', monospace; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .c-frames { width:90px; flex-shrink:0; font-family:'IBM Plex Mono', monospace; }
+    .c-detect { width:120px; flex-shrink:0; }
+    .c-time { width:80px; flex-shrink:0; font-family:'IBM Plex Mono', monospace; color:var(--carbon-text-secondary); }
+    .c-status { width:200px; flex-shrink:0; }
+    .detect-bar { height:6px; background:var(--carbon-border); width:80px; display:inline-block; vertical-align:middle; margin-right:8px; }
+    .detect-bar i { display:block; height:100%; background:var(--carbon-success); }
+    .detect-bar i.low { background:var(--carbon-error); } .detect-bar i.mid { background:var(--carbon-warning); }
+
+    /* config pane */
+    .code-block { background:#161616; color:#f4f4f4; font-family:'IBM Plex Mono', monospace; font-size:12px; line-height:1.7; padding:16px 20px; overflow:auto; white-space:pre; flex:1; border:1px solid var(--carbon-border); border-top:none; }
+    .code-block .k { color:#78a9ff; } .code-block .s { color:#a7f0ba; } .code-block .c { color:#8d8d8d; }
+
+    .callout { display:flex; gap:12px; padding:12px 16px; border:1px solid var(--carbon-border); border-left:3px solid var(--carbon-info); background:var(--carbon-info-light); margin-bottom:14px; }
+    .callout.warn { border-left-color:var(--carbon-warning); background:var(--carbon-warning-light); }
+    .callout i { margin-top:2px; } .callout .t { font-size:13px; } .callout .t strong { font-weight:600; }
+    .mono { font-family:'IBM Plex Mono', monospace; }
+
+    @keyframes dotPulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; } }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+  <div class="app-frame">
+    <div class="accent-bar"></div>
+    <div class="app-header">
+      <a href="#" class="app-logo"><i class="fas fa-shield-alt"></i> MASKINGOPS</a>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="#"><i class="fas fa-th-large"></i> Dashboard</a>
+        <a href="#"><i class="fas fa-mask"></i> MaskAnyone</a>
+        <a href="#" class="active"><i class="fas fa-chart-bar"></i> MaskBench</a>
+        <a href="challenge-builder.html"><i class="fas fa-trophy"></i> Challenge Builder</a>
+        <a href="#"><i class="fas fa-archive"></i> Archive</a>
+      </nav>
+      <div class="header-actions">
+        <button title="Help"><i class="fas fa-question-circle"></i></button>
+        <button title="Settings"><i class="fas fa-cog"></i></button>
+      </div>
+    </div>
+
+    <div class="app-body">
+      <!-- Runs list -->
+      <aside class="runs-sidebar" aria-label="Runs">
+        <div class="runs-sidebar-head">
+          <span class="runs-title">Runs</span>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Refresh"><i class="fas fa-rotate"></i></button>
+        </div>
+
+        <div class="run-item active" data-run="0">
+          <div class="run-item-top"><span class="run-dot running"></span><span class="run-name">EnvisionGestureChallenge</span></div>
+          <div class="run-meta"><span class="mono">20260608-153000</span><span>running · 67%</span></div>
+        </div>
+        <div class="run-item" data-run="1">
+          <div class="run-item-top"><span class="run-dot partial"></span><span class="run-name">EnvisionGestureChallenge</span></div>
+          <div class="run-meta"><span class="mono">20260607-1104</span><span>6 failed</span></div>
+        </div>
+        <div class="run-item" data-run="2">
+          <div class="run-item-top"><span class="run-dot done"></span><span class="run-name">TedTalks-pilot</span></div>
+          <div class="run-meta"><span class="mono">20260606-0931</span><span>done · 48</span></div>
+        </div>
+        <div class="run-item" data-run="3">
+          <div class="run-item-top"><span class="run-dot failed"></span><span class="run-name">SaGA-handtest</span></div>
+          <div class="run-meta"><span class="mono">20260605-1740</span><span>config error</span></div>
+        </div>
+        <div class="run-item" data-run="4">
+          <div class="run-item-top"><span class="run-dot done"></span><span class="run-name">TragicTalkers</span></div>
+          <div class="run-meta"><span class="mono">20260604-1402</span><span>done · 12</span></div>
+        </div>
+      </aside>
+
+      <!-- Run detail -->
+      <main id="main" class="main-content">
+        <div class="detail-head">
+          <div>
+            <p class="page-label">MaskBench · Run log</p>
+            <h1 class="page-title">EnvisionGestureChallenge <strong>· 20260608-153000</strong></h1>
+            <div class="detail-sub">
+              <span><i class="fas fa-circle" style="font-size:7px; color:var(--carbon-info);"></i> Running</span>
+              <span class="mono">/output/EnvisionGestureChallenge-20260608-153000</span>
+              <span>MediaPipe World Landmarker</span>
+              <span>started 15:30:00 · 42m elapsed</span>
+              <span class="mono">cfg a3f1…9c</span>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="btn btn-ghost btn-sm" title="Download raw log"><i class="fas fa-download"></i> log.jsonl</button>
+            <button class="btn btn-secondary btn-sm"><i class="fas fa-terminal"></i> Copy run dir</button>
+            <button class="btn btn-secondary btn-sm"><i class="fas fa-play"></i> Resume</button>
+            <button class="btn btn-primary btn-sm"><i class="fas fa-trophy"></i> Build challenge</button>
+          </div>
+        </div>
+
+        <!-- Reconciliation -->
+        <div class="recon">
+          <div class="recon-tile"><div class="recon-v">1,204</div><div class="recon-l">videos discovered</div></div>
+          <div class="recon-tile ok"><div class="recon-v" style="color:var(--carbon-success);">812</div><div class="recon-l">npz written so far</div></div>
+          <div class="recon-tile err"><div class="recon-v" style="color:var(--carbon-error);">6</div><div class="recon-l">failed (skipped)</div></div>
+          <div class="recon-tile warn"><div class="recon-v" style="color:#735f00;">1</div><div class="recon-l">filename unparsed</div></div>
+          <div class="recon-tile"><div class="recon-v">1 / 1</div><div class="recon-l">estimators ran</div></div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+            <span class="text-sm">Processing · 812 / 1,204 videos</span><span class="mono text-secondary">67% · ~21m left</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill info" style="width:67%;"></div></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <div class="tab active" data-tab="log"><i class="fas fa-stream"></i> Log stream <span class="count err">6</span></div>
+          <div class="tab" data-tab="videos"><i class="fas fa-table-list"></i> Per-video <span class="count">1,204</span></div>
+          <div class="tab" data-tab="config"><i class="fas fa-file-code"></i> Config</div>
+        </div>
+
+        <!-- LOG TAB -->
+        <div class="tabpane active" data-pane="log">
+          <div class="log-toolbar">
+            <span class="filter-pill active" data-level="all">All <span class="n">1,642</span></span>
+            <span class="filter-pill" data-level="info"><i class="fas fa-circle" style="font-size:7px; color:var(--carbon-info);"></i> Info <span class="n">1,604</span></span>
+            <span class="filter-pill" data-level="warn"><i class="fas fa-circle" style="font-size:7px; color:var(--carbon-warning);"></i> Warn <span class="n">32</span></span>
+            <span class="filter-pill" data-level="error"><i class="fas fa-circle" style="font-size:7px; color:var(--carbon-error);"></i> Error <span class="n">6</span></span>
+            <input class="log-search" placeholder="filter messages, e.g. GESRES or 'ragged'…" id="logSearch">
+            <button class="btn btn-ghost btn-sm" title="Auto-scroll"><i class="fas fa-angles-down"></i> Follow</button>
+          </div>
+          <div class="log-console" id="logConsole"></div>
+        </div>
+
+        <!-- VIDEOS TAB -->
+        <div class="tabpane" data-pane="videos">
+          <div class="vtable">
+            <div class="vhead"><div class="c-name">Video</div><div class="c-frames">Frames</div><div class="c-detect">Detection</div><div class="c-time">Time</div><div class="c-status">Status</div></div>
+            <div class="vrow"><div class="c-name">MULTISIMO_S07_0007_gesture_move</div><div class="c-frames">312</div><div class="c-detect"><span class="detect-bar"><i style="width:98%;"></i></span>98%</div><div class="c-time">3.1s</div><div class="c-status"><span class="tag tag-success"><i class="fas fa-check"></i> npz written</span></div></div>
+            <div class="vrow"><div class="c-name">ECOLANG_012_0005_nogesture</div><div class="c-frames">145</div><div class="c-detect"><span class="detect-bar"><i style="width:91%;"></i></span>91%</div><div class="c-time">1.6s</div><div class="c-status"><span class="tag tag-success"><i class="fas fa-check"></i> npz written</span></div></div>
+            <div class="vrow"><div class="c-name">GESRES_p14_0088_gesture_hold</div><div class="c-frames">208</div><div class="c-detect"><span class="detect-bar"><i class="mid" style="width:54%;"></i></span>54%</div><div class="c-time">2.4s</div><div class="c-status"><span class="tag tag-error"><i class="fas fa-xmark"></i> ragged npz — skipped</span></div></div>
+            <div class="vrow"><div class="c-name">ZHUBO_S21_0114_gesture_other</div><div class="c-frames">—</div><div class="c-detect"><span class="detect-bar"><i class="low" style="width:0;"></i></span>—</div><div class="c-time">0.2s</div><div class="c-status"><span class="tag tag-error"><i class="fas fa-xmark"></i> fps=0 — skipped</span></div></div>
+            <div class="vrow"><div class="c-name">SAGA_pp_03_0042_gesture_hold_mirror</div><div class="c-frames">176</div><div class="c-detect"><span class="detect-bar"><i style="width:88%;"></i></span>88%</div><div class="c-time">2.0s</div><div class="c-status"><span class="tag tag-success"><i class="fas fa-check"></i> npz written</span></div></div>
+            <div class="vrow"><div class="c-name">ZHUBO_S09_0210_gesture_move</div><div class="c-frames">—</div><div class="c-detect"><span class="detect-bar"><i style="width:0;"></i></span>—</div><div class="c-time">—</div><div class="c-status"><span class="tag tag-processing"><i class="fas fa-spinner fa-spin"></i> in progress</span></div></div>
+            <div class="vrow"><div class="c-name">clip_final_v2</div><div class="c-frames">—</div><div class="c-detect">—</div><div class="c-time">—</div><div class="c-status"><span class="tag tag-warning"><i class="fas fa-exclamation"></i> filename unparsed</span></div></div>
+            <div class="vrow"><div class="c-name">MULTISIMO_S03_0451_nogesture</div><div class="c-frames">—</div><div class="c-detect">—</div><div class="c-time">—</div><div class="c-status"><span class="tag tag-default">queued</span></div></div>
+          </div>
+        </div>
+
+        <!-- CONFIG TAB -->
+        <div class="tabpane" data-pane="config">
+          <div class="code-block"><span class="c"># config.yml snapshot — copied into the run dir at start (provenance)</span>
+<span class="k">dataset</span>:
+  <span class="k">name</span>: <span class="s">EnvisionGestureChallenge</span>
+  <span class="k">code_file</span>: <span class="s">datasets.dataset.Dataset</span>
+  <span class="k">video_folder</span>: <span class="s">/datasets/</span>
+<span class="k">execute_processing</span>: <span class="s">true</span>
+<span class="k">execute_rendering</span>: <span class="s">true</span>
+<span class="k">pose_estimators</span>:
+  - <span class="k">name</span>: <span class="s">MediaPipePoseWorldLandmarker</span>
+    <span class="k">code_file</span>: <span class="s">models.mediapipe_worldlandmarker_pose_estimator.MediaPipeWorldLandmarkerPoseEstimator</span>
+    <span class="k">config</span>:
+      <span class="k">body_weights</span>: <span class="s">pose_landmarker_heavy.task</span>
+      <span class="k">hand_weights</span>: <span class="s">mediapipe_hand_landmarker.task</span>
+      <span class="k">max_num_poses</span>: <span class="s">3</span>
+      <span class="k">confidence_threshold</span>: <span class="s">0.3</span></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // ── Canned structured log (this is exactly the JSONL maskbench would emit) ──
+    const LOG = [
+      ['15:30:00','info','config','Loaded config envision_gesture_challenge.yml · cfg hash a3f1…9c'],
+      ['15:30:00','info','dataset','Scanning /datasets (rglob *.mp4 *.avi)'],
+      ['15:30:01','info','dataset','Found <span class="v">1204</span> videos across 7 corpora · 152 speakers'],
+      ['15:30:01','warn','dataset','Cannot parse filename (too few parts): <span class="hl">clip_final_v2.mp4</span> — skipped'],
+      ['15:30:01','info','engine','Estimators configured: 1 · enabled: 1 · max_workers=1 · 8 CPU cores'],
+      ['15:30:02','info','inference','MediaPipeWorldLandmarker · MULTISIMO_S07_0007_gesture_move · start'],
+      ['15:30:05','info','npz','MULTISIMO_S07_0007_gesture_move · 312 frames · 98% detected · <span class="v">3.1s</span>'],
+      ['15:30:07','info','inference','ECOLANG_012_0005_nogesture · start'],
+      ['15:30:08','info','npz','ECOLANG_012_0005_nogesture · 145 frames · 91% detected · <span class="v">1.6s</span>'],
+      ['15:31:10','info','inference','GESRES_p14_0088_gesture_hold · start'],
+      ['15:31:12','error','npz','GESRES_p14_0088_gesture_hold · <span class="hl">setting an array element with a sequence</span> (ragged frames: 113/208 had no detection) — video skipped'],
+      ['15:31:40','info','inference','ZHUBO_S21_0114_gesture_other · start'],
+      ['15:31:40','error','inference','ZHUBO_S21_0114_gesture_other · <span class="hl">fps=0</span> in metadata → ZeroDivisionError in format_frame — skipped'],
+      ['15:32:05','info','inference','SAGA_pp_03_0042_gesture_hold_mirror · start'],
+      ['15:32:07','info','npz','SAGA_pp_03_0042_gesture_hold_mirror · 176 frames · 88% detected · <span class="v">2.0s</span>'],
+      ['15:33:01','warn','render','GESRES_p11_0301 · no pose results for frame 204 — wrote blank frame'],
+      ['15:40:22','error','npz','ECOLANG_088_0142_gesture_move · ragged frames (61/154 empty) — video skipped'],
+      ['15:52:14','error','inference','TEDM3D_S02_0033_gesture_other · could not read frame 0 (corrupt?) — skipped'],
+      ['16:01:09','error','npz','ZHUBO_S30_0455_nogesture · ragged frames — video skipped'],
+      ['16:08:47','error','inference','SAGA_pp_07_0119_gesture_hold · fps=0 — skipped'],
+      ['16:11:55','info','inference','MULTISIMO_S07_0008_gesture_move · start'],
+      ['16:12:00','info','engine','Progress: <span class="v">812</span>/1204 done · 6 failed · 1 unparsed · ~21m remaining'],
+    ];
+
+    const console_ = document.getElementById('logConsole');
+    let activeLevel = 'all', query = '';
+    function renderLog() {
+      const rows = LOG.filter(([ts,lvl,stage,msg]) => {
+        if (activeLevel !== 'all' && lvl !== activeLevel) return false;
+        if (query) {
+          const plain = (stage + ' ' + msg).replace(/<[^>]+>/g,'').toLowerCase();
+          if (!plain.includes(query)) return false;
+        }
+        return true;
+      });
+      if (!rows.length) { console_.innerHTML = '<div class="log-empty">No log lines match this filter.</div>'; return; }
+      console_.innerHTML = rows.map(([ts,lvl,stage,msg]) =>
+        `<div class="log-line ${lvl}"><span class="log-ts">${ts}</span><span class="log-lvl">${lvl.toUpperCase()}</span><span class="log-stage">${stage}</span><span class="log-msg">${msg}</span></div>`
+      ).join('');
+    }
+    renderLog();
+
+    document.querySelectorAll('.filter-pill').forEach(p => p.addEventListener('click', () => {
+      document.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active'); activeLevel = p.dataset.level; renderLog();
+    }));
+    document.getElementById('logSearch').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); renderLog(); });
+
+    // tabs
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tabpane').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.querySelector(`.tabpane[data-pane="${t.dataset.tab}"]`).classList.add('active');
+    }));
+
+    // run selection (mock — keeps the first run populated)
+    document.querySelectorAll('.run-item').forEach(r => r.addEventListener('click', () => {
+      document.querySelectorAll('.run-item').forEach(x => x.classList.remove('active'));
+      r.classList.add('active');
+    }));
+  </script>
+</body>
+</html>
