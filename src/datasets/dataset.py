@@ -2,6 +2,7 @@ import math
 import os
 from abc import ABC
 from typing import Dict, List
+from pathlib import Path
 
 from .video_sample import VideoSample
 from pose_result_class import VideoPoseResult
@@ -12,8 +13,8 @@ class Dataset(ABC):
     def __init__(self, name: str, video_folder: str, gt_folder: str = None, config: dict = None):
         self.name = name
         self.config = config
-        self.video_folder = video_folder
-        self.gt_folder = gt_folder  # Optional - None if dataset has no ground truth
+        self.video_folder = Path(video_folder)
+        self.gt_folder = Path(gt_folder) if gt_folder else None  # Optional - None if dataset has no ground truth
         self.video_samples = self.load_videos()
 
     def load_videos(self) -> List[VideoSample]:
@@ -24,13 +25,15 @@ class Dataset(ABC):
         video_extensions = (".avi", ".mp4")
         samples = []
 
-        if not os.path.exists(self.video_folder):
+        if not self.video_folder.exists():
             raise ValueError(f"Videos folder not found at {self.video_folder}")
 
-        for filename in os.listdir(self.video_folder):
-            video_path = os.path.join(self.video_folder, filename)
-            if filename.endswith(video_extensions):
-                samples.append(VideoSample(video_path))
+        video_files = []
+        for ext in video_extensions:
+            video_files.extend(self.video_folder.rglob(f"*{ext}"))
+
+        for filename in video_files:
+                samples.append(VideoSample(filename))
 
         return samples
 
@@ -43,15 +46,15 @@ class Dataset(ABC):
         The returned dictionary should map video names to ground truth `VideoPoseResult` objects.
         Returns empty dict if no gt_folder is specified or doesn't exist.
         """
-        if self.gt_folder is None or not os.path.exists(self.gt_folder):
+        if self.gt_folder is None or not self.gt_folder.exists():
             return {}
 
         gt_pose_results = {}
         for sample in self.video_samples:
-            video_name = os.path.splitext(os.path.basename(sample.video_path))[0]
-            json_path = os.path.join(self.gt_folder, f"{video_name}.json")
+            video_name = sample.video_path.stem
+            json_path = self.gt_folder / f"{video_name}.json"
 
-            if not os.path.exists(json_path):
+            if not json_path.exists():
                 raise ValueError(f"Ground truth JSON file missing for video `{video_name}`.")
             
             gt_pose_results[video_name] = VideoPoseResult.from_json(json_path, video_name)
@@ -63,7 +66,7 @@ class Dataset(ABC):
         Default implementation to return COCO keypoint pairs if gt_folder is specified and exists,
         otherwise returns None.
         """
-        if self.gt_folder is not None and os.path.exists(self.gt_folder):
+        if self.gt_folder is not None and self.gt_folder.exists():
             return COCO_KEYPOINT_PAIRS
         return None
 
