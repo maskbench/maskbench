@@ -55,15 +55,42 @@ Pragmatic stack: **Datasheet (humans) + Croissant (machines) + PROV provenance +
 
 ## 3. Controlled vocabularies
 
-Free text is not allowed in these fields. Canonical values, case-normalised:
+Free text is not allowed in these fields. Canonical values **derived from the actual 29,098-clip corpus**
+(read-only filename scan, 2026-06-08):
 
-- **corpus** — `Ecolang | MULTISIMO | SaGA | SAGAplus | ZHUBO | GESRES | TEDM3D` (extend by PR, not ad hoc).
-- **label** — `Gesture | NoGesture | Move` (canonical case; `gesture`→`Gesture`, etc.).
-- **subtype** — per-corpus enum or `NA`. Multi-token subtypes (`iconic_deictic`) are **single values**, not split.
+- **corpus** — `Ecolang | TedM3D | SAGAplus | Multisimo | ZHUBO | GESRES | SaGA` — canonical casing matches the
+  filename prefixes as they appear in the data (`SaGA` is the one corrected case; the dataset writes `SAGA`).
+  Extend by PR, not ad hoc.
+- **label** — `Gesture | NoGesture`. **The dataset is 2-class and exactly balanced** (14,549 each); there is
+  **no `Move` label** in the data (`MoveClips/` is empty, no `_Move_` filenames). `move` exists only as a *subtype*
+  within the SaGA family (§3.1). Reserve `Move` only if Move-labelled data is added later.
+- **subtype** — per-corpus enum (§3.1) or the single null sentinel `NA`. Multi-token subtypes
+  (`iconic_deictic`, `RepGest_enumeration`) are **single values**, not split.
 - **language** — ISO 639-1 (`en`, `de`, `zh`).
 - **setting** — `narration | group_discussion | direction_giving | clinical | presentation`.
 
 Each corpus has a one-row entry in `corpora.csv` (language, setting, consent, licence) so clip rows stay thin.
+
+### 3.1 Subtype vocabularies (per corpus)
+
+Normalisation rules (decided): **(a)** lowercase the linguistic gesture-type adjectives
+(`Iconic→iconic`, `Beat→beat`) for GESRES / Multisimo / SaGA family; **(b)** keep Ecolang's CamelCase taxonomy
+names as-is (they are scheme-specific identifiers, not adjectives); **(c)** collapse all missing/None sentinels
+(`None`, `NA`, `N_A`, empty) to a **single `NA`**; **(d)** fix the source typo `deictic__abstract → deictic_abstract`;
+**(e)** keep `_`-joined combinations as single canonical values.
+
+| Corpus | Canonical subtype enum |
+|---|---|
+| **Ecolang** | `RepGest`, `PragGest`, `ObjMan`, `Point`, `BeatGest`, `SpeakerReferent`, `RepGest_enumeration`, `NA` |
+| **GESRES** | `beat`, `metaphoric`, `deictic`, `iconic`, `emblem`, `adaptor`, `deictic_abstract`, `NA` |
+| **Multisimo** | `beat`, `iconic`, `deictic`, `symbolic`, `NA` |
+| **SaGA** / **SAGAplus** | `iconic`, `deictic`, `discourse`, `move`, `beat`, `unclear`, `iconic_deictic`, `iconic_beat`, `deictic_beat`, `iconic_deictic_beat`, `discourse_iconic`, `discourse_beat`, `NA` |
+| **ZHUBO** | `NA` (no gesture-subtype taxonomy) |
+| **TedM3D** | `NA` (no gesture-subtype taxonomy) |
+
+The manifest validator (§9) enforces `subtype ∈ vocab[corpus]`; values outside the corpus's enum are a hard error.
+A corpus whose only value is `NA` carries no subtype signal — note this in the Datasheet so participants don't
+treat absence as a class.
 
 ---
 
