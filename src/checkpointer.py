@@ -8,7 +8,7 @@ import logging
 import cv2 as cv
 from typing import Dict, Optional
 from filelock import FileLock
-from utils import parse_filename
+from tqdm import tqdm
 
 from pose_result_class import VideoPoseResult
 
@@ -166,6 +166,8 @@ class Checkpointer:
 
             estimator_dir = os.path.join(self.poses_dir, estimator_name)
             results[estimator_name] = {}
+
+            progress_bar = tqdm(os.listdir(estimator_dir), desc=f"Loading pose results for {estimator_name}", unit="file")
             
             for pose_file in os.listdir(estimator_dir):
                 if not pose_file.endswith("_poses.json"):
@@ -175,6 +177,7 @@ class Checkpointer:
                 json_path = os.path.join(estimator_dir, pose_file)
                 video_pose_result = VideoPoseResult.from_json(json_path, video_name)
                 results[estimator_name][video_name] = video_pose_result
+                progress_bar.update(1)
                     
         return results 
 
