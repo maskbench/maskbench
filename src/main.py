@@ -14,7 +14,7 @@ from models import PoseEstimator
 from rendering import PoseRenderer
 from evaluation import Evaluator, MaskBenchVisualizer
 from evaluation.metrics import Metric
-from scripts.raw_masked_experiment import run_raw_masked_experiment
+from save_formats.special_format import SpecialFormat
 
 def main():
     config, config_file_path = load_config()
@@ -39,16 +39,20 @@ def main():
     metrics = load_metrics(metric_specifications)
     print("Available metrics:", [metric.name for metric in metrics])
 
+    special_save_format_specifications = config.get("special_save_format", [])
+    special_save_formats = load_special_save_formats(special_save_format_specifications, checkpointer)
+    print("Available special save formats:", [format.name for format in special_save_formats])
+
     execute_evaluation = config.get("execute_evaluation", False)
     execute_rendering = config.get("execute_rendering", False)
     render_poses_only = config.get("render_poses_only", False)
     execute_processing = config.get("execute_processing", True)
     
-    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering, render_poses_only, execute_processing)
+    run(dataset, pose_estimators, metrics, special_save_formats, checkpointer, execute_evaluation, execute_rendering, render_poses_only, execute_processing)
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, execute_processing: bool):
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], special_save_formats: List[SpecialFormat], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, execute_processing: bool):
     inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer, execute_processing)
     gt_pose_results = dataset.get_gt_pose_results()
     pose_results = inference_engine.run_parallel_tasks()
@@ -67,10 +71,12 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
         if gt_pose_results and dataset.get_gt_keypoint_pairs() is not None:
             pose_results["GroundTruth"] = gt_pose_results
             estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
-
         pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer, render_poses_only)
         pose_renderer.render_all_videos(pose_results)
 
+    for save_format in special_save_formats:
+        print(f"Saving results in special format: {save_format.name}")
+        save_format.create(pose_results)
 
 def parse_code_file(code_file: str) -> tuple[str, str]:
     if not code_file or '.' not in code_file:
@@ -111,7 +117,7 @@ def load_dataset(dataset_specification: dict) -> Dataset:
         dataset_class = getattr(dataset_module, class_name)
         dataset = dataset_class(dataset_name, video_folder=video_folder, gt_folder=gt_folder, config=config)
     except (ImportError, AttributeError, TypeError) as e:
-        print(f"Error instantiating dataset {dataset_specification.get('name')}: {e}")
+        logging.error(f"Error instantiating dataset {dataset_specification.get('name')}: {e}")
         raise e
 
     return dataset
@@ -134,7 +140,7 @@ def load_pose_estimators(pose_estimator_specifications: dict) -> List[PoseEstima
             pose_estimator = estimator_class(estimator_name, estimator_config)
             pose_estimators.append(pose_estimator)
         except (ImportError, AttributeError, TypeError) as e:
-            print(f"Error instantiating pose estimator {estimator_name}: {e}")
+            logging.error(f"Error instantiating pose estimator {estimator_name}: {e}")
 
     return pose_estimators
 
@@ -152,10 +158,29 @@ def load_metrics(metric_specifications: List[dict]) -> List[Metric]:
             metric = metric_class(config=metric_config)
             metrics.append(metric)
         except (ImportError, AttributeError, TypeError) as e:
-            print(f"Error instantiating metric {metric_name}: {e}")
+            logging.error(f"Error instantiating metric {metric_name}: {e}")
 
     return metrics
 
+def load_special_save_formats(special_save_format_specifications: List[dict], checkpointer: Checkpointer) -> List[SpecialFormat]:
+    save_formats = []
+    for spec in special_save_format_specifications:
+        format_name = spec.get("name")
+        format_enabled = spec.get("enabled", True)
+
+        if not format_enabled:
+            continue
+
+        try:
+            module_path, class_name = parse_code_file(spec.get("code_file"))
+            format_module = importlib.import_module(module_path)
+            format_class = getattr(format_module, class_name)
+            save_format = format_class(name=format_name, checkpointer=checkpointer)
+            save_formats.append(save_format)
+        except (ImportError, AttributeError, TypeError) as e:
+            logging.error(f"Error instantiating special save format {format_name}: {e}")
+
+    return save_formats
 
 if __name__ == "__main__":
     main()

@@ -17,3 +17,9 @@ pose_estimators:
       hand_weights: mediapipe_hand_landmarker.task
       max_num_poses: 3
       confidence_threshold: 0.3
+
+special_save_format:
+    - name: npz
+      enabled: true
+      code_file: save_formats.npz_format.NpzFormat
+
