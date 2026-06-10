@@ -147,7 +147,49 @@ class VideoPoseResult:
                         ) for k in keypoints
                     ]
                     person_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
-                frame_pose_results.append(FramePoseResult(persons=person_pose_results, frame_idx=frame_index))
+
+                persons_world_landmark = frame.get("persons_world_landmark", [])
+                persons_world_landmark_pose_results = []
+                for person in persons_world_landmark:
+                    keypoints = person.get("keypoints", [])
+                    pose_keypoints = [
+                        PoseKeypoint(
+                            x=k["x"], 
+                            y=k["y"], 
+                            z=k["z"],
+                            confidence=k.get("confidence", None)
+                        ) for k in keypoints
+                    ]
+                    persons_world_landmark_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
+
+                hands = frame.get("hands", [])
+                hands_pose_results = []
+                for hand in hands:
+                    keypoints = hand.get("keypoints", [])
+                    pose_keypoints = [
+                        PoseKeypoint(
+                            x=k["x"], 
+                            y=k["y"], 
+                            confidence=k.get("confidence", None)
+                        ) for k in keypoints
+                    ]
+                    hands_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
+
+                hands_world_landmark = frame.get("hands_world_landmark", [])
+                hands_world_landmark_pose_results = []
+                for hand in hands_world_landmark:
+                    keypoints = hand.get("keypoints", [])
+                    pose_keypoints = [
+                        PoseKeypoint(
+                            x=k["x"], 
+                            y=k["y"],
+                            z=k["z"],
+                            confidence=k.get("confidence", None)
+                        ) for k in keypoints
+                    ]
+                    hands_world_landmark_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
+
+                frame_pose_results.append(FramePoseResult(persons=person_pose_results, persons_world_landmark=persons_world_landmark_pose_results, hands=hands_pose_results, hands_world_landmark=hands_world_landmark_pose_results, frame_idx=frame_index))
             
             return cls(
                 fps=data.get("fps", None),
