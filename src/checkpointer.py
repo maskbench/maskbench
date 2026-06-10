@@ -190,19 +190,29 @@ class Checkpointer:
         # frame[0] represents person[0]
         world_left_hand_landmarks, world_right_hand_landmarks = self.return_hand_world_landmarks(hand_world_landmark)
         image_left_hand_landmarks, image_right_hand_landmarks = self.return_hand_image_landmarks(hands)
+
+        num_keypoints = next(
+            (len(frame[0].keypoints) for frame in persons_world_landmark 
+                if frame and frame[0]),
+            33
+        )
+        world_nan_keypoints = [[np.nan, np.nan, np.nan]] * num_keypoints
+        image_nan_keypoints = [[np.nan, np.nan]] * num_keypoints
         
         # body landmarks
+
         world_landmarks_array = np.array([
             [[kp.x if kp.x is not None else np.nan,
             kp.y if kp.y is not None else np.nan,
             kp.z if kp.z is not None else np.nan]
-            for kp in frame[0].keypoints] if frame and frame[0] and frame[0].keypoints else []
+            for kp in frame[0].keypoints] if frame and frame[0] and frame[0].keypoints else world_nan_keypoints
             for frame in persons_world_landmark
         ], dtype=float)
+
         image_landmarks_array = np.array([
             [[kp.x if kp.x is not None else np.nan,
             kp.y if kp.y is not None else np.nan]
-            for kp in frame[0].keypoints] if frame and frame[0] and frame[0].keypoints else []
+            for kp in frame[0].keypoints] if frame and frame[0] and frame[0].keypoints else image_nan_keypoints
             for frame in persons
         ], dtype=float)
 
