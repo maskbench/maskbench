@@ -76,6 +76,8 @@ class Checkpointer:
         command = [
             "ffmpeg",
             "-y",  # Overwrite output file if it exists
+            "-hide_banner",
+            "-loglevel", "error",
             "-i", output_path,
             "-c:v", "libx264",
             "-preset", "fast",
