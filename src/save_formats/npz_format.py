@@ -1,3 +1,5 @@
+import logging
+
 import tqdm
 import numpy as np
 from pathlib import Path
@@ -19,12 +21,16 @@ class NpzFormat(SpecialFormat):
             estimator_dir = self.dir / estimator_name
             estimator_dir.mkdir(parents=True, exist_ok=True)
 
-            progress_bar = tqdm.tqdm(total=len(videos), desc=f"Saving NPZ for {estimator_name}")
+            progress_bar = tqdm.tqdm(total=len(videos), desc=f"Saving NPZ for {estimator_name}", unit="videos")
+            print()
 
             for video_name, video_pose_results in videos.items():
                 output_path = estimator_dir / f"{video_name}.npz"
                 self.save_npz(video_pose_results, output_path)
                 progress_bar.update(1)
+                logging.info(progress_bar.__str__())
+            progress_bar.close()
+            print()
 
     def extract_hand_landmarks(self, hand_landmarks, dimensions: int):
         num_keypoints = next(
@@ -75,6 +81,7 @@ class NpzFormat(SpecialFormat):
     def save_npz(self, video_pose_result: VideoPoseResult, output_path: Path) -> None:
         if output_path.exists():
             print(f"Output file {output_path} already exists. Skipping save in format {self.name}.")
+            logging.info(f"Output file {output_path} already exists. Skipping save in format {self.name}.")
             return
         
         video_name = video_pose_result.video_name

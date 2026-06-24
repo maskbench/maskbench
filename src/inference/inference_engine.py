@@ -4,6 +4,7 @@ from checkpointer import Checkpointer
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+import tqdm
 
 class InferenceEngine:
     """Class responsible for running the pose estimators on the videos and saving the results in the `poses` folder."""
@@ -71,8 +72,12 @@ class InferenceEngine:
             Dictionary mapping pose estimator names to video names and `VideoPoseResult` objects.
         """
         estimator_results = {}
-
+        progress = tqdm.tqdm(total=len(self.dataset), desc=f"Processing videos with {estimator.name}", unit="videos")
+        print()
         for video in self.dataset:
+            progress.update(1)
+            logging.info(progress.__str__())
+            
             if video.get_filename() in self.results[estimator.name]:
                 print(f"Skipping already processed video {video.get_filename()} for estimator {estimator.name}")
                 continue # if results already exist, skip inference
@@ -88,6 +93,9 @@ class InferenceEngine:
                 print(f"Error processing video {video.get_filename()} with estimator {estimator.name}: {e}")
                 logging.error(f"Faced Exception: {e} on Video: {video.get_filename()} with Estimator: {estimator.name}")
                 continue
+
+        progress.close()
+        print()
         
         print(f"Completed estimator '{estimator.name}'")
         return {'estimator_name': estimator.name, 'estimator_results': estimator_results}

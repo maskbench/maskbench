@@ -25,17 +25,19 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 class Checkpointer:
-    def __init__(self, dataset_name: str, checkpoint_name: Optional[str] = None):
+    def __init__(self, dataset_name: str, total_videos: int, checkpoint_name: Optional[str] = None):
         """
         Initialize the Checkpointer.
         
         Args:
             dataset_name (str): Name of the dataset being processed
-            load_checkpoint (Optional[str]): Name of checkpoint to load (format: datasetname-date-time)
+            total_videos (int): Total number of videos in the dataset
+            checkpoint_name (Optional[str]): Name of checkpoint to load (format: datasetname-date-time)
         """
         self.dataset_name = dataset_name
         self.base_output_path = "/output"
-        
+        self.total_videos = total_videos
+
         if checkpoint_name != None: # load existing checkpoint
             self.load_checkpoint = True
             self.checkpoint_dir = os.path.join(self.base_output_path, checkpoint_name)
@@ -126,12 +128,34 @@ class Checkpointer:
                 with open(inference_file_path, 'r') as f:
                     inference_times = json.load(f)
             else:
-                inference_times = {}
+                inference_times = {
+                    "metadata": {
+                        "total_videos": self.total_videos, # total videos in the dataset
+                        "total_time_taken": 0.0
+                    },
+                    "videos_processed_per_estimator": {},
+                    "total_time_per_estimator": {}
+                }
 
             if estimator_name not in inference_times:
                 inference_times[estimator_name] = {}
-                
+            if estimator_name not in inference_times["videos_processed_per_estimator"]:
+                inference_times["videos_processed_per_estimator"][estimator_name] = 0
+            if estimator_name not in inference_times["total_time_per_estimator"]:
+                inference_times["total_time_per_estimator"][estimator_name] = 0.0
+
+            if video_name in inference_times[estimator_name]:
+                print(f"Warning: Overwriting existing inference time for {estimator_name} on {video_name}")
+                logging.warning(f"Overwriting existing inference time for {estimator_name} on {video_name}")
+                inference_times["total_time_per_estimator"][estimator_name] -= inference_times[estimator_name][video_name] # subtract old time from total
+                inference_times["metadata"]["total_time_taken"] -= inference_times[estimator_name][video_name] # subtract old time from total 
+                inference_times["videos_processed_per_estimator"][estimator_name] -= 1
+
+
             inference_times[estimator_name][video_name] = inference_time # add new inference time
+            inference_times["total_time_per_estimator"][estimator_name] += inference_time
+            inference_times["metadata"]["total_time_taken"] += inference_time
+            inference_times["videos_processed_per_estimator"][estimator_name] += 1
             
             with open(inference_file_path, 'w') as f:
                 json.dump(inference_times, f, indent=4)

@@ -25,7 +25,7 @@ def main():
 
     checkpoint_name = config.get("inference_checkpoint_name", None)
     checkpoint_name = checkpoint_name if checkpoint_name != "None" else None
-    checkpointer = Checkpointer(dataset.name, checkpoint_name)
+    checkpointer = Checkpointer(dataset.name, len(dataset), checkpoint_name)
     checkpointer.save_config(config_file_path)
 
     log_folder =  checkpointer.checkpoint_dir or "/output"
