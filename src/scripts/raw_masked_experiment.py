@@ -66,7 +66,9 @@ def run_raw_masked_experiment():
     dataset_name = "RawMaskedExperiment"
     strategies = ["Raw"] + STRATEGIES
     
-    checkpointers = {strategy: Checkpointer(dataset_name, f"{dataset_name}-{strategy}") for strategy in strategies}
+    # Load-only experiment (no inference here), so total_videos is unused -> 0.
+    # Pass it explicitly so the strategy name lands in checkpoint_name, not total_videos.
+    checkpointers = {strategy: Checkpointer(dataset_name, 0, f"{dataset_name}-{strategy}") for strategy in strategies}
     pose_results = {strategy: checkpointer.load_pose_results() for strategy, checkpointer in checkpointers.items()}
     gt_pose_results = pose_results["Raw"]
 

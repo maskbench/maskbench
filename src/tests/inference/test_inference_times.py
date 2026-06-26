@@ -121,5 +121,25 @@ class TestSaveLoadRoundTrip(unittest.TestCase):
             self.assertEqual(_checkpointer(d).load_inference_times(), {})
 
 
+class TestCheckpointerInit(unittest.TestCase):
+    """F2: the 3-arg Checkpointer(dataset_name, total_videos, checkpoint_name) must
+    bind correctly — a string must not land in total_videos (the raw_masked_experiment bug)."""
+
+    @unittest.skipUnless(os.path.isdir("/output") and os.access("/output", os.W_OK),
+                         "needs a writable /output (container)")
+    def test_load_branch_binds_args_not_swapped(self):
+        name = "test-f2-init-tmp"
+        path = os.path.join("/output", name)
+        os.makedirs(path, exist_ok=True)
+        try:
+            c = Checkpointer("DS", 0, name)  # (dataset_name, total_videos, checkpoint_name)
+            self.assertEqual(c.total_videos, 0)
+            self.assertEqual(c.dataset_name, "DS")
+            self.assertTrue(c.checkpoint_dir.endswith(name))
+            self.assertTrue(c.load_checkpoint)
+        finally:
+            os.rmdir(path)
+
+
 if __name__ == "__main__":
     unittest.main()
