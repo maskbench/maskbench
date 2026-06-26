@@ -1,6 +1,7 @@
 import logging
 
 import tqdm
+from progress_logging import log_progress
 import numpy as np
 from pathlib import Path
 from typing import Dict, List
@@ -28,7 +29,7 @@ class NpzFormat(SpecialFormat):
                 output_path = estimator_dir / f"{video_name}.npz"
                 self.save_npz(video_pose_results, output_path)
                 progress_bar.update(1)
-                logging.info(progress_bar.__str__())
+                log_progress(progress_bar.n, progress_bar.total, f"Saving NPZ for {estimator_name}")
             progress_bar.close()
             print()
 

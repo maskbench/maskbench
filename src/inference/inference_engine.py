@@ -5,6 +5,7 @@ import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 import tqdm
+from progress_logging import log_progress
 
 class InferenceEngine:
     """Class responsible for running the pose estimators on the videos and saving the results in the `poses` folder."""
@@ -76,8 +77,8 @@ class InferenceEngine:
         print()
         for video in self.dataset:
             progress.update(1)
-            logging.info(progress.__str__())
-            
+            log_progress(progress.n, progress.total, f"Processing videos with {estimator.name}")
+
             if video.get_filename() in self.results[estimator.name]:
                 print(f"Skipping already processed video {video.get_filename()} for estimator {estimator.name}")
                 continue # if results already exist, skip inference

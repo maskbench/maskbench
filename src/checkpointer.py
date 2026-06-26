@@ -12,6 +12,63 @@ from tqdm import tqdm
 
 from pose_result_class import VideoPoseResult
 
+
+# ── inference_times.json schema ───────────────────────────────────────────────
+# Current on-disk schema (version 1):
+#   {
+#     "schema_version": 1,
+#     "metadata": {"total_videos": int, "total_time_taken": float},
+#     "estimators": {<estimator>: {<video>: seconds}},
+#     "videos_processed_per_estimator": {<estimator>: int},
+#     "total_time_per_estimator": {<estimator>: float},
+#   }
+# Two earlier shapes exist on disk and must be read without crashing or corrupting:
+#   legacy-flat: {<estimator>: {<video>: seconds}}            (no bookkeeping keys)
+#   mixed:       bookkeeping keys + <estimator> keys at the top level, no "estimators"
+INFERENCE_TIMES_SCHEMA_VERSION = 1
+_RESERVED_INFERENCE_KEYS = {
+    "schema_version", "metadata", "estimators",
+    "videos_processed_per_estimator", "total_time_per_estimator",
+}
+
+
+def estimator_timings(data: dict) -> dict:
+    """Return ``{estimator: {video: seconds}}`` from any inference_times shape.
+
+    Normalises the three on-disk shapes (nested / mixed / legacy-flat) so callers
+    that iterate estimators never see the reserved bookkeeping keys.
+    """
+    if "estimators" in data:                                  # nested (current)
+        return data["estimators"]
+    if any(k in data for k in _RESERVED_INFERENCE_KEYS):      # mixed (strip reserved)
+        return {k: v for k, v in data.items() if k not in _RESERVED_INFERENCE_KEYS}
+    return data                                               # legacy-flat
+
+
+def migrate_inference_times(data: dict, total_videos: int) -> dict:
+    """Normalise any inference_times shape (incl. ``{}``) to the current schema.
+
+    Idempotent and non-destructive: roll-ups are recomputed from the estimator
+    timings, never assumed, so re-migrating a current file is a no-op.
+    """
+    if "estimators" in data and "metadata" in data:           # already current
+        data.setdefault("schema_version", INFERENCE_TIMES_SCHEMA_VERSION)
+        data.setdefault("videos_processed_per_estimator", {})
+        data.setdefault("total_time_per_estimator", {})
+        return data
+    est = estimator_timings(data)                             # excludes reserved keys
+    return {
+        "schema_version": INFERENCE_TIMES_SCHEMA_VERSION,
+        "metadata": {
+            "total_videos": total_videos,
+            "total_time_taken": sum(sum(v.values()) for v in est.values()),
+        },
+        "estimators": est,
+        "videos_processed_per_estimator": {e: len(v) for e, v in est.items()},
+        "total_time_per_estimator": {e: sum(v.values()) for e, v in est.items()},
+    }
+
+
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.floating):
@@ -122,41 +179,38 @@ class Checkpointer:
         inference_file_path = os.path.join(self.checkpoint_dir, "inference_times.json")
         lock = FileLock(inference_file_path + ".lock")  # to prevent concurrent access
         
-        # Load existing inference times or create new dict if file doesn't exist
+        # Load existing inference times (any on-disk shape) or start fresh, then
+        # normalise to the current schema before updating. migrate_* handles the
+        # legacy-flat / mixed / empty cases so this never KeyErrors on resume.
         with lock:
+            data = {}
             if os.path.exists(inference_file_path):
                 with open(inference_file_path, 'r') as f:
-                    inference_times = json.load(f)
-            else:
-                inference_times = {
-                    "metadata": {
-                        "total_videos": self.total_videos, # total videos in the dataset
-                        "total_time_taken": 0.0
-                    },
-                    "videos_processed_per_estimator": {},
-                    "total_time_per_estimator": {}
-                }
+                    try:
+                        data = json.load(f)
+                    except json.JSONDecodeError:
+                        logging.warning(f"Could not parse {inference_file_path}; rebuilding it.")
+                        data = {}
+            inference_times = migrate_inference_times(data, self.total_videos)
 
-            if estimator_name not in inference_times:
-                inference_times[estimator_name] = {}
-            if estimator_name not in inference_times["videos_processed_per_estimator"]:
-                inference_times["videos_processed_per_estimator"][estimator_name] = 0
-            if estimator_name not in inference_times["total_time_per_estimator"]:
-                inference_times["total_time_per_estimator"][estimator_name] = 0.0
+            estimators = inference_times["estimators"]
+            estimators.setdefault(estimator_name, {})
+            inference_times["videos_processed_per_estimator"].setdefault(estimator_name, 0)
+            inference_times["total_time_per_estimator"].setdefault(estimator_name, 0.0)
 
-            if video_name in inference_times[estimator_name]:
+            if video_name in estimators[estimator_name]:
                 print(f"Warning: Overwriting existing inference time for {estimator_name} on {video_name}")
                 logging.warning(f"Overwriting existing inference time for {estimator_name} on {video_name}")
-                inference_times["total_time_per_estimator"][estimator_name] -= inference_times[estimator_name][video_name] # subtract old time from total
-                inference_times["metadata"]["total_time_taken"] -= inference_times[estimator_name][video_name] # subtract old time from total 
+                old_time = estimators[estimator_name][video_name]
+                inference_times["total_time_per_estimator"][estimator_name] -= old_time
+                inference_times["metadata"]["total_time_taken"] -= old_time
                 inference_times["videos_processed_per_estimator"][estimator_name] -= 1
 
-
-            inference_times[estimator_name][video_name] = inference_time # add new inference time
+            estimators[estimator_name][video_name] = inference_time # add new inference time
             inference_times["total_time_per_estimator"][estimator_name] += inference_time
             inference_times["metadata"]["total_time_taken"] += inference_time
             inference_times["videos_processed_per_estimator"][estimator_name] += 1
-            
+
             with open(inference_file_path, 'w') as f:
                 json.dump(inference_times, f, indent=4)
                 
@@ -216,12 +270,18 @@ class Checkpointer:
             video names to their inference times in seconds.
         """
         inference_file_path = os.path.join(self.checkpoint_dir, "inference_times.json")
-        
+
         if not os.path.exists(inference_file_path):
             print(f"No inference times found in checkpoint {self.checkpoint_dir}. Skipping inference time plot.")
             return {}
-            
+
         with open(inference_file_path, 'r') as f:
-            inference_times = json.load(f)
-            
-        return inference_times
+            try:
+                inference_times = json.load(f)
+            except json.JSONDecodeError:
+                logging.warning(f"Could not parse {inference_file_path}; returning empty inference times.")
+                return {}
+
+        # Return only the estimator -> {video: seconds} map, normalised across all
+        # on-disk shapes, so consumers (visualizer, plots) never see bookkeeping keys.
+        return estimator_timings(inference_times)
