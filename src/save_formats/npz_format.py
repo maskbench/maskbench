@@ -1,36 +1,40 @@
 import logging
-
-import tqdm
 import numpy as np
 from pathlib import Path
-from typing import Dict, List
+from typing import List
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from utils import parse_filename
-from pose_result_class import VideoPoseResult
 from save_formats import SpecialFormat
 from checkpointer import Checkpointer
-
+from datasets import Dataset, VideoSample
 
 class NpzFormat(SpecialFormat):
     def __init__(self, name: str, checkpointer: Checkpointer):
         super().__init__(name, checkpointer)
         self.dir = Path(self.checkpointer.checkpoint_dir) / "npz"
 
-    def create(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]]) -> None:
-        for estimator_name, videos in pose_results.items():
-            estimator_dir = self.dir / estimator_name
-            estimator_dir.mkdir(parents=True, exist_ok=True)
+    def save_pose_results(self, dataset: Dataset, estimators: List[str], max_workers: int = None) -> None:
+        if max_workers is None:
+            max_workers = 20
 
-            progress_bar = tqdm.tqdm(total=len(videos), desc=f"Saving NPZ for {estimator_name}", unit="videos")
-            print()
+        logging.info(f"Saving pose results in NPZ format using {max_workers} workers.")
 
-            for video_name, video_pose_results in videos.items():
-                output_path = estimator_dir / f"{video_name}.npz"
-                self.save_npz(video_pose_results, output_path)
-                progress_bar.update(1)
-                logging.info(progress_bar.__str__())
-            progress_bar.close()
-            print()
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # add tasks - saves NPZ files in parallel
+            future_to_estimator = {}
+            for video in dataset:
+                for estimator in estimators:
+                   future = executor.submit(self.save_npz, video, estimator)
+                   future_to_estimator[future] = video
+            
+            # process result
+            for future in as_completed(future_to_estimator):
+                video = future_to_estimator[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    logging.error(f"Saving NPZ for video {video.get_filename()} generated an exception: {e}")
 
     def extract_hand_landmarks(self, hand_landmarks, dimensions: int):
         num_keypoints = next(
@@ -78,11 +82,18 @@ class NpzFormat(SpecialFormat):
         return np.array(body_landmarks, dtype=float)
 
     # This is specific to envision gesture challenge, we can modify this to be more general if needed
-    def save_npz(self, video_pose_result: VideoPoseResult, output_path: Path) -> None:
+    def save_npz(self, video: VideoSample, estimator_name: str) -> None:
+        estimator_dir = self.dir / estimator_name
+        estimator_dir.mkdir(parents=True, exist_ok=True)
+        output_path = estimator_dir / f"{video.video_name}.npz"
         if output_path.exists():
             print(f"Output file {output_path} already exists. Skipping save in format {self.name}.")
-            logging.info(f"Output file {output_path} already exists. Skipping save in format {self.name}.")
             return
+        
+        if not self.checkpointer.exists(estimator_name, video.video_name):
+            logging.error(f"No pose results found for video {video.video_name} using estimator {estimator_name}. Skipping save in format {self.name}.")
+            return
+        video_pose_result = self.checkpointer.load_video_pose_result(estimator_name, video.video_name)
         
         video_name = video_pose_result.video_name
         fps = video_pose_result.fps

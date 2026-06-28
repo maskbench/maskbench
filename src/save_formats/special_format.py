@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
-from pose_result_class import VideoPoseResult
 from checkpointer import Checkpointer
+from datasets import Dataset
 
 class SpecialFormat(ABC):
     """Base class for all special save formats in MaskBench."""
@@ -19,9 +19,10 @@ class SpecialFormat(ABC):
         self.checkpointer = checkpointer
 
     @abstractmethod
-    def create(
+    def save_pose_results(
         self,
-        video_pose_results: Dict[str, Dict[str, List[VideoPoseResult]]],
+        dataset: Dataset, 
+        estimators: List[str], max_workers: int = None,
     ) -> None:
         """
         Create the necessary directories and files for saving pose results in a special format. 

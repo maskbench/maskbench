@@ -2,6 +2,7 @@ import requests
 import zipfile
 import json
 import io
+import logging
 import os
 import utils
 import shutil
@@ -95,11 +96,15 @@ class MaskAnyoneApiPoseEstimator(PoseEstimator):
                             zip_file.extractall(output_dir)  # Extract to the 'output' directory
                     else:
                         print(f"Error: Received Response Status Code: {response.status_code}")
+                        logging.error(f"Error: Received Response Status Code: {response.status_code} for chunk {chunk_path}")
                 
                 except requests.exceptions.RequestException as e:
                     print(f"Request Failed in MaskAnyone API for {chunk_path}: {e}")
+                    logging.error(f"Request Failed in MaskAnyone API for {chunk_path}: {e}")
                 except zipfile.BadZipFile as e:
                     print(f"Bad Zip File in MaskAnyone API for {chunk_path}: {e}")
+                    logging.error(f"Bad Zip File in MaskAnyone API for {chunk_path}: {e}")
                 except OSError as e:
                     print(f"OS Error in MaskAnyone API for {chunk_path}: {e}")
+                    logging.error(f"OS Error in MaskAnyone API for {chunk_path}: {e}")
     

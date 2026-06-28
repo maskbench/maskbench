@@ -127,6 +127,15 @@ class Checkpointer:
             if os.path.exists(inference_file_path):
                 with open(inference_file_path, 'r') as f:
                     inference_times = json.load(f)
+                    if "metadata" not in inference_times: # support for older versions of checkpoint without metadata
+                        inference_times["metadata"] = {
+                            "total_videos": self.total_videos,
+                            "total_time_taken": 0.0
+                        }
+                    if "videos_processed_per_estimator" not in inference_times:
+                        inference_times["videos_processed_per_estimator"] = {}
+                    if "total_time_per_estimator" not in inference_times:
+                        inference_times["total_time_per_estimator"] = {}
             else:
                 inference_times = {
                     "metadata": {
@@ -169,6 +178,47 @@ class Checkpointer:
         config_file_name = os.path.basename(config_file_path)
         shutil.copy(config_file_path, os.path.join(self.checkpoint_dir, config_file_name))
 
+    def load_pose_result(self, estimator_name: str, video_name: str) -> Optional[VideoPoseResult]:
+        """
+        Load pose estimation results for a specific estimator and video.
+        
+        Args:
+            estimator_name (str): Name of the pose estimator (e.g., 'Yolo', 'Mediapipe')
+            video_name (str): Name of the video
+
+        Returns:
+            Optional[VideoPoseResult]: The loaded pose result or None if not found.
+        """
+        estimator_dir = os.path.join(self.poses_dir, estimator_name)
+        if not os.path.exists(estimator_dir):
+            return None
+
+        pose_file = f"{video_name}_poses.json"
+        json_path = os.path.join(estimator_dir, pose_file)
+        if not os.path.exists(json_path):
+            return None
+
+        return VideoPoseResult.from_json(json_path, video_name)
+
+    def exists(self, estimator_name: str, video_name: str) -> bool:
+        """
+        Check if pose estimation results exist for a specific estimator and video.
+        
+        Args:
+            estimator_name (str): Name of the pose estimator (e.g., 'Yolo', 'Mediapipe')
+            video_name (str): Name of the video
+
+        Returns:
+            bool: True if results exist, False otherwise.
+        """
+        estimator_dir = os.path.join(self.poses_dir, estimator_name)
+        if not os.path.exists(estimator_dir):
+            return False
+
+        pose_file = f"{video_name}_poses.json"
+        json_path = os.path.join(estimator_dir, pose_file)
+        return os.path.exists(json_path)
+    
     def load_pose_results(self, pose_estimator_names: list[str]) -> Dict[str, Dict[str, VideoPoseResult]]:
         """
         Load all pose results from the checkpoint.
