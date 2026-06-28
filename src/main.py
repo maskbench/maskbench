@@ -22,15 +22,15 @@ def main():
     dataset_specification = config.get("dataset", {})
     dataset = load_dataset(dataset_specification)
     print("Dataset:", dataset.name)
-    logging.info(f"Loaded dataset '{dataset.name}' with {len(dataset)} videos.")
 
     checkpoint_name = config.get("inference_checkpoint_name", None)
     checkpoint_name = checkpoint_name if checkpoint_name != "None" else None
     checkpointer = Checkpointer(dataset.name, len(dataset), checkpoint_name)
-    checkpointer.save_config(config_file_path)
-
     log_folder =  checkpointer.checkpoint_dir or "/output"
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(funcName)s:%(lineno)d - %(message)s', filename=f'{log_folder}/{current_session}_maskbench.log')
+
+    checkpointer.save_config(config_file_path)
+    logging.info(f"Loaded dataset '{dataset.name}' with {len(dataset)} videos.")
 
     pose_estimator_specifications = config.get("pose_estimators", [])
     pose_estimators = load_pose_estimators(pose_estimator_specifications)
