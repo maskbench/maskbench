@@ -1,3 +1,4 @@
+import logging
 import os
 import utils
 import cv2
@@ -27,7 +28,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         super().__init__(name, config)
 
         weights_file = self.config.get("weights", "pose_landmarker_lite.task")
-        print("Using weights file: ", weights_file)
+        logging.info("Mediapipe: Using weights file: %s", weights_file)
         pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
         user_weights_file_path = os.path.join("/weights/user_weights", weights_file)
 

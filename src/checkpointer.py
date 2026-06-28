@@ -8,7 +8,7 @@ import logging
 import cv2 as cv
 from typing import Dict, Optional
 from filelock import FileLock
-from utils import parse_filename
+from tqdm import tqdm
 
 from pose_result_class import VideoPoseResult
 
@@ -25,17 +25,19 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 class Checkpointer:
-    def __init__(self, dataset_name: str, checkpoint_name: Optional[str] = None):
+    def __init__(self, dataset_name: str, total_videos: int, checkpoint_name: Optional[str] = None):
         """
         Initialize the Checkpointer.
         
         Args:
             dataset_name (str): Name of the dataset being processed
-            load_checkpoint (Optional[str]): Name of checkpoint to load (format: datasetname-date-time)
+            total_videos (int): Total number of videos in the dataset
+            checkpoint_name (Optional[str]): Name of checkpoint to load (format: datasetname-date-time)
         """
         self.dataset_name = dataset_name
         self.base_output_path = "/output"
-        
+        self.total_videos = total_videos
+
         if checkpoint_name != None: # load existing checkpoint
             self.load_checkpoint = True
             self.checkpoint_dir = os.path.join(self.base_output_path, checkpoint_name)
@@ -50,7 +52,6 @@ class Checkpointer:
         # Create subdirectories
         self.poses_dir = os.path.join(self.checkpoint_dir, "poses")
         self.plots_dir = os.path.join(self.checkpoint_dir, "plots")
-        self.npz_dir = os.path.join(self.checkpoint_dir, "npz")
         self.renderings_dir = os.path.join(self.checkpoint_dir, "renderings")
         
     def save_rendered_video(self, video_name: str, estimator_name: str, video_writer: cv.VideoWriter) -> str:
@@ -77,6 +78,8 @@ class Checkpointer:
         command = [
             "ffmpeg",
             "-y",  # Overwrite output file if it exists
+            "-hide_banner",
+            "-loglevel", "error",
             "-i", output_path,
             "-c:v", "libx264",
             "-preset", "fast",
@@ -89,155 +92,6 @@ class Checkpointer:
         
         return output_path
     
-    def return_hand_world_landmarks(self, hand_world_landmark):
-        world_left_hand_landmarks = []
-        world_right_hand_landmarks = []
-        num_keypoints = next(
-            (len(hand.keypoints) for frame in hand_world_landmark 
-                if frame 
-                for hand in frame if hand.keypoints),
-            21
-        )
-        nan_keypoints = [[np.nan, np.nan, np.nan]] * num_keypoints
-
-        for frame in hand_world_landmark:
-            left_kps = [
-                [kp.x if kp.x is not None else np.nan,
-                kp.y if kp.y is not None else np.nan,
-                kp.z if kp.z is not None else np.nan]
-                for hand in frame
-                for kp in hand.keypoints if kp.hand == 0 # left hand
-            ] if frame else []
-            left_kps = left_kps if left_kps else nan_keypoints
-
-            right_kps = [
-                [kp.x if kp.x is not None else np.nan,
-                kp.y if kp.y is not None else np.nan,
-                kp.z if kp.z is not None else np.nan]
-                for hand in frame
-                for kp in hand.keypoints if kp.hand == 1 # right hand
-            ] if frame else []
-            right_kps = right_kps if right_kps else nan_keypoints
-
-            world_left_hand_landmarks.append(left_kps)
-            world_right_hand_landmarks.append(right_kps)
-
-        world_left_hand_landmarks = np.array(world_left_hand_landmarks, dtype=float)
-        world_right_hand_landmarks = np.array(world_right_hand_landmarks, dtype=float)
-
-        return world_left_hand_landmarks, world_right_hand_landmarks
-    
-    def return_hand_image_landmarks(self, hand_image_landmark):
-        image_left_hand_landmarks = []
-        image_right_hand_landmarks = []
-        num_keypoints = next(
-            (len(hand.keypoints) for frame in hand_image_landmark 
-                if frame 
-                for hand in frame if hand.keypoints),
-            21
-        )
-        nan_keypoints = [[np.nan, np.nan]] * num_keypoints
-
-        for frame in hand_image_landmark:
-            left_kps = [
-                [kp.x if kp.x is not None else np.nan,
-                kp.y if kp.y is not None else np.nan]
-                for hand in frame
-                for kp in hand.keypoints if kp.hand == 0 # left hand
-            ] if frame else []
-            left_kps = left_kps if left_kps else nan_keypoints
-
-            right_kps = [
-                [kp.x if kp.x is not None else np.nan,
-                kp.y if kp.y is not None else np.nan]
-                for hand in frame
-                for kp in hand.keypoints if kp.hand == 1 # right hand
-            ] if frame else []
-            right_kps = right_kps if right_kps else nan_keypoints
-
-            image_left_hand_landmarks.append(left_kps)
-            image_right_hand_landmarks.append(right_kps)
-
-        image_left_hand_landmarks = np.array(image_left_hand_landmarks, dtype=float)
-        image_right_hand_landmarks = np.array(image_right_hand_landmarks, dtype=float)
-
-        return image_left_hand_landmarks, image_right_hand_landmarks
-
-    # This is specific to envision gesture challenge, we can modify this to be more general if needed
-    def save_npz(self, video_pose_result: VideoPoseResult, estimator_name: str) -> str:
-        os.makedirs(self.npz_dir, exist_ok=True)
-        estimator_dir = os.path.join(self.npz_dir, estimator_name)
-        os.makedirs(estimator_dir, exist_ok=True)
-
-        video_name = video_pose_result.video_name
-        output_path = os.path.join(estimator_dir, f"{video_name}.npz")
-
-        fps = video_pose_result.fps
-        frame_width = video_pose_result.frame_width
-        frame_height = video_pose_result.frame_height
-        video_name = video_pose_result.video_name
-        corpus, speaker, clip_id, category, subtype, is_mirror = parse_filename(video_name).values()
-        frames = video_pose_result.frames
-        persons_world_landmark = [frame.persons_world_landmark for frame in frames] # 3d
-        hand_world_landmark = [frame.hands_world_landmark for frame in frames] # 3d
-        hands = [frame.hands for frame in frames] # 2d
-        persons = [frame.persons for frame in frames] # 2d
-
-        # This assumes single person video
-        # we convert None/ NULL to nan for convinience
-
-        # hand landmarks - if they exist
-        # frame[0] represents person[0]
-        world_left_hand_landmarks, world_right_hand_landmarks = self.return_hand_world_landmarks(hand_world_landmark)
-        image_left_hand_landmarks, image_right_hand_landmarks = self.return_hand_image_landmarks(hands)
-
-        num_keypoints = next(
-            (len(frame[0].keypoints) for frame in persons_world_landmark 
-                if frame and frame[0]),
-            33
-        )
-        world_nan_keypoints = [[np.nan, np.nan, np.nan]] * num_keypoints
-        image_nan_keypoints = [[np.nan, np.nan]] * num_keypoints
-        
-        # body landmarks
-
-        world_landmarks_array = np.array([
-            [[kp.x if kp.x is not None else np.nan,
-            kp.y if kp.y is not None else np.nan,
-            kp.z if kp.z is not None else np.nan]
-            for kp in frame[0].keypoints] if frame and frame[0] and frame[0].keypoints else world_nan_keypoints
-            for frame in persons_world_landmark
-        ], dtype=float)
-
-        image_landmarks_array = np.array([
-            [[kp.x if kp.x is not None else np.nan,
-            kp.y if kp.y is not None else np.nan]
-            for kp in frame[0].keypoints] if frame and frame[0] and frame[0].keypoints else image_nan_keypoints
-            for frame in persons
-        ], dtype=float)
-
-        np.savez(
-            output_path,
-            video_name=video_name,
-            is_mirror=is_mirror,
-            corpus=corpus,
-            speaker=speaker,
-            clip_id=clip_id,
-            category=category,
-            subtype=subtype,
-            fps=fps,
-            frame_width=frame_width,
-            frame_height=frame_height,
-            world_body_landmarks=world_landmarks_array,
-            image_body_landmarks=image_landmarks_array,
-            world_left_hand_landmarks=world_left_hand_landmarks,
-            world_right_hand_landmarks=world_right_hand_landmarks,
-            image_left_hand_landmarks=image_left_hand_landmarks,
-            image_right_hand_landmarks=image_right_hand_landmarks
-        )
-    
-        return output_path
-
     def save_video_pose_result(self, video_pose_result: VideoPoseResult, estimator_name: str) -> str:
         """
         Save pose estimation results for a video.
@@ -273,13 +127,44 @@ class Checkpointer:
             if os.path.exists(inference_file_path):
                 with open(inference_file_path, 'r') as f:
                     inference_times = json.load(f)
+                    if "metadata" not in inference_times: # support for older versions of checkpoint without metadata
+                        inference_times["metadata"] = {
+                            "total_videos": self.total_videos,
+                            "total_time_taken": 0.0
+                        }
+                    if "videos_processed_per_estimator" not in inference_times:
+                        inference_times["videos_processed_per_estimator"] = {}
+                    if "total_time_per_estimator" not in inference_times:
+                        inference_times["total_time_per_estimator"] = {}
             else:
-                inference_times = {}
+                inference_times = {
+                    "metadata": {
+                        "total_videos": self.total_videos, # total videos in the dataset
+                        "total_time_taken": 0.0
+                    },
+                    "videos_processed_per_estimator": {},
+                    "total_time_per_estimator": {}
+                }
 
             if estimator_name not in inference_times:
                 inference_times[estimator_name] = {}
-                
+            if estimator_name not in inference_times["videos_processed_per_estimator"]:
+                inference_times["videos_processed_per_estimator"][estimator_name] = 0
+            if estimator_name not in inference_times["total_time_per_estimator"]:
+                inference_times["total_time_per_estimator"][estimator_name] = 0.0
+
+            if video_name in inference_times[estimator_name]:
+                print(f"Warning: Overwriting existing inference time for {estimator_name} on {video_name}")
+                logging.warning(f"Overwriting existing inference time for {estimator_name} on {video_name}")
+                inference_times["total_time_per_estimator"][estimator_name] -= inference_times[estimator_name][video_name] # subtract old time from total
+                inference_times["metadata"]["total_time_taken"] -= inference_times[estimator_name][video_name] # subtract old time from total 
+                inference_times["videos_processed_per_estimator"][estimator_name] -= 1
+
+
             inference_times[estimator_name][video_name] = inference_time # add new inference time
+            inference_times["total_time_per_estimator"][estimator_name] += inference_time
+            inference_times["metadata"]["total_time_taken"] += inference_time
+            inference_times["videos_processed_per_estimator"][estimator_name] += 1
             
             with open(inference_file_path, 'w') as f:
                 json.dump(inference_times, f, indent=4)
@@ -293,6 +178,47 @@ class Checkpointer:
         config_file_name = os.path.basename(config_file_path)
         shutil.copy(config_file_path, os.path.join(self.checkpoint_dir, config_file_name))
 
+    def load_pose_result(self, estimator_name: str, video_name: str) -> Optional[VideoPoseResult]:
+        """
+        Load pose estimation results for a specific estimator and video.
+        
+        Args:
+            estimator_name (str): Name of the pose estimator (e.g., 'Yolo', 'Mediapipe')
+            video_name (str): Name of the video
+
+        Returns:
+            Optional[VideoPoseResult]: The loaded pose result or None if not found.
+        """
+        estimator_dir = os.path.join(self.poses_dir, estimator_name)
+        if not os.path.exists(estimator_dir):
+            return None
+
+        pose_file = f"{video_name}_poses.json"
+        json_path = os.path.join(estimator_dir, pose_file)
+        if not os.path.exists(json_path):
+            return None
+
+        return VideoPoseResult.from_json(json_path, video_name)
+
+    def exists(self, estimator_name: str, video_name: str) -> bool:
+        """
+        Check if pose estimation results exist for a specific estimator and video.
+        
+        Args:
+            estimator_name (str): Name of the pose estimator (e.g., 'Yolo', 'Mediapipe')
+            video_name (str): Name of the video
+
+        Returns:
+            bool: True if results exist, False otherwise.
+        """
+        estimator_dir = os.path.join(self.poses_dir, estimator_name)
+        if not os.path.exists(estimator_dir):
+            return False
+
+        pose_file = f"{video_name}_poses.json"
+        json_path = os.path.join(estimator_dir, pose_file)
+        return os.path.exists(json_path)
+    
     def load_pose_results(self, pose_estimator_names: list[str]) -> Dict[str, Dict[str, VideoPoseResult]]:
         """
         Load all pose results from the checkpoint.
@@ -316,6 +242,8 @@ class Checkpointer:
 
             estimator_dir = os.path.join(self.poses_dir, estimator_name)
             results[estimator_name] = {}
+
+            progress_bar = tqdm(os.listdir(estimator_dir), desc=f"Loading pose results for {estimator_name}", unit="file")
             
             for pose_file in os.listdir(estimator_dir):
                 if not pose_file.endswith("_poses.json"):
@@ -325,6 +253,7 @@ class Checkpointer:
                 json_path = os.path.join(estimator_dir, pose_file)
                 video_pose_result = VideoPoseResult.from_json(json_path, video_name)
                 results[estimator_name][video_name] = video_pose_result
+                progress_bar.update(1)
                     
         return results 
 

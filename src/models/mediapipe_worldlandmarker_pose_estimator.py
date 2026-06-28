@@ -1,3 +1,4 @@
+import logging
 import os
 import utils
 import cv2
@@ -29,11 +30,11 @@ class MediaPipeWorldLandmarkerPoseEstimator(PoseEstimator):
         super().__init__(name, config)
 
         body_weights_file = self.config.get("body_weights", "pose_landmarker_lite.task")
-        print("Mediapipe: Using body weights file: ", body_weights_file)
+        logging.info("Mediapipe: Using body weights file: %s", body_weights_file)
         pre_built_body_weights_file_path = os.path.join("/weights/pre_built", body_weights_file)
 
         hand_weights_file = self.config.get("hand_weights", "mediapipe_hand_landmarker.task")
-        print("Mediapipe: Using hand weights file: ", hand_weights_file)
+        logging.info("Mediapipe: Using hand weights file: %s", hand_weights_file)
         pre_built_hand_weights_file_path = os.path.join("/weights/pre_built", hand_weights_file)
 
         if os.path.exists(pre_built_body_weights_file_path) and os.path.exists(pre_built_hand_weights_file_path):

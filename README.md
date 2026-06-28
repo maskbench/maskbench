@@ -72,6 +72,14 @@ Follow the instructions below to install and run experiments with MaskBench:
         code_file: datasets.dataset.Dataset
         video_folder: /datasets/<your-dataset-name>/videos  # Edit this line to point to the videos folder of your dataset.
     ```
+7. **For Windows Users:** Run
+    
+    **Note:** Git Bash is preferable to Command Prompt or PowerShell
+
+    **Warning:** Docker "User" variable is not always set by default in Windows. You can manually set it, otherwise container name will be "maskbench_dev_".
+    ```bash
+    dos2unix entrypoint.sh
+    ```
 8. **Build and run the MaskBench Docker container**.
 
     **Note:** To use Enroot follow the ReadMe [here](./enroot_scripts/readme.md)

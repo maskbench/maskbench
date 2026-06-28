@@ -20,29 +20,21 @@ class PoseRenderer:
         self.render_poses_only = render_poses_only
         self.line_thickness = line_thickness
 
-    def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]], max_workers: int = None):
+    def render_all_videos(self, max_workers: int = None):
         """
         Render all videos in the dataset with the provided pose results.
         Args:
-            pose_results (Dict[str, Dict[str, List[VideoPoseResult]]]): Dictionary where keys are estimator names and values are dictionaries mapping video names to lists of VideoPoseResult objects.
+            max_workers (int, optional): The maximum number of threads to use for rendering. Defaults to None, which uses the number of CPU cores.
         """
         if max_workers is None:
             max_workers = mp.cpu_count()
-        print(f"Rendering videos using {max_workers} workers.")
+        logging.info(f"Rendering videos using {max_workers} workers.")
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # add tasks - renders videos in parallel
             future_to_estimator = {}
             for video in self.dataset:
-                video_name = video.get_filename()
-                video_pose_results = {}
-                for estimator in pose_results.keys():
-                    if video_name not in pose_results[estimator]:
-                        print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
-                        logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
-                        continue
-                    video_pose_results[estimator] = pose_results[estimator][video_name]
-                future = executor.submit(self.render_video, video, video_pose_results)
+                future = executor.submit(self.render_video, video)
                 future_to_estimator[future] = video
             
             # process result
@@ -51,22 +43,36 @@ class PoseRenderer:
                 try:
                     future.result()
                 except Exception as e:
-                    print(f"Rendering video {video.get_filename()} generated an exception: {e}")
-                    logging.exception(e)
+                    logging.error(f"Rendering video {video.get_filename()} generated an exception: {e}")
 
     def render_video(
         self,
         video: VideoSample,
-        video_pose_results: Dict[str, VideoPoseResult],
     ):
         """
         Render video with keypoints and save it to output path.
         Args:
             video (VideoSample): The video sample to render.
-            video_pose_results (Dict[str, VideoPoseResult]): Dictionary of pose results for each estimator.
         """
-        print(f"Rendering video {video.get_filename()}")
+
         video_name = video.get_filename()
+        video_pose_results = {}
+        # for estimator in pose_results.keys():
+        for estimator in self.estimators_point_pairs.keys():
+            # if video_name not in pose_results[estimator]:
+            if not self.checkpointer.exists(estimator, video_name):
+                print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
+                logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
+                continue
+            # video_pose_results[estimator] = pose_results[estimator][video_name]
+            video_pose_results[estimator] = self.checkpointer.load_pose_result(estimator, video_name)
+
+        if not video_pose_results:
+            print(f"No pose results found for video {video_name}. Skipping rendering.")
+            logging.error(f"No pose results found for video {video_name}. Skipping rendering.")
+            return
+
+        print(f"Rendering video {video.get_filename()}")
         cap, video_metadata = get_video_metadata(video.path)
         fps = video_metadata["fps"]
         width = video_metadata["width"]
@@ -138,6 +144,8 @@ class PoseRenderer:
         cap.release()
         for estimator_name, writer in video_writers:
             self.checkpointer.save_rendered_video(video_name, estimator_name, writer)
+        
+        del video_pose_results  # free memory
 
     def draw_keypoints(
         self, video_name: str, frame, frame_pose_result: List[PersonPoseResult], point_pairs, color
