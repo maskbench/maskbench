@@ -101,7 +101,7 @@ class NpzFormat(SpecialFormat):
         frame_height = video_pose_result.frame_height
         frames = video_pose_result.frames
 
-        corpus, speaker, clip_id, category, subtype, is_mirror = parse_filename(video_name).values()
+        corpus, speaker, clip_id, category, subtype = parse_filename(video_name).values()
 
         persons_world_landmark = [frame.persons_world_landmark for frame in frames] # 3d
         hand_world_landmark = [frame.hands_world_landmark for frame in frames] # 3d
@@ -119,7 +119,6 @@ class NpzFormat(SpecialFormat):
         np.savez(
             output_path,
             video_name=video_name,
-            is_mirror=is_mirror,
             corpus=corpus,
             speaker=speaker,
             clip_id=clip_id,

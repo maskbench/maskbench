@@ -6,7 +6,7 @@ import numpy as np
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from pose_result_class import PersonPoseResult, VideoPoseResult
+from pose_result_class import PersonPoseResult
 from datasets import Dataset, VideoSample
 from checkpointer import Checkpointer
 from utils import get_color_palette, get_video_metadata, parse_filename
@@ -192,7 +192,7 @@ class PoseRenderer:
         font_scale = 0.5
         color = (255, 255, 255)  # white color
         thickness = 1
-        corpus, speaker, clip_id, category, subtype, is_mirror = parse_filename(text).values()
+        corpus, speaker, clip_id, category, subtype = parse_filename(text).values()
         parts = {
             "Corpus": corpus,
             "Speaker": speaker,

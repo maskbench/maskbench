@@ -3,6 +3,7 @@ import cv2
 import glob
 import os
 import json
+import logging
 from typing import List
 from pose_result_class import FramePoseResult, PersonPoseResult, PoseKeypoint
 
@@ -157,53 +158,33 @@ def get_frame_count_ffprobe(video_path: str) -> int:
 # note: not keeping this in utils to avoid circular imports
 def parse_filename(video_name: str):
         """Parse video filename to extract metadata.
-            Example filename: MULTISIMO_S07_0007_gesture_move
+            Example filename: Ecolang_ad00_0_Move_Objman
             Returns:
                 dict: A dictionary containing the extracted metadata fields:
-                    - corpus: The corpus name (e.g., "MULTISIMO")
-                    - speaker: The speaker identifier (e.g., "S07")
-                    - clip_id: The clip identifier (e.g., "0007")
-                    - category: The category of the gesture (e.g., "gesture" or "nogesture")
-                    - subtype: The subtype of the gesture (e.g., "move", "hold", "other", or "NA" if not specified)
-                    - is_mirror: A boolean indicating whether the video is a mirror version (True if "_mirror" is in the filename, False otherwise)
-        """   
-        is_mirror = "_mirror" in video_name
-        clean_name = video_name.replace("_mirror", "").replace(".mp4", "")
-        
-        parts = clean_name.split("_")
-        
-        if len(parts) < 4:
-            print(f"Warning: Cannot parse filename (too few parts): {video_name}")
-            return None
-        
-        corpus = parts[0]
-        
-        # Find category index
-        category_idx = None
-        for i, p in enumerate(parts):
-            if p.lower() in ['gesture', 'nogesture']:
-                category_idx = i
-                break
-        
-        if category_idx is None or category_idx < 2:
-            print(f"Warning: Cannot find category in: {video_name}")
-            return None
-        
-        clip_id = parts[category_idx - 1]
-        
-        if category_idx > 2:
-            speaker = "_".join(parts[1:category_idx-1])
-        else:
-            speaker = parts[1]
-        
-        category = parts[category_idx].lower()
-        subtype = parts[category_idx + 1] if category_idx + 1 < len(parts) else "NA"
-        
-        return dict(
-            corpus=corpus,
-            speaker=speaker,
-            clip_id=clip_id,
-            category=category,
-            subtype=subtype,
-            is_mirror=is_mirror
+                    - corpus: The corpus name (e.g., "Ecolang")
+                    - speaker: The speaker identifier (e.g., "ad00")
+                    - clip_id: The clip identifier (e.g., "0")
+                    - category: The category (i.e., "Gesture" or "NoGesture" or "Move")
+                    - subtype: The subtype of the gesture (e.g., "Move", "Hold", "Objman")
+        """
+        result = dict(
+            corpus=None,
+            speaker=None,
+            clip_id=None,
+            category=None,
+            subtype=None,
         )
+        
+        parts = video_name.split("_")
+        try:
+            result["corpus"] = parts[0]
+            result["subtype"] = parts[-1] 
+            result["category"] = parts[-2]
+            result["clip_id"] = parts[-3]
+            result["speaker"] = "_".join(parts[1:-3]) 
+        except IndexError:
+            print(f"Warning: Cannot parse filename (not enough parts): {video_name}")
+            logging.error(f"Cannot parse filename (not enough parts): {video_name}")
+            return result
+                
+        return result
