@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from utils import parse_filename
 from save_formats import SpecialFormat
 from checkpointer import Checkpointer
-from datasets import Dataset, VideoSample
+from datasets import Dataset
 
 class NpzFormat(SpecialFormat):
     def __init__(self, name: str, checkpointer: Checkpointer):
@@ -25,7 +25,7 @@ class NpzFormat(SpecialFormat):
             future_to_estimator = {}
             for video in dataset:
                 for estimator in estimators:
-                   future = executor.submit(self.save_npz, video, estimator)
+                   future = executor.submit(self.save_npz, video.get_filename(), estimator.name)
                    future_to_estimator[future] = video
             
             # process result
@@ -82,18 +82,18 @@ class NpzFormat(SpecialFormat):
         return np.array(body_landmarks, dtype=float)
 
     # This is specific to envision gesture challenge, we can modify this to be more general if needed
-    def save_npz(self, video: VideoSample, estimator_name: str) -> None:
+    def save_npz(self, video_name: str, estimator_name: str) -> None:
         estimator_dir = self.dir / estimator_name
         estimator_dir.mkdir(parents=True, exist_ok=True)
-        output_path = estimator_dir / f"{video.video_name}.npz"
+        output_path = estimator_dir / f"{video_name}.npz"
         if output_path.exists():
             print(f"Output file {output_path} already exists. Skipping save in format {self.name}.")
             return
         
-        if not self.checkpointer.exists(estimator_name, video.video_name):
-            logging.error(f"No pose results found for video {video.video_name} using estimator {estimator_name}. Skipping save in format {self.name}.")
+        if not self.checkpointer.exists(estimator_name, video_name):
+            logging.error(f"No pose results found for video {video_name} using estimator {estimator_name}. Skipping save in format {self.name}.")
             return
-        video_pose_result = self.checkpointer.load_video_pose_result(estimator_name, video.video_name)
+        video_pose_result = self.checkpointer.load_pose_result(estimator_name, video_name)
         
         video_name = video_pose_result.video_name
         fps = video_pose_result.fps
@@ -101,7 +101,7 @@ class NpzFormat(SpecialFormat):
         frame_height = video_pose_result.frame_height
         frames = video_pose_result.frames
 
-        corpus, speaker, clip_id, category, subtype, is_mirror = parse_filename(video_name).values()
+        corpus, speaker, clip_id, category, subtype = parse_filename(video_name).values()
 
         persons_world_landmark = [frame.persons_world_landmark for frame in frames] # 3d
         hand_world_landmark = [frame.hands_world_landmark for frame in frames] # 3d
@@ -119,7 +119,6 @@ class NpzFormat(SpecialFormat):
         np.savez(
             output_path,
             video_name=video_name,
-            is_mirror=is_mirror,
             corpus=corpus,
             speaker=speaker,
             clip_id=clip_id,
