@@ -1,10 +1,11 @@
-from typing import Dict, List
 import cv2
 import os
 import logging
 import numpy as np
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List
+from tqdm import tqdm
 
 from pose_result_class import PersonPoseResult
 from datasets import Dataset, VideoSample
@@ -29,6 +30,7 @@ class PoseRenderer:
         if max_workers is None:
             max_workers = mp.cpu_count()
         logging.info(f"Rendering videos using {max_workers} workers.")
+        progress = tqdm(total=len(self.dataset), desc="Rendering videos", unit="video")
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # add tasks - renders videos in parallel
@@ -40,10 +42,12 @@ class PoseRenderer:
             # process result
             for future in as_completed(future_to_estimator):
                 video = future_to_estimator[future]
+                progress.update(1)
                 try:
                     future.result()
                 except Exception as e:
                     logging.error(f"Rendering video {video.get_filename()} generated an exception: {e}")
+        progress.close()
 
     def render_video(
         self,

@@ -2,6 +2,7 @@ import logging
 import numpy as np
 from pathlib import Path
 from typing import List
+from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from utils import parse_filename
@@ -19,6 +20,7 @@ class NpzFormat(SpecialFormat):
             max_workers = 20
 
         logging.info(f"Saving pose results in NPZ format using {max_workers} workers.")
+        progress = tqdm(total=len(dataset) * len(estimators), desc="Saving NPZ files", unit="file")
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # add tasks - saves NPZ files in parallel
@@ -31,10 +33,12 @@ class NpzFormat(SpecialFormat):
             # process result
             for future in as_completed(future_to_estimator):
                 video = future_to_estimator[future]
+                progress.update(1)
                 try:
                     future.result()
                 except Exception as e:
                     logging.error(f"Saving NPZ for video {video.get_filename()} generated an exception: {e}")
+        progress.close()
 
     def extract_hand_landmarks(self, hand_landmarks, dimensions: int):
         num_keypoints = next(
