@@ -57,6 +57,8 @@ class PoseRenderer:
 
         video_name = video.get_filename()
         video_pose_results = {}
+        output_paths = {}
+        all_estimators_rendered = True
         # for estimator in pose_results.keys():
         for estimator in self.estimators_point_pairs.keys():
             # if video_name not in pose_results[estimator]:
@@ -64,15 +66,25 @@ class PoseRenderer:
                 print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
                 logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
                 continue
-            # video_pose_results[estimator] = pose_results[estimator][video_name]
+            output_paths[estimator] = os.path.join(self.checkpointer.renderings_dir, video_name, f"{video_name}_{estimator}.mp4")
+            if self.checkpointer.exists_rendered_video(output_paths[estimator]):
+                print(f"Rendered video already exists for video {video_name} using estimator {estimator}. Skipping rendering.")
+                continue  # skip if already rendered    
             video_pose_results[estimator] = self.checkpointer.load_pose_result(estimator, video_name)
-
+            all_estimators_rendered = False  # at least one estimator needs rendering
+        
+        # empty video_pose_results means either no pose results or all estimators already rendered
         if not video_pose_results:
-            print(f"No pose results found for video {video_name}. Skipping rendering.")
-            logging.error(f"No pose results found for video {video_name}. Skipping rendering.")
-            return
+            if all_estimators_rendered:
+                print(f"All estimators have rendered videos for {video_name}. Skipping rendering.")
+                return
+            else:
+                print(f"No pose results found for video {video_name}. Skipping rendering.")
+                logging.error(f"No pose results found for video {video_name}. Skipping rendering.")
+                return
 
         print(f"Rendering video {video.get_filename()}")
+        logging.info(f"Rendering video {video.get_filename()} with estimators: {list(video_pose_results.keys())}")
         cap, video_metadata = get_video_metadata(video.path)
         fps = video_metadata["fps"]
         width = video_metadata["width"]
@@ -84,8 +96,7 @@ class PoseRenderer:
         video_writers = []  # initialize video writers
         video_name = video.get_filename()
 
-        for estimator_name in self.estimators_point_pairs.keys():  # video writer for every model
-            output_path = os.path.join(self.checkpointer.renderings_dir, video_name, f"{video_name}_{estimator_name}.mp4")
+        for estimator_name, output_path in output_paths.items():  # video writer for every model
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
             video_writers.append((estimator_name, out))

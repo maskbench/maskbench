@@ -87,13 +87,15 @@ class NpzFormat(SpecialFormat):
         estimator_dir.mkdir(parents=True, exist_ok=True)
         output_path = estimator_dir / f"{video_name}.npz"
         if output_path.exists():
-            print(f"Output file {output_path} already exists. Skipping save in format {self.name}.")
-            return
-        
+            if not output_path.stat().st_size == 0:  # check if file is empty
+                print(f"Output file {output_path.stem} already exists. Skipping save in format {self.name}.")
+                return
+            
         if not self.checkpointer.exists(estimator_name, video_name):
             logging.error(f"No pose results found for video {video_name} using estimator {estimator_name}. Skipping save in format {self.name}.")
             return
         video_pose_result = self.checkpointer.load_pose_result(estimator_name, video_name)
+        logging.info(f"Saving pose results for video {video_name} using estimator {estimator_name} in format {self.name}.")
         
         video_name = video_pose_result.video_name
         fps = video_pose_result.fps

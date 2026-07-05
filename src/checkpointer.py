@@ -178,6 +178,13 @@ class Checkpointer:
         config_file_name = os.path.basename(config_file_path)
         shutil.copy(config_file_path, os.path.join(self.checkpoint_dir, config_file_name))
 
+    def exists_rendered_video(self, output_path: str) -> bool:
+        if not os.path.exists(output_path):
+            return False
+        if os.path.getsize(output_path) == 0:  # check if file is empty
+            return False
+        return True
+
     def load_pose_result(self, estimator_name: str, video_name: str) -> Optional[VideoPoseResult]:
         """
         Load pose estimation results for a specific estimator and video.
@@ -196,6 +203,8 @@ class Checkpointer:
         pose_file = f"{video_name}_poses.json"
         json_path = os.path.join(estimator_dir, pose_file)
         if not os.path.exists(json_path):
+            return None
+        if os.path.getsize(json_path) == 0:  # check if file is empty
             return None
 
         return VideoPoseResult.from_json(json_path, video_name)
@@ -217,7 +226,11 @@ class Checkpointer:
 
         pose_file = f"{video_name}_poses.json"
         json_path = os.path.join(estimator_dir, pose_file)
-        return os.path.exists(json_path)
+        if not os.path.exists(json_path):
+            return False
+        if os.path.getsize(json_path) == 0:  # check if file is empty
+            return False
+        return True
     
     def load_pose_results(self, pose_estimator_names: list[str]) -> Dict[str, Dict[str, VideoPoseResult]]:
         """
