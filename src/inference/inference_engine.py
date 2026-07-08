@@ -14,6 +14,10 @@ class InferenceEngine:
         self.execute_processing = execute_processing
     
     def run_parallel_tasks(self, max_workers: int = None) -> None:
+        if not self.execute_processing:
+            logging.info("Skipping inference as per configuration.")
+            print("Skipping inference as per configuration.")
+            return
         num_estimator = len(self.pose_estimators)
         if num_estimator == 0:
             raise ValueError("No pose estimators provided. Please provide at least one pose estimator to run the inference engine.")
@@ -60,9 +64,6 @@ class InferenceEngine:
             if self.checkpointer.exists(estimator.name, video.get_filename()):
                 print(f"Skipping already processed video {video.get_filename()} for estimator {estimator.name}")
                 continue # if results already exist, skip inference
-            elif not self.execute_processing:
-                print(f"Skipping inference for video {video.get_filename()} for estimator {estimator.name} as per configuration.")
-                continue
 
             logging.info(f"Running estimator '{estimator.name}' on video {video.path}")
 
