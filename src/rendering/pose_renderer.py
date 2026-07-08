@@ -207,7 +207,11 @@ class PoseRenderer:
         font_scale = 0.5
         color = (255, 255, 255)  # white color
         thickness = 1
-        corpus, speaker, clip_id, category, subtype = parse_filename(text).values()
+        result = parse_filename(text)
+        if result is None:
+            logging.error(f"Failed to parse filename: {text}. Skipping adding text to frame.")
+            return frame
+        corpus, speaker, clip_id, category, subtype = result.values()
         parts = {
             "Corpus": corpus,
             "Speaker": speaker,

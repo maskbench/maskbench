@@ -107,7 +107,12 @@ class NpzFormat(SpecialFormat):
         frame_height = video_pose_result.frame_height
         frames = video_pose_result.frames
 
-        corpus, speaker, clip_id, category, subtype = parse_filename(video_name).values()
+        result = parse_filename(video_name)
+        if result is None:
+            logging.error(f"Failed to parse filename: {video_name}. Skipping adding text to frame.")
+            corpus, speaker, clip_id, category, subtype = np.nan, np.nan, np.nan, np.nan, np.nan
+        else:
+            corpus, speaker, clip_id, category, subtype = result.values()
 
         persons_world_landmark = [frame.persons_world_landmark for frame in frames] # 3d
         hand_world_landmark = [frame.hands_world_landmark for frame in frames] # 3d
