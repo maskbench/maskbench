@@ -107,6 +107,21 @@ class PoseRenderer:
 
         color_palette = get_color_palette()
 
+        # specific to envision gesture challenge - parse filename to get corpus, speaker, clip_id, category, subtype
+        result = parse_filename(video_name)
+        if result is None:
+            logging.error(f"Failed to parse filename: {video_name}. Skipping adding text to frames.")
+            parts = None
+        else:
+            corpus, speaker, clip_id, category, subtype = result.values()
+            parts = {
+                "Corpus": corpus,
+                "Speaker": speaker,
+                "Clip ID": clip_id,
+                "Category": category,
+                "Subtype": subtype,
+            }
+
         frame_number = 0
         while frame_number < frame_count:  # for every frame
             if self.render_poses_only:
@@ -128,21 +143,21 @@ class PoseRenderer:
                     if type(point_pairs) == tuple:
                         body_point_pairs, hand_point_pairs = point_pairs
                         frame_copies[idx] = self.draw_keypoints(
-                            video_name,
                             frame_copies[idx],
                             frame_keypoints.hands,
                             hand_point_pairs,
                             self.hex_to_bgr(color_palette[idx]),
+                            parts
                         )
                         point_pairs = body_point_pairs
 
                     # default drawing with body keypoints
                     frame_copies[idx] = self.draw_keypoints(
-                        video_name,
                         frame_copies[idx],
                         frame_keypoints.persons,
                         point_pairs,
                         self.hex_to_bgr(color_palette[idx]),
+                        parts
                     )  # draw keypoints on frame
                     writer.write(frame_copies[idx])  # write rendered frame
                 except KeyError as e:
@@ -163,7 +178,7 @@ class PoseRenderer:
         del video_pose_results  # free memory
 
     def draw_keypoints(
-        self, video_name: str, frame, frame_pose_result: List[PersonPoseResult], point_pairs, color
+        self, frame, frame_pose_result: List[PersonPoseResult], point_pairs, color, parts
     ):
         """Draw keypoints and join keypoint pairs on 1 frame"""
         if not frame_pose_result:  # if this frame has no keypoints
@@ -195,11 +210,12 @@ class PoseRenderer:
                 point2 = (int(point2.x), int(point2.y))
                 cv2.line(frame, point1, point2, color=color, thickness=self.line_thickness)
 
-        self.add_text_to_frame(frame, video_name)
+        if parts is not None:
+            self.add_text_to_frame(frame, parts)
 
         return frame
     
-    def add_text_to_frame(self, frame, text, position=(5, 15)):
+    def add_text_to_frame(self, frame, parts:dict, position=(5, 15)):
         """Add text to a frame at the specified position.
             Text can be split into multiple lines using the specified delimeter. Each line will be rendered below the previous one with a fixed spacing.
         """
@@ -207,19 +223,7 @@ class PoseRenderer:
         font_scale = 0.5
         color = (255, 255, 255)  # white color
         thickness = 1
-        result = parse_filename(text)
-        if result is None:
-            logging.error(f"Failed to parse filename: {text}. Skipping adding text to frame.")
-            return frame
-        corpus, speaker, clip_id, category, subtype = result.values()
-        parts = {
-            "Corpus": corpus,
-            "Speaker": speaker,
-            "Clip ID": clip_id,
-            "Category": category,
-            "Subtype": subtype,
-        }
-
+        
         # This is specific to envision gesture challenge
         for idx, (key, value) in enumerate(parts.items()):
             text_part = f"{key}: {value}"

@@ -184,7 +184,6 @@ def parse_filename(video_name: str):
             result["speaker"] = "_".join(parts[1:-3]) 
         except IndexError:
             print(f"Warning: Cannot parse filename (not enough parts): {video_name}")
-            logging.error(f"Cannot parse filename (not enough parts): {video_name}")
             return None
                 
         return result
