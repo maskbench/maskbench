@@ -47,8 +47,8 @@ class NpzFormat(SpecialFormat):
                 for hand in frame if hand.keypoints),
             21
         ) # 21 is default -- mediapipe hand keypoints
-        nan_kps = [[np.nan] * dimensions for _ in range(num_keypoints)]
-        coords = ['x', 'y', 'z'][:dimensions]
+        coords = ['x', 'y', 'z'][:dimensions] + ['confidence']
+        nan_kps = [[np.nan] * len(coords) for _ in range(num_keypoints)]
 
         left_hand_landmarks = []
         right_hand_landmarks = []
@@ -71,8 +71,8 @@ class NpzFormat(SpecialFormat):
                 for body in frame if body.keypoints),
             33
         ) # 33 is default -- mediapipe body keypoints
-        nan_kps = [[np.nan] * dimensions for _ in range(num_keypoints)]
-        coords = ['x', 'y', 'z'][:dimensions]
+        coords = ['x', 'y', 'z'][:dimensions] + ['confidence']
+        nan_kps = [[np.nan] * len(coords) for _ in range(num_keypoints)]
 
         body_landmarks = [
             [
