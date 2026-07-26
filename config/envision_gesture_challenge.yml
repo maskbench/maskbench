@@ -1,7 +1,10 @@
 inference_checkpoint_name: None # comment out or set to "None" to run inference from scratch
+
 execute_processing: true       # set to false to skip processing the dataset videos and loading existing processed data
-execute_rendering: true         # set to false to skip rendering the videos
-render_poses_only: true        # set to true to render the pose keypoints overlayed on the black video frames
+execute_evaluation: true       # set to false to skip calculating evaluation metrics and plotting
+execute_rendering: true        # set to false to skip rendering the videos
+render_poses_only: true         # set to true to render the pose keypoints overlayed on the black video frames
+
 max_rendering_workers: 10
 max_inference_workers: 5
 max_special_save_workers: 10
@@ -25,4 +28,20 @@ special_save_format:
     - name: npz
       enabled: true
       code_file: save_formats.npz_format.NpzFormat
+
+metrics:
+  - name: Velocity
+    code_file: evaluation.metrics.velocity.VelocityMetric
+    config:
+      time_unit: frame
+
+  - name: Acceleration
+    code_file: evaluation.metrics.acceleration.AccelerationMetric
+    config:
+      time_unit: frame
+  
+  - name: Jerk
+    code_file: evaluation.metrics.jerk.JerkMetric
+    config:
+      time_unit: frame
 
