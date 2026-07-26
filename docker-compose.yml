@@ -5,7 +5,6 @@ services:
         env_file: 
           - .env
         depends_on:
-          - openpose
           - sam2
           - maskanyone_api
         volumes:
@@ -25,22 +24,6 @@ services:
                 - driver: nvidia
                   device_ids: ["${MASKBENCH_GPU_ID_1:-0}"]
                   capabilities: [ gpu ]
-    
-    openpose:
-      image: ghcr.io/maskanyone/maskanyone/openpose:${MASK_ANYONE_VERSION}
-      restart: on-failure
-      environment:
-        OPENPOSE_MODEL_DIR: ${OPENPOSE_MODEL_DIR:-/workspace/openpose/models}
-        OPENPOSE_PORT: ${OPENPOSE_PORT:-8000}
-        OPENPOSE_HOST: ${OPENPOSE_HOST:-openpose}
-      deploy:
-        resources:
-          reservations:
-            devices:
-              - driver: nvidia
-                device_ids: ["${MASKBENCH_GPU_ID_2:-0}"]
-                capabilities: [ gpu ]
-    
     sam2:
       image: ghcr.io/maskanyone/maskanyone/sam2:${MASK_ANYONE_VERSION}
       restart: on-failure

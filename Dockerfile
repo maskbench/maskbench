@@ -24,8 +24,9 @@ RUN curl -L -o /weights/pre_built/yolo11x-pose.pt "https://github.com/ultralytic
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./
 # Avoid creating a virtualenv in a container
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-root
+RUN poetry config virtualenvs.create false
+RUN poetry lock
+RUN poetry install --no-root
 
 WORKDIR /src
 COPY src/ /src/
