@@ -79,6 +79,17 @@ class Dataset(ABC):
         
         return VideoPoseResult.from_json(json_path, video_name)
 
+    def gt_pose_exists(self, video_name: str) -> bool:
+        """
+        Check if ground truth pose result exists for a given video.
+        Returns False if no gt_folder is specified or doesn't exist.
+        """
+        if self.gt_folder is None or not self.gt_folder.exists():
+            return False
+
+        json_path = self.gt_folder / f"{video_name}.json"
+        return json_path.exists()
+
     def get_gt_keypoint_pairs(self) -> None | List[tuple]:
         """
         Default implementation to return COCO keypoint pairs if gt_folder is specified and exists,

@@ -66,15 +66,20 @@ class PoseRenderer:
         # for estimator in pose_results.keys():
         for estimator in self.estimators_point_pairs.keys():
             # if video_name not in pose_results[estimator]:
-            if not self.checkpointer.exists(estimator, video_name):
+            if not self.checkpointer.exists(estimator, video_name) and not self.dataset.gt_pose_exists(video_name):
                 print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
                 logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
                 continue
             output_paths[estimator] = os.path.join(self.checkpointer.renderings_dir, video_name, f"{video_name}_{estimator}.mp4")
             if self.checkpointer.exists_rendered_video(output_paths[estimator]):
                 print(f"Rendered video already exists for video {video_name} using estimator {estimator}. Skipping rendering.")
-                continue  # skip if already rendered    
-            video_pose_results[estimator] = self.checkpointer.load_pose_result(estimator, video_name)
+                continue  # skip if already rendered
+
+            if estimator == "GroundTruth":
+                video_pose_results[estimator] = self.dataset.get_single_pose_result(video_name)
+            else:
+                video_pose_results[estimator] = self.checkpointer.load_pose_result(estimator, video_name)
+
             all_estimators_rendered = False  # at least one estimator needs rendering
         
         # empty video_pose_results means either no pose results or all estimators already rendered

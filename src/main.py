@@ -75,9 +75,13 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
     if execute_rendering:
         logging.info("Executing rendering.")
         estimators_point_pairs = {est.name: est.get_keypoint_pairs() for est in pose_estimators}
-        # if gt_pose_results and dataset.get_gt_keypoint_pairs() is not None:
-        #     # pose_results["GroundTruth"] = gt_pose_results TODO
-        #     estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
+
+        gt_keypoint_pairs = dataset.get_gt_keypoint_pairs()
+        if gt_keypoint_pairs is None:
+            logging.warning("Ground truth keypoint pairs not found. Rendering will proceed without ground truth poses.")
+        else:
+            estimators_point_pairs["GroundTruth"] = gt_keypoint_pairs
+
         pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer, render_poses_only)
         pose_renderer.render_all_videos(max_workers=max_rendering_workers)
 
