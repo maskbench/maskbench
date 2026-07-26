@@ -62,15 +62,15 @@ def main():
 def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], special_save_formats: List[SpecialFormat], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, execute_processing: bool, max_inference_workers: int, max_rendering_workers: int, max_special_save_workers: int):
     logging.info('Starting Inference')
     inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer, execute_processing)
-    gt_pose_results = dataset.get_gt_pose_results()
     inference_engine.run_parallel_tasks(max_workers=max_inference_workers)
 
-    # if execute_evaluation:
-    #     print("Executing evaluation.")
-    #     evaluator = Evaluator(metrics=metrics)
-    #     metric_results = evaluator.evaluate(pose_results, gt_pose_results)
-    #     visualizer = MaskBenchVisualizer(checkpointer)
-    #     visualizer.generate_all_plots(metric_results)
+    if execute_evaluation:
+        print("Executing evaluation.")
+        evaluator = Evaluator(metrics=metrics, checkpointer=checkpointer, dataset=dataset)
+        model_list = [estimator.name for estimator in pose_estimators]
+        metric_results = evaluator.evaluate(model_list)
+        visualizer = MaskBenchVisualizer(checkpointer)
+        visualizer.generate_all_plots(metric_results)
 
     if execute_rendering:
         logging.info("Executing rendering.")

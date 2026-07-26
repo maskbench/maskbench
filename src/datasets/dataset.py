@@ -61,6 +61,24 @@ class Dataset(ABC):
 
         return gt_pose_results
 
+    def get_single_pose_result(self, video_name: str) -> VideoPoseResult:
+        """
+        Default implementation to load a single ground truth pose result from the gt_folder.
+        Expects one JSON file per video with the same name as the video file.
+        The format of the ground truth files should be consistent with `VideoPoseResult` structure, otherwise overwrite
+        this method in a subclass and implement your own logic to load the ground truth data.
+        Returns None if no gt_folder is specified or doesn't exist.
+        """
+        if self.gt_folder is None or not self.gt_folder.exists():
+            return None
+
+        json_path = self.gt_folder / f"{video_name}.json"
+
+        if not json_path.exists():
+            return None
+        
+        return VideoPoseResult.from_json(json_path, video_name)
+
     def get_gt_keypoint_pairs(self) -> None | List[tuple]:
         """
         Default implementation to return COCO keypoint pairs if gt_folder is specified and exists,

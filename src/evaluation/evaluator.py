@@ -1,18 +1,21 @@
+import logging
 from typing import Dict, List
 from evaluation.metrics import MetricResult, Metric
-from pose_result_class import VideoPoseResult
+from checkpointer import Checkpointer
+from datasets import Dataset
 
 
 class Evaluator:
     """Main evaluator class that orchestrates the evaluation process."""
     
-    def __init__(self, metrics: List[Metric]):
+    def __init__(self, metrics: List[Metric], checkpointer: Checkpointer, dataset: Dataset):
         self.metrics = {metric.name: metric for metric in metrics}
-    
+        self.checkpointer = checkpointer
+        self.dataset = dataset
+
     def evaluate(
         self,
-        models_video_pose_results: Dict[str, Dict[str, VideoPoseResult]],
-        gt_video_pose_results: Dict[str, VideoPoseResult] = None
+        model_list: List[str] = None,
     ) -> Dict[str, Dict[str, Dict[str, MetricResult]]]:
         """
         Run evaluation for all metrics on all models and videos.
@@ -28,21 +31,26 @@ class Evaluator:
         
         for metric_name, metric in self.metrics.items():
             print(f"Computing metric: {metric_name}")
-            
             model_results_dict = {}
-            for model_name, video_pose_results in models_video_pose_results.items():
-                
-                if not gt_video_pose_results:
-                    gt_video_pose_results = {video_name: None for video_name in video_pose_results.keys()}
-                
+            
+            for model_name in model_list:
                 video_metric_results = {}
-                for video_name, video_result in video_pose_results.items():
-                    gt_result = gt_video_pose_results[video_name]
-                    result = metric.compute(video_result, gt_result, model_name)
+
+                for video in self.dataset:
+                    video_name = video.get_filename()
+                    video_pose_result = None
+                    if not self.checkpointer.exists(model_name, video_name):
+                        print(f"No pose results found for video {video_name} using estimator {model_name}. Skipping.")
+                        logging.error(f"No pose results found for video {video_name} using estimator {model_name}. Skipping Evaluation for this video.")
+                        continue
+                    video_pose_result = self.checkpointer.load_pose_result(model_name, video_name)
+
+                    gt_pose_result = self.dataset.get_single_pose_result(video_name) # Can be None
+                    result = metric.compute(video_pose_result, gt_pose_result, model_name)
                     if result is not None:
                         video_metric_results[video_name] = result
 
-                model_results_dict[model_name] = video_metric_results
+                model_results_dict[model_name] = video_metric_results  
             
             results[metric_name] = model_results_dict
             
