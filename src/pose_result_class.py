@@ -104,7 +104,7 @@ class VideoPoseResult:
                 for kpt_idx, keypoint in enumerate(person.keypoints):
                     values[frame_idx, person_idx, kpt_idx, 0] = keypoint.x
                     values[frame_idx, person_idx, kpt_idx, 1] = keypoint.y
-                    mask[frame_idx, person_idx, kpt_idx] = False  # Unmask only existing values
+                    mask[frame_idx, person_idx, kpt_idx] = (keypoint.x is None or keypoint.y is None)  # Unmask only existing non None values
         
         return ma.array(values, mask=mask)
 

@@ -86,15 +86,24 @@ class Metric(ABC):
         is_poses_to_match_masked_array = isinstance(poses_to_match, ma.MaskedArray)
         is_reference_masked_array = isinstance(reference, ma.MaskedArray)
         for i in range(M):
-            if is_poses_to_match_masked_array and poses_to_match.mask.all(axis=(1,2))[i]: # Reduce the number of valid poses to match (if the person is completely masked)
+            is_masked = is_poses_to_match_masked_array and poses_to_match.mask.all(axis=(1,2))[i]
+            is_nan_mean = np.isnan(mean_poses_to_match[i]).any()
+            if is_masked or is_nan_mean: # Reduce the number of valid poses to match (if the person is completely masked)
                 valid_M -= 1
             else:
                 poses_to_match_index_mapping.append(i)
         for i in range(N):
-            if is_reference_masked_array and reference.mask.all(axis=(1,2))[i]: # Reduce the number of valid references (if the person is completely masked)
+            is_masked = is_reference_masked_array and reference.mask.all(axis=(1,2))[i]
+            is_nan_mean = np.isnan(mean_ref_poses[i]).any()
+            if is_masked or is_nan_mean: # Reduce the number of valid references (if the person is completely masked)
                 valid_N -= 1
             else:
                 reference_index_mapping.append(i)
+
+        if valid_M == 0:
+            return np.full_like(reference, np.inf)
+        if valid_N == 0:
+            return poses_to_match
 
         # Calculate cost matrix based on Euclidian distance between each prediction (valid_M) in the rows and references (valid_N) in the columns
         cost_matrix = np.zeros((valid_M, valid_N))
@@ -105,8 +114,10 @@ class Metric(ABC):
                 cost_matrix[i, j] = np.linalg.norm(mean_poses_to_match[pos_to_match_idx] - mean_ref_poses[ref_idx])
         # Remove rows where all entries are nan, which might happen if the shape N or M is 
         # greater than the maximum number of persons in the reference or predictions.
-        valid_rows = ~np.all(np.isnan(cost_matrix), axis=1)
-        cost_matrix = cost_matrix[valid_rows]
+        if np.isnan(cost_matrix).any():
+            finite_vals = cost_matrix[np.isfinite(cost_matrix)]
+            sentinel = (finite_vals.max()*10+1) if finite_vals.size > 0 else 1e6
+            cost_matrix = np.nan_to_num(cost_matrix, nan=sentinel)
                 
         # Apply Hungarian algorithm
         row_ind, col_ind = linear_sum_assignment(cost_matrix)
