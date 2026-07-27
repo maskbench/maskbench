@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Union
 import numpy as np
 import numpy.ma as ma
 
@@ -56,6 +56,20 @@ class MetricResult:
         
         # Create axis name to dimension mapping for easier lookup
         self.axis_name_to_dim = {name: i for i, name in enumerate(axis_names)}
+
+    def to_json(self) -> dict:
+        """
+        Convert the MetricResult to a JSON-serializable dictionary.
+        """
+        return {
+            "unit": self.unit,
+            "axis_names": self.axis_names,
+            "metric_name": self.metric_name,
+            "video_name": self.video_name,
+            "model_name": self.model_name,
+            "values": self.values.tolist(),
+            "mask": self.values.mask.tolist() if self.values.mask is not ma.nomask else None,
+        }
         
     def aggregate(
         self,

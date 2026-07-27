@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, List
-from evaluation.metrics import MetricResult, Metric
+from evaluation.metrics import Metric
+from metric_result_class import MetricResult
 from checkpointer import Checkpointer
 from datasets import Dataset
 

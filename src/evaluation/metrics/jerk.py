@@ -5,7 +5,7 @@ import logging
 
 from pose_result_class import VideoPoseResult
 from .metric import Metric
-from .metric_result import COORDINATE_AXIS, FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
+from metric_result_class import COORDINATE_AXIS, FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
 from .acceleration import AccelerationMetric
 
 

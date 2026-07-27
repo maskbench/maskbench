@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-from evaluation.metrics.metric_result import COORDINATE_AXIS, FRAME_AXIS, PERSON_AXIS, MetricResult
+from metric_result_class import COORDINATE_AXIS, FRAME_AXIS, PERSON_AXIS, MetricResult
 from keypoint_pairs import COCO_KEYPOINT_NAMES
 from .plot import Plot
 

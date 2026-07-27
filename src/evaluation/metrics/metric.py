@@ -6,7 +6,7 @@ import numpy.ma as ma
 from scipy.optimize import linear_sum_assignment
 
 from pose_result_class import VideoPoseResult
-from evaluation.metrics.metric_result import MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
+from metric_result_class import MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
 
 
 class Metric(ABC):

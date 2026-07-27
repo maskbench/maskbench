@@ -11,6 +11,7 @@ from filelock import FileLock
 from tqdm import tqdm
 
 from pose_result_class import VideoPoseResult
+from metric_result_class import MetricResult
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):

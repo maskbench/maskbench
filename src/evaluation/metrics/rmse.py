@@ -4,7 +4,7 @@ from typing import Dict, Optional, Any
 from pose_result_class import VideoPoseResult
 from .euclidean_distance import EuclideanDistanceMetric
 from .metric import Metric
-from .metric_result import MetricResult
+from metric_result_class import MetricResult
 
 
 class RMSEMetric(EuclideanDistanceMetric):

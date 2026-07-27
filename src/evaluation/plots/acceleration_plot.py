@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from evaluation.metrics.metric_result import MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
+from metric_result_class import MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
 from .plot import Plot
 
 

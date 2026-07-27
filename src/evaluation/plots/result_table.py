@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 
-from evaluation.metrics.metric_result import MetricResult
+from metric_result_class import MetricResult
 from evaluation.utils import aggregate_results_over_all_videos
 
 

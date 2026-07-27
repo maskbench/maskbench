@@ -4,7 +4,7 @@ from typing import Dict, Optional, Any
 
 from pose_result_class import VideoPoseResult
 from .metric import Metric
-from .metric_result import FRAME_AXIS, MetricResult
+from metric_result_class import FRAME_AXIS, MetricResult
 from .euclidean_distance import EuclideanDistanceMetric
 
 

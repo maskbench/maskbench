@@ -3,7 +3,7 @@ from typing import Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-from evaluation.metrics.metric_result import MetricResult
+from metric_result_class import MetricResult
 from utils import get_color_palette
 
 

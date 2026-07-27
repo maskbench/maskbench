@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import numpy.ma as ma
 
-from evaluation.metrics.metric_result import MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
+from metric_result_class import MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
 
 
 class TestMetricResult(unittest.TestCase):

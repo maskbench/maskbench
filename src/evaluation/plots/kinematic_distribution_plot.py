@@ -5,7 +5,7 @@ import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 
-from evaluation.metrics.metric_result import COORDINATE_AXIS, MetricResult
+from metric_result_class import COORDINATE_AXIS, MetricResult
 from .plot import Plot
 
 
