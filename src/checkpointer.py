@@ -3,6 +3,7 @@ import json
 import datetime
 import shutil
 import subprocess
+from pathlib import Path
 import numpy as np
 import logging
 import cv2 as cv
@@ -54,6 +55,7 @@ class Checkpointer:
         self.poses_dir = os.path.join(self.checkpoint_dir, "poses")
         self.plots_dir = os.path.join(self.checkpoint_dir, "plots")
         self.renderings_dir = os.path.join(self.checkpoint_dir, "renderings")
+        self.evaluation_dir = Path(self.checkpoint_dir) / "evaluation"
         
     def save_rendered_video(self, video_name: str, estimator_name: str, video_writer: cv.VideoWriter) -> str:
         """
@@ -289,3 +291,33 @@ class Checkpointer:
             inference_times = json.load(f)
             
         return inference_times
+
+    def save_evaluation_result(self, metric_name: str, model_name: str, video_name: str, result: MetricResult) -> None:
+        output_dir = self.evaluation_dir / metric_name / model_name
+        output_dir.mkdir(parents=True, exist_ok=True)
+        result = result.to_json() if result is not None else None
+        output_path = output_dir / f"{video_name}_result.json"
+        with open(output_path, "w") as f:
+            json.dump(result, f, indent=4, cls=NumpyEncoder)
+        return
+
+    def exists_evaluation_result(self, metric_name: str, model_name: str, video_name: str) -> bool:
+        input_path = self.evaluation_dir / metric_name / model_name / f"{video_name}_result.json"
+        return input_path.exists() and os.path.getsize(input_path) > 0
+    
+    def load_evaluation_result(self, metric_name: str, model_name: str, video_name: str) -> Optional[MetricResult]:
+        input_path = self.evaluation_dir / metric_name / model_name / f"{video_name}_result.json"
+        if not input_path.exists():
+            return None
+        with open(input_path, "r") as f:
+            result_dict = json.load(f)
+        if result_dict is None:
+            return None
+        return MetricResult(
+            values=np.array(result_dict["values"]),
+            axis_names=result_dict["axis_names"],
+            metric_name=result_dict["metric_name"],
+            video_name=result_dict["video_name"],
+            model_name=result_dict.get("model_name"),
+            unit=result_dict.get("unit")
+        )
