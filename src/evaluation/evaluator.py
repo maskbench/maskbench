@@ -20,7 +20,6 @@ class Evaluator:
         self,
         model_list: List[str] = None,
     ) -> None:
-    # ) -> Dict[str, Dict[str, Dict[str, MetricResult]]]:
         """
         Run evaluation for all metrics on all models and videos.
         
@@ -33,11 +32,7 @@ class Evaluator:
         """
         max_workers = max(mp.cpu_count() - 1, 1)  # Use all available CPU cores for parallel processing
         logging.info(f'Evaluating with {max_workers} workers')
-        test_videos = []
-        for video in self.dataset:
-            test_videos.append(video)
-
-        test_videos = test_videos[:5]
+        
         for metric_name, metric in self.metrics.items():
             print(f"Computing metric: {metric_name}")
             
@@ -46,13 +41,13 @@ class Evaluator:
                     with ThreadPoolExecutor(max_workers=max_workers) as executor:
                         future_to_video = {
                             executor.submit(self.evaluate_video, video.get_filename(), model_name, metric): video
-                            for video in test_videos
+                            for video in self.dataset
                         }
                         for future in as_completed(future_to_video):
                             future.result()
                             progress.update(1)
 
-    def evaluate_video(self, video_name: str, model_name: str, metric: Metric) -> Dict[str, MetricResult]:
+    def evaluate_video(self, video_name: str, model_name: str, metric: Metric) -> None:
         video_pose_result = None
         if self.checkpointer.exists_evaluation_result(metric.name, model_name, video_name):
             print(f'Skipping evaluation for {video_name} using {model_name} for metric {metric.name} as results already exist.')

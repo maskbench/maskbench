@@ -1,14 +1,14 @@
 import logging
 import numpy as np
 import numpy.ma as ma
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 
 
 from evaluation.utils import DISTANCE_FILL_VALUE, calculate_bbox_sizes_for_persons_in_frame
 from pose_result_class import VideoPoseResult
 from .metric import Metric
 from metric_result_class import COORDINATE_AXIS, FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
-
+from checkpointer import Checkpointer
 
 class VelocityMetric(Metric):
     """
@@ -19,8 +19,8 @@ class VelocityMetric(Metric):
           in pixels/frame or pixels/second. Defaults to "frame".
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__(name="Velocity", config=config)
+    def __init__(self, name: str, metric_names: List[str], config: Optional[Dict[str, Any]] = None, checkpointer: Optional[Checkpointer] = None):
+        super().__init__(name=name, metric_names=metric_names, config=config, checkpointer=checkpointer)
         time_unit = config.get("time_unit", "frame") if config else "frame"
         if time_unit not in ["second", "frame"]:
             raise ValueError("time_unit must be either 'second' or 'frame'")
@@ -49,6 +49,11 @@ class VelocityMetric(Metric):
             - time_unit="second": velocity is computed per second (pixels/second) by dividing by the time delta between frames
             - time_unit="frame": velocity is computed per frame (pixels/frame)
         """
+        print(f'vel checkpointer is {self.checkpointer}')
+        if self.checkpointer.exists_evaluation_result(self.name, model_name, video_result.video_name):
+            print(f'Skipping evaluation for {video_result.video_name} using {model_name} for metric {self.name} as results already exist.')
+            return self.checkpointer.load_evaluation_result(self.name, model_name, video_result.video_name)
+
         pred_poses = video_result.to_numpy_ma(self.name, model_name)  # shape: (frames, persons, keypoints, 2)
         if pred_poses.shape[1] == 0 or pred_poses.shape[2] == 0:
             print(f"Warning: No persons or keypoints detected in the video. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")

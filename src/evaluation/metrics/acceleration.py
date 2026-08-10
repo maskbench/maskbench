@@ -1,13 +1,12 @@
 import numpy as np
 import numpy.ma as ma
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 import logging
 
 from pose_result_class import VideoPoseResult
 from .metric import Metric
 from metric_result_class import COORDINATE_AXIS, FRAME_AXIS, KEYPOINT_AXIS, PERSON_AXIS, MetricResult
-from .velocity import VelocityMetric
-
+from checkpointer import Checkpointer
 
 class AccelerationMetric(Metric):
     """
@@ -18,9 +17,13 @@ class AccelerationMetric(Metric):
           in pixels/frame² or pixels/second². Defaults to "frame".
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__(name="Acceleration", config=config)
-        self.velocity_metric = VelocityMetric(config)
+    def __init__(self, name: str, metric_names: List[str], config: Optional[Dict[str, Any]] = None, checkpointer: Optional[Checkpointer] = None):
+        super().__init__(name=name, metric_names=metric_names, config=config, checkpointer=checkpointer)
+
+        self.dependant_metric_name = self.config.get('dependant_metric_name', 'Velocity')
+        if self.dependant_metric_name not in self.metric_names:
+            raise ValueError(f'{self.dependant_metric_name} not found in active metrics. {self.name} is dependant on {self.dependant_metric_name}')
+
         time_unit = config.get("time_unit", "frame") if config else "frame"
         if time_unit not in ["second", "frame"]:
             raise ValueError("time_unit must be either 'second' or 'frame'")
@@ -50,6 +53,11 @@ class AccelerationMetric(Metric):
             - time_unit="second": acceleration is computed per second (pixels/second²) by dividing by the time delta between frames
             - time_unit="frame": acceleration is computed per frame (pixels/frame²)
         """
+        print(f'acc checkpointer is {self.checkpointer}')
+        if self.checkpointer.exists_evaluation_result(self.name, model_name, video_result.video_name):
+            print(f'Skipping evaluation for {video_result.video_name} using {model_name} for metric {self.name} as results already exist.')
+            return self.checkpointer.load_evaluation_result(self.name, model_name, video_result.video_name)
+
         pred_poses = video_result.to_numpy_ma(self.name, model_name)  # shape: (frames, persons, keypoints, 2)
         
         if pred_poses.shape[1] == 0 or pred_poses.shape[2] == 0:
@@ -61,8 +69,14 @@ class AccelerationMetric(Metric):
             print(f"Warning: Acceleration metric requires at least 3 frames to compute. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
             logging.warning(f"Warning: Acceleration metric requires at least 3 frames to compute. Returning empty MetricResult. Video: {video_result.video_name}, Model: {model_name}, Metric: {self.name}.")
             return None
+          
+        if not self.checkpointer.exists_evaluation_result(self.dependant_metric_name, model_name, video_result.video_name):
+            logging.error(f'Evaluation result not found for {self.dependant_metric_name} with {model_name} and {video_result.video_name}. Make sure to run {self.dependant_metric_name} before {self.name} metric')
+            print(f'Evaluation result not found for {self.dependant_metric_name} with {model_name} and {video_result.video_name}. Make sure to run {self.dependant_metric_name} before {self.name} metric')
+            return None
 
-        velocity_result = self.velocity_metric.compute(video_result, gt_video_result, model_name)
+        velocity_result = self.checkpointer.load_evaluation_result(self.dependant_metric_name, model_name, video_result.video_name)
+
         if velocity_result is None:
             return None
         

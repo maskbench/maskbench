@@ -48,6 +48,7 @@ def main():
     logging.info(f"Loaded {len(special_save_formats)} special save formats: {[format.name for format in special_save_formats]}")
 
     execute_evaluation = config.get("execute_evaluation", False)
+    execute_visualization = config.get("execute_visualization", False)
     execute_rendering = config.get("execute_rendering", False)
     render_poses_only = config.get("render_poses_only", False)
     execute_processing = config.get("execute_processing", True)
@@ -56,11 +57,11 @@ def main():
     max_special_save_workers = config.get("max_special_save_workers", 10)
     save_special_formats = config.get('save_special_formats', False)
 
-    run(dataset, pose_estimators, metrics, special_save_formats, checkpointer, execute_evaluation, execute_rendering, render_poses_only, save_special_formats, execute_processing, max_inference_workers, max_rendering_workers, max_special_save_workers)
+    run(dataset, pose_estimators, metrics, special_save_formats, checkpointer, execute_evaluation, execute_visualization, execute_rendering, render_poses_only, save_special_formats, execute_processing, max_inference_workers, max_rendering_workers, max_special_save_workers)
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], special_save_formats: List[SpecialFormat], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, save_special_formats: bool, execute_processing: bool, max_inference_workers: int, max_rendering_workers: int, max_special_save_workers: int):
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], special_save_formats: List[SpecialFormat], checkpointer: Checkpointer, execute_evaluation: bool, execute_visualization: bool, execute_rendering: bool, render_poses_only: bool, save_special_formats: bool, execute_processing: bool, max_inference_workers: int, max_rendering_workers: int, max_special_save_workers: int):
     logging.info('Starting Inference')
     inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer, execute_processing)
     inference_engine.run_parallel_tasks(max_workers=max_inference_workers)
@@ -69,9 +70,10 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
         print("Executing evaluation.")
         evaluator = Evaluator(metrics=metrics, checkpointer=checkpointer, dataset=dataset)
         model_list = [estimator.name for estimator in pose_estimators]
-        # evaluator.evaluate(model_list)
-    visualizer = MaskBenchVisualizer(checkpointer)
-    visualizer.generate_all_plots()
+        evaluator.evaluate(model_list)
+    if execute_visualization:
+        visualizer = MaskBenchVisualizer(checkpointer)
+        visualizer.generate_all_plots()
 
     if execute_rendering:
         logging.info("Executing rendering.")

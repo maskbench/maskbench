@@ -7,12 +7,13 @@ from scipy.optimize import linear_sum_assignment
 
 from pose_result_class import VideoPoseResult
 from metric_result_class import MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
+from checkpointer import Checkpointer
 
 
 class Metric(ABC):
     """Base class for all metrics in MaskBench."""
     
-    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, name: str, metric_names: List[str], config: Optional[Dict[str, Any]] = None, checkpointer: Optional[Checkpointer] = None):
         """
         Initialize a metric.
         
@@ -22,13 +23,15 @@ class Metric(ABC):
         """
         self.name = name
         self.config = config or {}
+        self.checkpointer = checkpointer or None
+        self.metric_names = metric_names
     
     @abstractmethod
     def compute(
         self,
         video_result: VideoPoseResult,
         gt_video_result: Optional[VideoPoseResult] = None,
-        model_name: Optional[str] = None
+        model_name: Optional[str] = None,
     ) -> MetricResult:
         """
         Compute the metric for a video.
