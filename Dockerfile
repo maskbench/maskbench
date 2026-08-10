@@ -14,12 +14,8 @@ RUN curl -L -o /weights/pre_built/pose_landmarker_lite.task "https://storage.goo
 RUN curl -L -o /weights/pre_built/pose_landmarker_full.task "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task"
 RUN curl -L -o /weights/pre_built/pose_landmarker_heavy.task "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task"
 
-# Yolo
-RUN curl -L -o /weights/pre_built/yolo11n-pose.pt "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-pose.pt"
-RUN curl -L -o /weights/pre_built/yolo11s-pose.pt "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s-pose.pt"
-RUN curl -L -o /weights/pre_built/yolo11m-pose.pt "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11m-pose.pt"
-RUN curl -L -o /weights/pre_built/yolo11l-pose.pt "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11l-pose.pt"
-RUN curl -L -o /weights/pre_built/yolo11x-pose.pt "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11x-pose.pt"
+# Mediapipe Hand Landmark
+RUN curl -L -o /weights/pre_built/mediapipe_hand_landmarker.task "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task"
 
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./

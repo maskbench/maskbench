@@ -3,8 +3,9 @@ import cv2
 import glob
 import os
 import json
+import logging
 from typing import List
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
+from pose_result_class import FramePoseResult, PersonPoseResult, PoseKeypoint
 
 def get_color_palette() -> list:
     return [
@@ -98,7 +99,6 @@ def maskanyone_convert_json_to_nested_arrays(json_pose_file: str, overlay_strate
             
             return frame_results
 
-
 def get_video_metadata(video_path: str) -> tuple[cv2.VideoCapture, dict]:
     """
     Get metadata of a video capture object.
@@ -153,3 +153,37 @@ def get_frame_count_ffprobe(video_path: str) -> int:
         raise RuntimeError(f"ffprobe failed: {e.stderr.strip()}")
     except ValueError:
         raise RuntimeError("Could not parse frame count from ffprobe output.")
+
+# this is specific to envision gesture challenge, we can modify this to be more general if needed
+# note: not keeping this in utils to avoid circular imports
+def parse_filename(video_name: str):
+        """Parse video filename to extract metadata.
+            Example filename: Ecolang_ad00_0_Move_Objman
+            Returns:
+                dict: A dictionary containing the extracted metadata fields:
+                    - corpus: The corpus name (e.g., "Ecolang")
+                    - speaker: The speaker identifier (e.g., "ad00")
+                    - clip_id: The clip identifier (e.g., "0")
+                    - category: The category (i.e., "Gesture" or "NoGesture" or "Move")
+                    - subtype: The subtype of the gesture (e.g., "Move", "Hold", "Objman")
+        """
+        result = dict(
+            corpus=None,
+            speaker=None,
+            clip_id=None,
+            category=None,
+            subtype=None,
+        )
+        
+        parts = video_name.split("_")
+        try:
+            result["corpus"] = parts[0]
+            result["subtype"] = parts[-1] 
+            result["category"] = parts[-2]
+            result["clip_id"] = parts[-3]
+            result["speaker"] = "_".join(parts[1:-3]) 
+        except IndexError:
+            print(f"Warning: Cannot parse filename (not enough parts): {video_name}")
+            return None
+                
+        return result

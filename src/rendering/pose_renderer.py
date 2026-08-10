@@ -1,15 +1,16 @@
-from typing import Dict, List
 import cv2
 import os
 import logging
 import numpy as np
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List
+from tqdm import tqdm
 
-from inference import FramePoseResult, VideoPoseResult
+from pose_result_class import PersonPoseResult
 from datasets import Dataset, VideoSample
 from checkpointer import Checkpointer
-from utils import get_color_palette, get_video_metadata
+from utils import get_color_palette, get_video_metadata, parse_filename
 
 
 class PoseRenderer:
@@ -20,52 +21,79 @@ class PoseRenderer:
         self.render_poses_only = render_poses_only
         self.line_thickness = line_thickness
 
-    def render_all_videos(self, pose_results: Dict[str, Dict[str, List[VideoPoseResult]]], max_workers: int = None):
+    def render_all_videos(self, max_workers: int = None):
         """
         Render all videos in the dataset with the provided pose results.
         Args:
-            pose_results (Dict[str, Dict[str, List[VideoPoseResult]]]): Dictionary where keys are estimator names and values are dictionaries mapping video names to lists of VideoPoseResult objects.
+            max_workers (int, optional): The maximum number of threads to use for rendering. Defaults to None, which uses the number of CPU cores.
         """
         if max_workers is None:
             max_workers = mp.cpu_count()
-        print(f"Rendering videos using {max_workers} workers.")
+        logging.info(f"Rendering videos using {max_workers} workers.")
+        progress = tqdm(total=len(self.dataset), desc="Rendering videos", unit="video")
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # add tasks - renders videos in parallel
             future_to_estimator = {}
             for video in self.dataset:
-                video_name = video.get_filename()
-                video_pose_results = {}
-                for estimator in pose_results.keys():
-                    if video_name not in pose_results[estimator]:
-                        print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
-                        logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
-                        continue
-                    video_pose_results[estimator] = pose_results[estimator][video_name]
-                future = executor.submit(self.render_video, video, video_pose_results)
+                future = executor.submit(self.render_video, video)
                 future_to_estimator[future] = video
             
             # process result
             for future in as_completed(future_to_estimator):
                 video = future_to_estimator[future]
+                progress.update(1)
                 try:
                     future.result()
                 except Exception as e:
-                    print(f"Rendering video {video.get_filename()} generated an exception: {e}")
-                    logging.exception(e)
+                    logging.error(f"Rendering video {video.get_filename()} generated an exception: {e}")
+        progress.close()
 
     def render_video(
         self,
         video: VideoSample,
-        video_pose_results: Dict[str, VideoPoseResult],
     ):
         """
         Render video with keypoints and save it to output path.
         Args:
             video (VideoSample): The video sample to render.
-            video_pose_results (Dict[str, VideoPoseResult]): Dictionary of pose results for each estimator.
         """
+
+        video_name = video.get_filename()
+        video_pose_results = {}
+        output_paths = {}
+        all_estimators_rendered = True
+        # for estimator in pose_results.keys():
+        for estimator in self.estimators_point_pairs.keys():
+            # if video_name not in pose_results[estimator]:
+            if not self.checkpointer.exists(estimator, video_name) and not self.dataset.gt_pose_exists(video_name):
+                print(f"No pose results found for video {video_name} using estimator {estimator}. Skipping.")
+                logging.error(f"No pose results found for video {video_name} using estimator {estimator}. Skipping Rendering")
+                continue
+            output_paths[estimator] = os.path.join(self.checkpointer.renderings_dir, video_name, f"{video_name}_{estimator}.mp4")
+            if self.checkpointer.exists_rendered_video(output_paths[estimator]):
+                print(f"Rendered video already exists for video {video_name} using estimator {estimator}. Skipping rendering.")
+                continue  # skip if already rendered
+
+            if estimator == "GroundTruth":
+                video_pose_results[estimator] = self.dataset.get_single_pose_result(video_name)
+            else:
+                video_pose_results[estimator] = self.checkpointer.load_pose_result(estimator, video_name)
+
+            all_estimators_rendered = False  # at least one estimator needs rendering
+        
+        # empty video_pose_results means either no pose results or all estimators already rendered
+        if not video_pose_results:
+            if all_estimators_rendered:
+                print(f"All estimators have rendered videos for {video_name}. Skipping rendering.")
+                return
+            else:
+                print(f"No pose results found for video {video_name}. Skipping rendering.")
+                logging.error(f"No pose results found for video {video_name}. Skipping rendering.")
+                return
+
         print(f"Rendering video {video.get_filename()}")
+        logging.info(f"Rendering video {video.get_filename()} with estimators: {list(video_pose_results.keys())}")
         cap, video_metadata = get_video_metadata(video.path)
         fps = video_metadata["fps"]
         width = video_metadata["width"]
@@ -77,13 +105,27 @@ class PoseRenderer:
         video_writers = []  # initialize video writers
         video_name = video.get_filename()
 
-        for estimator_name in self.estimators_point_pairs.keys():  # video writer for every model
-            output_path = os.path.join(self.checkpointer.renderings_dir, video_name, f"{video_name}_{estimator_name}.mp4")
+        for estimator_name, output_path in output_paths.items():  # video writer for every model
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
             video_writers.append((estimator_name, out))
 
         color_palette = get_color_palette()
+
+        # specific to envision gesture challenge - parse filename to get corpus, speaker, clip_id, category, subtype
+        result = parse_filename(video_name)
+        if result is None:
+            logging.error(f"Failed to parse filename: {video_name}. Skipping adding text to frames.")
+            parts = None
+        else:
+            corpus, speaker, clip_id, category, subtype = result.values()
+            parts = {
+                "Corpus": corpus,
+                "Speaker": speaker,
+                "Clip ID": clip_id,
+                "Category": category,
+                "Subtype": subtype,
+            }
 
         frame_number = 0
         while frame_number < frame_count:  # for every frame
@@ -101,11 +143,26 @@ class PoseRenderer:
             for idx, (estimator_name, writer) in enumerate(video_writers):  # for every model
                 try:
                     frame_keypoints = video_pose_results[estimator_name].frames[frame_number]
+                    point_pairs = self.estimators_point_pairs[estimator_name]
+                    # if we have both hand and body keypoints. we additionally draw hand.
+                    if type(point_pairs) == tuple:
+                        body_point_pairs, hand_point_pairs = point_pairs
+                        frame_copies[idx] = self.draw_keypoints(
+                            frame_copies[idx],
+                            frame_keypoints.hands,
+                            hand_point_pairs,
+                            self.hex_to_bgr(color_palette[idx]),
+                            parts
+                        )
+                        point_pairs = body_point_pairs
+
+                    # default drawing with body keypoints
                     frame_copies[idx] = self.draw_keypoints(
                         frame_copies[idx],
-                        frame_keypoints,
-                        self.estimators_point_pairs[estimator_name],
+                        frame_keypoints.persons,
+                        point_pairs,
                         self.hex_to_bgr(color_palette[idx]),
+                        parts
                     )  # draw keypoints on frame
                     writer.write(frame_copies[idx])  # write rendered frame
                 except KeyError as e:
@@ -122,23 +179,26 @@ class PoseRenderer:
         cap.release()
         for estimator_name, writer in video_writers:
             self.checkpointer.save_rendered_video(video_name, estimator_name, writer)
+        
+        del video_pose_results  # free memory
 
     def draw_keypoints(
-        self, frame, frame_pose_result: FramePoseResult, point_pairs, color
+        self, frame, frame_pose_result: List[PersonPoseResult], point_pairs, color, parts
     ):
         """Draw keypoints and join keypoint pairs on 1 frame"""
-        if not frame_pose_result.persons:  # if this frame has no keypoints
+        if not frame_pose_result:  # if this frame has no keypoints
             return frame
 
-        for person in frame_pose_result.persons:
-            if not person or not person.keypoints:
+        # for hands - person 0 is and person 1 is hand 0 and hand 1
+        for person in frame_pose_result:
+            if not person or not person.keypoints: # if there are no keypoints for this person
                 continue
-
+            # Note: This is for 2D keypoints
             for keypoint in person.keypoints: # draw a circle for each keypoint if it exists
-                if keypoint: 
+                if keypoint and keypoint.x is not None and keypoint.y is not None:
                     center = (int(keypoint.x), int(keypoint.y))
                     cv2.circle(frame, center, self.line_thickness, color, -1)
-                
+            
             for pair in point_pairs:  # iterate over point pairs to add lines between keypoints
                 try: # some keypoints might be missing, which would lead to an IndexError
                     point1 = person.keypoints[pair[0]]
@@ -146,14 +206,34 @@ class PoseRenderer:
                 except IndexError as e:
                     continue
                 
-                if (point1 is None) or (point2 is None) or \
-                    ((point1.x <= 0) and (point1.y <= 0)) or ((point2.x <= 0) and (point2.y <= 0)):
+                if (point1 is None) or (point2 is None) \
+                    or (point1.x is None) or (point1.y is None) \
+                    or (point2.x is None) or (point2.y is None):
                     continue
 
                 point1 = (int(point1.x), int(point1.y))
                 point2 = (int(point2.x), int(point2.y))
                 cv2.line(frame, point1, point2, color=color, thickness=self.line_thickness)
 
+        if parts is not None:
+            self.add_text_to_frame(frame, parts)
+
+        return frame
+    
+    def add_text_to_frame(self, frame, parts:dict, position=(5, 15)):
+        """Add text to a frame at the specified position.
+            Text can be split into multiple lines using the specified delimeter. Each line will be rendered below the previous one with a fixed spacing.
+        """
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.5
+        color = (255, 255, 255)  # white color
+        thickness = 1
+        
+        # This is specific to envision gesture challenge
+        for idx, (key, value) in enumerate(parts.items()):
+            text_part = f"{key}: {value}"
+            text_part_position = (position[0], position[1] + idx * 15)  # adjust y position for each part
+            cv2.putText(frame, text_part, text_part_position, font, font_scale, color, thickness)
         return frame
 
     def hex_to_bgr(self, hex_color: str) -> tuple[int, int, int]:

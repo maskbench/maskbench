@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import numpy.ma as ma
 
-from inference.pose_result import PoseKeypoint, PersonPoseResult, FramePoseResult, VideoPoseResult
+from pose_result_class import PoseKeypoint, PersonPoseResult, FramePoseResult, VideoPoseResult
 
 
 class TestPoseResult(unittest.TestCase):

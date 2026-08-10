@@ -12,8 +12,9 @@ np.set_printoptions(threshold=np.inf)
 class PoseKeypoint:
     x: float
     y: float
+    z: Optional[float] = None  # for 3D keypoints, otherwise None
+    hand: Optional[int] = None # 0 for left hand, 1 for right hand, None for non-hand keypoints
     confidence: Optional[float] = None
-
 
 @dataclass
 class PersonPoseResult:
@@ -23,9 +24,11 @@ class PersonPoseResult:
 
 @dataclass
 class FramePoseResult:
-    persons: List[PersonPoseResult]
     frame_idx: int
-
+    persons: List[PersonPoseResult]
+    persons_world_landmark: Optional[List[PersonPoseResult]] = None  # for Mediapipe World Landmarker, otherwise None
+    hands: Optional[List[PersonPoseResult]] = None  # for Mediapipe Hands, otherwise None
+    hands_world_landmark: Optional[List[PersonPoseResult]] = None  # for Mediapipe Hands World Landmarker, otherwise None
 
 class VideoPoseResult:
     """
@@ -101,7 +104,7 @@ class VideoPoseResult:
                 for kpt_idx, keypoint in enumerate(person.keypoints):
                     values[frame_idx, person_idx, kpt_idx, 0] = keypoint.x
                     values[frame_idx, person_idx, kpt_idx, 1] = keypoint.y
-                    mask[frame_idx, person_idx, kpt_idx] = False  # Unmask only existing values
+                    mask[frame_idx, person_idx, kpt_idx] = (keypoint.x is None or keypoint.y is None)  # Unmask only existing non None values
         
         return ma.array(values, mask=mask)
 
@@ -144,7 +147,49 @@ class VideoPoseResult:
                         ) for k in keypoints
                     ]
                     person_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
-                frame_pose_results.append(FramePoseResult(persons=person_pose_results, frame_idx=frame_index))
+
+                persons_world_landmark = frame.get("persons_world_landmark", [])
+                persons_world_landmark_pose_results = []
+                for person in persons_world_landmark:
+                    keypoints = person.get("keypoints", [])
+                    pose_keypoints = [
+                        PoseKeypoint(
+                            x=k["x"], 
+                            y=k["y"], 
+                            z=k["z"],
+                            confidence=k.get("confidence", None)
+                        ) for k in keypoints
+                    ]
+                    persons_world_landmark_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
+
+                hands = frame.get("hands", [])
+                hands_pose_results = []
+                for hand in hands:
+                    keypoints = hand.get("keypoints", [])
+                    pose_keypoints = [
+                        PoseKeypoint(
+                            x=k["x"], 
+                            y=k["y"], 
+                            confidence=k.get("confidence", None)
+                        ) for k in keypoints
+                    ]
+                    hands_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
+
+                hands_world_landmark = frame.get("hands_world_landmark", [])
+                hands_world_landmark_pose_results = []
+                for hand in hands_world_landmark:
+                    keypoints = hand.get("keypoints", [])
+                    pose_keypoints = [
+                        PoseKeypoint(
+                            x=k["x"], 
+                            y=k["y"],
+                            z=k["z"],
+                            confidence=k.get("confidence", None)
+                        ) for k in keypoints
+                    ]
+                    hands_world_landmark_pose_results.append(PersonPoseResult(keypoints=pose_keypoints))
+
+                frame_pose_results.append(FramePoseResult(persons=person_pose_results, persons_world_landmark=persons_world_landmark_pose_results, hands=hands_pose_results, hands_world_landmark=hands_world_landmark_pose_results, frame_idx=frame_index))
             
             return cls(
                 fps=data.get("fps", None),
