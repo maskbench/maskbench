@@ -31,37 +31,54 @@ class Evaluator:
         Returns:
             Dictionary mapping metric names to models to video names to `MetricResult` objects.
         """
+        results = {}
         max_workers = max(mp.cpu_count() - 1, 1)  # Use all available CPU cores for parallel processing
         logging.info(f'Evaluating with {max_workers} workers')
         test_videos = []
         for video in self.dataset:
             test_videos.append(video)
 
-        test_videos = test_videos[:5]
+        # test_videos = test_videos[:5]
         for metric_name, metric in self.metrics.items():
             print(f"Computing metric: {metric_name}")
+            model_results_dict = {}
             
             for model_name in model_list:
+                video_metric_results = {}
+
+                # try with tqdm or smth. progress is not working
                 with tqdm.tqdm(total=len(self.dataset), desc=f"Evaluating {metric_name} for model {model_name}", unit="video") as progress:
                     with ThreadPoolExecutor(max_workers=max_workers) as executor:
                         future_to_video = {
                             executor.submit(self.evaluate_video, video.get_filename(), model_name, metric): video
                             for video in test_videos
+                            # for video in self.dataset
                         }
                         for future in as_completed(future_to_video):
-                            future.result()
+                            video_name = future_to_video[future].get_filename()
+                            # result = future.result()
+                            result = future.result()
+                            # if result is not None:
+                            #     video_metric_results[video_name] = result
                             progress.update(1)
+                        # model_results_dict[model_name] = video_metric_results
+            
+        #     results[metric_name] = model_results_dict
+
+        # self.checkpointer.save_all_evaluation_results(results) # later remove saving this and keeping results in memory. think of a better way ot remove this redunancy
+
+        # # return results
 
     def evaluate_video(self, video_name: str, model_name: str, metric: Metric) -> Dict[str, MetricResult]:
         video_pose_result = None
         if self.checkpointer.exists_evaluation_result(metric.name, model_name, video_name):
             print(f'Skipping evaluation for {video_name} using {model_name} for metric {metric.name} as results already exist.')
-            return
+            return None # self.checkpointer.load_evaluation_result(metric.name, model_name, video_name)
         
         if not self.checkpointer.exists(model_name, video_name):
             print(f"No pose results found for video {video_name} using estimator {model_name}. Skipping.")
             logging.error(f"No pose results found for video {video_name} using estimator {model_name}. Skipping Evaluation for this video.")
-            return
+            return None
 
         print(f'Running evaluation for {video_name} using {model_name} for metric {metric.name}.')
         video_pose_result = self.checkpointer.load_pose_result(model_name, video_name)
@@ -69,3 +86,5 @@ class Evaluator:
         result = metric.compute(video_pose_result, gt_pose_result, model_name)
         if result is not None:
             self.checkpointer.save_evaluation_result(metric.name, model_name, video_name, result)
+
+        return result

@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import logging
 import cv2 as cv
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from filelock import FileLock
 from tqdm import tqdm
 
@@ -297,15 +297,21 @@ class Checkpointer:
         output_dir.mkdir(parents=True, exist_ok=True)
         result = result.to_json() if result is not None else None
         output_path = output_dir / f"{video_name}_result.json"
-        with open(output_path, "w") as f:
-            json.dump(result, f, indent=4, cls=NumpyEncoder)
-        return
-
+        try:
+            with open(output_path, "w") as f:
+                json.dump(result, f, indent=4, cls=NumpyEncoder, allow_nan=False)
+            print(f'Saved evaluation result in {output_path}')
+        except Exception as e:
+            os.remove(output_path)
+            print(f'Exception file saving {output_path}: {e}')
+            
     def exists_evaluation_result(self, metric_name: str, model_name: str, video_name: str) -> bool:
+        video_name = video_name.replace('_result', '') # TODO temporary solution
         input_path = self.evaluation_dir / metric_name / model_name / f"{video_name}_result.json"
         return input_path.exists() and os.path.getsize(input_path) > 0
     
     def load_evaluation_result(self, metric_name: str, model_name: str, video_name: str) -> Optional[MetricResult]:
+        video_name = video_name.replace('_result', '') # TODO temporary solution
         input_path = self.evaluation_dir / metric_name / model_name / f"{video_name}_result.json"
         if not input_path.exists():
             return None
@@ -314,10 +320,47 @@ class Checkpointer:
         if result_dict is None:
             return None
         return MetricResult(
-            values=np.array(result_dict["values"]),
+            values=np.array(result_dict["values"], dtype=float),
             axis_names=result_dict["axis_names"],
             metric_name=result_dict["metric_name"],
             video_name=result_dict["video_name"],
             model_name=result_dict.get("model_name"),
             unit=result_dict.get("unit")
         )
+
+    def save_all_evaluation_results(self, results: Dict[str, Dict[str, Dict[str, MetricResult]]]):
+        '''
+            Dictionary mapping metric names to models to video names to `MetricResult` objects.
+        '''
+        output_path = self.evaluation_dir / 'combined_results.json'
+        output = {}
+        
+        for metric_name, model_results in results.items():
+            for model_name, video_results in model_results.items():
+                for video_name, evaluation_results in video_results.items():
+                    # creates empty dict if non-existent
+                    output.setdefault(metric_name, {}).setdefault(model_name, {})[video_name] = evaluation_results.to_json()
+
+        try:
+            with open(output_path, "w") as f:
+                json.dump(output, f, indent=4, cls=NumpyEncoder, allow_nan=False)
+            print(f'Saved combined evaluation result in {output_path}')
+        except Exception as e:
+            os.remove(output_path)
+            print(f'Exception file saving {output_path}: {e}')
+
+    def load_all_evaluation_results(self):
+        output_path = self.evaluation_dir / 'combined_results.json'
+        if not output_path.exists():
+            return None
+
+        with open(output_path, 'r') as f:
+            data = json.load(f)
+
+        metric_results = {}
+        for metric_name, model_results in data.items():
+            for model_name, video_results in model_results.items():
+                for video_name, evaluation_results in video_results.items():
+                    metric_results.setdefault(metric_name, {}).setdefault(model_name, {})[video_name] = MetricResult(evaluation_results['values'], evaluation_results['axis_names'], evaluation_results['metric_name'], evaluation_results['video_name'], evaluation_results['model_name'], evaluation_results['unit'])
+
+        return metric_results

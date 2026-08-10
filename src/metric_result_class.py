@@ -41,7 +41,12 @@ class MetricResult:
         """
         # Convert to masked array if needed
         if not isinstance(values, ma.MaskedArray):
-            values = ma.array(values)
+            data = np.array(values, dtype=object)
+            mask = data == None
+            filled = np.where(mask, np.nan, data).astype(float)
+            values = ma.array(filled, mask=mask)
+            # values = ma.where(values == None, np.nan, values).astype(float)
+            # values = ma.masked_where(values == None, values)
             
         if len(axis_names) != values.ndim:
             raise ValueError(f"Number of axis names ({len(axis_names)}) must match "
@@ -61,16 +66,20 @@ class MetricResult:
         """
         Convert the MetricResult to a JSON-serializable dictionary.
         """
+        is_masked = isinstance(self.values, ma.MaskedArray)
+        mask = self.values.mask.tolist() if is_masked and self.values.mask is not ma.nomask else None
+        raw_values = self.values.filled(np.nan) if is_masked else self.values
+        clean_values = np.where(np.isnan(raw_values) | np.isinf(raw_values), None, raw_values).tolist()
         return {
             "unit": self.unit,
             "axis_names": self.axis_names,
             "metric_name": self.metric_name,
             "video_name": self.video_name,
             "model_name": self.model_name,
-            "values": self.values.tolist(),
-            "mask": self.values.mask.tolist() if self.values.mask is not ma.nomask else None,
+            "values": clean_values,
+            "mask": mask,
         }
-        
+
     def aggregate(
         self,
         dims: Union[str, List[str]],
