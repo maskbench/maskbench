@@ -1,9 +1,11 @@
-inference_checkpoint_name: None # comment out or set to "None" to run inference from scratch
+inference_checkpoint_name: EnvisionGestureChallenge-20260622-110513 # comment out or set to "None" to run inference from scratch
 
-execute_processing: true       # set to false to skip processing the dataset videos and loading existing processed data
-execute_evaluation: true       # set to false to skip calculating evaluation metrics and plotting
-execute_rendering: true        # set to false to skip rendering the videos
+
+execute_processing: false       # set to false to skip processing the dataset videos and loading existing processed data
+execute_evaluation: false       # set to false to skip calculating evaluation metrics and plotting
+execute_rendering: false        # set to false to skip rendering the videos
 render_poses_only: true         # set to true to render the pose keypoints overlayed on the black video frames
+save_special_formats: false
 
 max_rendering_workers: 10
 max_inference_workers: 5
@@ -24,24 +26,27 @@ pose_estimators:
       max_num_poses: 3
       confidence_threshold: 0.3
 
+
 special_save_format:
     - name: npz
       enabled: true
       code_file: save_formats.npz_format.NpzFormat
 
-metrics:
-  - name: Velocity
-    code_file: evaluation.metrics.velocity.VelocityMetric
-    config:
-      time_unit: frame
 
-  - name: Acceleration
-    code_file: evaluation.metrics.acceleration.AccelerationMetric
-    config:
-      time_unit: frame
-  
-  - name: Jerk
-    code_file: evaluation.metrics.jerk.JerkMetric
-    config:
-      time_unit: frame
+# metrics:
+#   - name: Velocity # Make sure this name matches name in Acceleration Metric
+#     code_file: evaluation.metrics.velocity.VelocityMetric
+#     config:
+#       time_unit: frame
 
+#   - name: Acceleration # Make sure this name matches name in Acceleration Metric
+#     code_file: evaluation.metrics.acceleration.AccelerationMetric
+#     config:
+#       time_unit: frame
+#       dependant_metric_name: Velocity # We need to run Velocity before calculating Acceleration
+ 
+#   - name: Jerk
+#     code_file: evaluation.metrics.jerk.JerkMetric
+#     config:
+#       time_unit: frame
+#       dependant_metric_name: Acceleration # We need to run Acceleration before calculating Jerk

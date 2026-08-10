@@ -38,7 +38,7 @@ def main():
     logging.info(f"Loaded {len(pose_estimators)} pose estimators: {[est.name for est in pose_estimators]}")
 
     metric_specifications = config.get("metrics", [])
-    metrics = load_metrics(metric_specifications)
+    metrics = load_metrics(metric_specifications, checkpointer)
     print("Available metrics:", [metric.name for metric in metrics])
     logging.info(f"Loaded {len(metrics)} metrics: {[metric.name for metric in metrics]}")
 
@@ -54,12 +54,13 @@ def main():
     max_inference_workers = config.get("max_inference_workers", 10)
     max_rendering_workers = config.get("max_rendering_workers", 10)
     max_special_save_workers = config.get("max_special_save_workers", 10)
+    save_special_formats = config.get('save_special_formats', False)
 
-    run(dataset, pose_estimators, metrics, special_save_formats, checkpointer, execute_evaluation, execute_rendering, render_poses_only, execute_processing, max_inference_workers, max_rendering_workers, max_special_save_workers)
+    run(dataset, pose_estimators, metrics, special_save_formats, checkpointer, execute_evaluation, execute_rendering, render_poses_only, save_special_formats, execute_processing, max_inference_workers, max_rendering_workers, max_special_save_workers)
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], special_save_formats: List[SpecialFormat], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, execute_processing: bool, max_inference_workers: int, max_rendering_workers: int, max_special_save_workers: int):
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], special_save_formats: List[SpecialFormat], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, save_special_formats: bool, execute_processing: bool, max_inference_workers: int, max_rendering_workers: int, max_special_save_workers: int):
     logging.info('Starting Inference')
     inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer, execute_processing)
     inference_engine.run_parallel_tasks(max_workers=max_inference_workers)
@@ -68,9 +69,9 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
         print("Executing evaluation.")
         evaluator = Evaluator(metrics=metrics, checkpointer=checkpointer, dataset=dataset)
         model_list = [estimator.name for estimator in pose_estimators]
-        metric_results = evaluator.evaluate(model_list)
-        visualizer = MaskBenchVisualizer(checkpointer)
-        visualizer.generate_all_plots(metric_results)
+        # evaluator.evaluate(model_list)
+    visualizer = MaskBenchVisualizer(checkpointer)
+    visualizer.generate_all_plots()
 
     if execute_rendering:
         logging.info("Executing rendering.")
@@ -85,9 +86,10 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
         pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer, render_poses_only)
         pose_renderer.render_all_videos(max_workers=max_rendering_workers)
 
-    for save_format in special_save_formats:
-        logging.info(f"Saving results in special format: {save_format.name}")
-        save_format.save_pose_results(dataset, pose_estimators, max_workers=max_special_save_workers)
+    if save_special_formats:
+        for save_format in special_save_formats:
+            logging.info(f"Saving results in special format: {save_format.name}")
+            save_format.save_pose_results(dataset, pose_estimators, max_workers=max_special_save_workers)
 
 def parse_code_file(code_file: str) -> tuple[str, str]:
     if not code_file or '.' not in code_file:
@@ -155,8 +157,9 @@ def load_pose_estimators(pose_estimator_specifications: dict) -> List[PoseEstima
     return pose_estimators
 
 
-def load_metrics(metric_specifications: List[dict]) -> List[Metric]:
+def load_metrics(metric_specifications: List[dict], checkpointer: Checkpointer) -> List[Metric]:
     metrics = []
+    metric_names = [spec.get('name') for spec in metric_specifications]
     for spec in metric_specifications:
         metric_name = spec.get("name")
         metric_config = spec.get("config", {})
@@ -165,7 +168,7 @@ def load_metrics(metric_specifications: List[dict]) -> List[Metric]:
             module_path, class_name = parse_code_file(spec.get("code_file"))
             metric_module = importlib.import_module(module_path)
             metric_class = getattr(metric_module, class_name)
-            metric = metric_class(config=metric_config)
+            metric = metric_class(name=metric_name, metric_names=metric_names, config=metric_config, checkpointer=checkpointer)
             metrics.append(metric)
         except (ImportError, AttributeError, TypeError) as e:
             raise ValueError(f"Error instantiating metric {metric_name}: {e}")
