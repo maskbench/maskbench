@@ -15,6 +15,7 @@ dataset:
   code_file: datasets.dataset.Dataset
   video_folder: /datasets/
 
+
 pose_estimators:
   - name: MediaPipePoseWorldLandmarker
     enabled: true
