@@ -11,10 +11,12 @@ max_rendering_workers: 10
 max_inference_workers: 5
 max_special_save_workers: 10
 
+
 dataset:
   name: EnvisionGestureChallenge
   code_file: datasets.dataset.Dataset
   video_folder: /datasets/
+
 
 pose_estimators:
   - name: MediaPipePoseWorldLandmarker
