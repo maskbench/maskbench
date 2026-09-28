@@ -158,7 +158,10 @@ def get_frame_count_ffprobe(video_path: str) -> int:
 # note: not keeping this in utils to avoid circular imports
 def parse_filename(video_name: str):
         """Parse video filename to extract metadata.
-            Example filename: Ecolang_ad00_0_Move_Objman
+            Example filename: Ecolang_ad00_0_Move_Objman or Ecolang_ad00 
+            Speakers may contain underscores. Optional labels are recognized only
+            by a numeric clip ID followed by Gesture, NoGesture, or Move and
+            a nonempty subtype at the end. Otherwise the remainder is the speaker.
             Returns:
                 dict: A dictionary containing the extracted metadata fields:
                     - corpus: The corpus name (e.g., "Ecolang")
@@ -175,15 +178,20 @@ def parse_filename(video_name: str):
             subtype=None,
         )
         
-        parts = video_name.split("_")
-        try:
-            result["corpus"] = parts[0]
-            result["subtype"] = parts[-1] 
-            result["category"] = parts[-2]
-            result["clip_id"] = parts[-3]
-            result["speaker"] = "_".join(parts[1:-3]) 
-        except IndexError:
-            print(f"Warning: Cannot parse filename (not enough parts): {video_name}")
+        corpus, separator, remainder = video_name.partition("_")
+        if not separator or not corpus or not remainder:
+            print(f"Warning: Cannot parse filename (missing corpus or speaker): {video_name}")
             return None
+
+        result["corpus"] = corpus
+        result["speaker"] = remainder
+        parts = remainder.rsplit("_", 3)
+        if len(parts) == 4: # dynamically check if clip_id, category, and subtype are present
+            speaker, clip_id, category, subtype = parts
+            if (speaker and clip_id.isdecimal()
+                    and category in {"Gesture", "NoGesture", "Move"}
+                    and subtype): # to cater cases like 1Politician_id3_Boebert_vid1
+                result.update(speaker=speaker, clip_id=clip_id,
+                              category=category, subtype=subtype)
                 
         return result
