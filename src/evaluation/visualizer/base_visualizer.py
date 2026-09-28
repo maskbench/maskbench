@@ -22,8 +22,9 @@ class Visualizer:
         
     def _save_plot(self, fig: plt.Figure, filename: str) -> None:
         """Save a matplotlib figure to the plots directory."""
-        output_path = os.path.join(self.plots_dir, filename)
-        fig.savefig(output_path, bbox_inches='tight', dpi=300)
+        if fig is not None:
+            output_path = os.path.join(self.plots_dir, filename)
+            fig.savefig(output_path, bbox_inches='tight', dpi=300)
 
     def _save_table(self, df: pd.DataFrame, filename: str) -> None:
         """Save a table to the plots directory."""

@@ -1,18 +1,20 @@
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 from itertools import cycle
 
+import logging
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 
-from evaluation.metrics.metric_result import COORDINATE_AXIS, MetricResult
+from metric_result_class import COORDINATE_AXIS
 from .plot import Plot
-
+from evaluation.result_generator import ResultGenerator
+from checkpointer import Checkpointer
 
 class KinematicDistributionPlot(Plot):
     """Plot class for visualizing kinematic distributions (velocity, acceleration, jerk) for different models."""
     
-    def __init__(self, metric_name: str, kinematic_limit: float = None):
+    def __init__(self, metric_name: str, checkpointer: Checkpointer, kinematic_limit: float = None):
         """
         Initialize the kinematic distribution plot.
         
@@ -36,6 +38,7 @@ class KinematicDistributionPlot(Plot):
         self.unit = None
         self.n_bins = 10
         self.kinematic_limit = kinematic_limit
+        self.result_generator = ResultGenerator(checkpointer, test=True)
         
         # Define a variety of marker shapes for different models
         # o: circle, s: square, ^: triangle up, v: triangle down, 
@@ -113,27 +116,23 @@ class KinematicDistributionPlot(Plot):
     
     def draw(
         self,
-        results: Dict[str, Dict[str, Dict[str, MetricResult]]],
         add_title: bool = True,
     ) -> Tuple[plt.Figure, str]:
 
         # First pass: compute the magnitude of the kinematic values and take median over videos
-        pose_estimator_results = results[self.metric_name]
+        if self.metric_name not in self.result_generator.return_metric_names():
+            logging.error(f"Metric {self.metric_name} not found in results.")
+            return (None, None)
         pose_estimator_medians = {} # store the median for each pose estimator over all videos
-        pose_estimator_magnitude_results = {} # store the magnitude results for each pose estimator
-
-        for pose_estimator_name, video_results in pose_estimator_results.items():
-            self.unit = next(iter(video_results.values())).unit if self.unit is None else self.unit
-
+        model_names = self.result_generator.return_model_names_for_metric(self.metric_name)
+        for model_name in model_names:
             video_magnitudes = []
-            pose_estimator_magnitude_results[pose_estimator_name] = {}
-            for video_name, metric_result in video_results.items():
+            for _, metric_result in self.result_generator.iter_with_metric_model(self.metric_name, model_name):
+                self.unit = metric_result.unit # get the unit of the video result
                 magnitude_result = metric_result.aggregate([COORDINATE_AXIS], method='vector_magnitude')
-
                 video_magnitudes.append(magnitude_result.aggregate_all(method='median'))
-                pose_estimator_magnitude_results[pose_estimator_name][video_name] = magnitude_result
 
-            pose_estimator_medians[pose_estimator_name] = np.median(video_magnitudes)
+            pose_estimator_medians[model_name] = np.median(video_magnitudes)
 
         if self.kinematic_limit is None:
             # Calculate the maximum average magnitude of all pose estimators to set the bounds of the plot
@@ -153,15 +152,14 @@ class KinematicDistributionPlot(Plot):
         
         # Create x positions that span the full width
         x_positions = np.linspace(0, 1, len(bin_labels))
-        
-        # Second pass: flatten and clip the values
-        for model_name, video_results in pose_estimator_results.items():
+
+        for model_name in model_names:
             model_values = []
-            for metric_result in video_results.values():
+            for _, metric_result in self.result_generator.iter_with_metric_model(self.metric_name, model_name):
                 values = metric_result.values
                 flattened_valid_clipped_vals = self._flatten_clip_validate(values)
                 model_values.extend(np.abs(flattened_valid_clipped_vals.flatten()))
-                
+            
             distribution = self._compute_distribution(model_values, bin_edges)
             
             marker = next(marker_cycle)

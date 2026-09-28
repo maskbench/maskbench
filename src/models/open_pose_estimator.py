@@ -5,9 +5,10 @@ import pickle
 
 import requests
 import utils
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from pose_result_class import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
 from keypoint_pairs import COCO_KEYPOINT_PAIRS, COCO_TO_OPENPOSE_BODY25, OPENPOSE_BODY25B_KEYPOINT_PAIRS, COCO_TO_OPENPOSE_BODY25B, OPENPOSE_BODY25_KEYPOINT_PAIRS
+
 class OpenPoseEstimator(PoseEstimator):
     def __init__(self, name: str, config: dict):
         """

@@ -3,13 +3,16 @@ import json
 import datetime
 import shutil
 import subprocess
+from pathlib import Path
 import numpy as np
 import logging
 import cv2 as cv
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from filelock import FileLock
+from tqdm import tqdm
 
-from inference.pose_result import VideoPoseResult
+from pose_result_class import VideoPoseResult
+from metric_result_class import MetricResult
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -20,19 +23,23 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
+    
+
 
 class Checkpointer:
-    def __init__(self, dataset_name: str, checkpoint_name: Optional[str] = None):
+    def __init__(self, dataset_name: str, total_videos: int, checkpoint_name: Optional[str] = None):
         """
         Initialize the Checkpointer.
         
         Args:
             dataset_name (str): Name of the dataset being processed
-            load_checkpoint (Optional[str]): Name of checkpoint to load (format: datasetname-date-time)
+            total_videos (int): Total number of videos in the dataset
+            checkpoint_name (Optional[str]): Name of checkpoint to load (format: datasetname-date-time)
         """
         self.dataset_name = dataset_name
         self.base_output_path = "/output"
-        
+        self.total_videos = total_videos
+
         if checkpoint_name != None: # load existing checkpoint
             self.load_checkpoint = True
             self.checkpoint_dir = os.path.join(self.base_output_path, checkpoint_name)
@@ -48,6 +55,7 @@ class Checkpointer:
         self.poses_dir = os.path.join(self.checkpoint_dir, "poses")
         self.plots_dir = os.path.join(self.checkpoint_dir, "plots")
         self.renderings_dir = os.path.join(self.checkpoint_dir, "renderings")
+        self.evaluation_dir = Path(self.checkpoint_dir) / "evaluation"
         
     def save_rendered_video(self, video_name: str, estimator_name: str, video_writer: cv.VideoWriter) -> str:
         """
@@ -73,6 +81,8 @@ class Checkpointer:
         command = [
             "ffmpeg",
             "-y",  # Overwrite output file if it exists
+            "-hide_banner",
+            "-loglevel", "error",
             "-i", output_path,
             "-c:v", "libx264",
             "-preset", "fast",
@@ -84,7 +94,7 @@ class Checkpointer:
         os.replace(temp_output_path, output_path)  # replace original file with re-encoded file
         
         return output_path
-        
+    
     def save_video_pose_result(self, video_pose_result: VideoPoseResult, estimator_name: str) -> str:
         """
         Save pose estimation results for a video.
@@ -120,13 +130,44 @@ class Checkpointer:
             if os.path.exists(inference_file_path):
                 with open(inference_file_path, 'r') as f:
                     inference_times = json.load(f)
+                    if "metadata" not in inference_times: # support for older versions of checkpoint without metadata
+                        inference_times["metadata"] = {
+                            "total_videos": self.total_videos,
+                            "total_time_taken": 0.0
+                        }
+                    if "videos_processed_per_estimator" not in inference_times:
+                        inference_times["videos_processed_per_estimator"] = {}
+                    if "total_time_per_estimator" not in inference_times:
+                        inference_times["total_time_per_estimator"] = {}
             else:
-                inference_times = {}
+                inference_times = {
+                    "metadata": {
+                        "total_videos": self.total_videos, # total videos in the dataset
+                        "total_time_taken": 0.0
+                    },
+                    "videos_processed_per_estimator": {},
+                    "total_time_per_estimator": {}
+                }
 
             if estimator_name not in inference_times:
                 inference_times[estimator_name] = {}
-                
+            if estimator_name not in inference_times["videos_processed_per_estimator"]:
+                inference_times["videos_processed_per_estimator"][estimator_name] = 0
+            if estimator_name not in inference_times["total_time_per_estimator"]:
+                inference_times["total_time_per_estimator"][estimator_name] = 0.0
+
+            if video_name in inference_times[estimator_name]:
+                print(f"Warning: Overwriting existing inference time for {estimator_name} on {video_name}")
+                logging.warning(f"Overwriting existing inference time for {estimator_name} on {video_name}")
+                inference_times["total_time_per_estimator"][estimator_name] -= inference_times[estimator_name][video_name] # subtract old time from total
+                inference_times["metadata"]["total_time_taken"] -= inference_times[estimator_name][video_name] # subtract old time from total 
+                inference_times["videos_processed_per_estimator"][estimator_name] -= 1
+
+
             inference_times[estimator_name][video_name] = inference_time # add new inference time
+            inference_times["total_time_per_estimator"][estimator_name] += inference_time
+            inference_times["metadata"]["total_time_taken"] += inference_time
+            inference_times["videos_processed_per_estimator"][estimator_name] += 1
             
             with open(inference_file_path, 'w') as f:
                 json.dump(inference_times, f, indent=4)
@@ -140,6 +181,60 @@ class Checkpointer:
         config_file_name = os.path.basename(config_file_path)
         shutil.copy(config_file_path, os.path.join(self.checkpoint_dir, config_file_name))
 
+    def exists_rendered_video(self, output_path: str) -> bool:
+        if not os.path.exists(output_path):
+            return False
+        if os.path.getsize(output_path) == 0:  # check if file is empty
+            return False
+        return True
+
+    def load_pose_result(self, estimator_name: str, video_name: str) -> Optional[VideoPoseResult]:
+        """
+        Load pose estimation results for a specific estimator and video.
+        
+        Args:
+            estimator_name (str): Name of the pose estimator (e.g., 'Yolo', 'Mediapipe')
+            video_name (str): Name of the video
+
+        Returns:
+            Optional[VideoPoseResult]: The loaded pose result or None if not found.
+        """
+        estimator_dir = os.path.join(self.poses_dir, estimator_name)
+        if not os.path.exists(estimator_dir):
+            return None
+
+        pose_file = f"{video_name}_poses.json"
+        json_path = os.path.join(estimator_dir, pose_file)
+        if not os.path.exists(json_path):
+            return None
+        if os.path.getsize(json_path) == 0:  # check if file is empty
+            return None
+
+        return VideoPoseResult.from_json(json_path, video_name)
+
+    def exists(self, estimator_name: str, video_name: str) -> bool:
+        """
+        Check if pose estimation results exist for a specific estimator and video.
+        
+        Args:
+            estimator_name (str): Name of the pose estimator (e.g., 'Yolo', 'Mediapipe')
+            video_name (str): Name of the video
+
+        Returns:
+            bool: True if results exist, False otherwise.
+        """
+        estimator_dir = os.path.join(self.poses_dir, estimator_name)
+        if not os.path.exists(estimator_dir):
+            return False
+
+        pose_file = f"{video_name}_poses.json"
+        json_path = os.path.join(estimator_dir, pose_file)
+        if not os.path.exists(json_path):
+            return False
+        if os.path.getsize(json_path) == 0:  # check if file is empty
+            return False
+        return True
+    
     def load_pose_results(self, pose_estimator_names: list[str]) -> Dict[str, Dict[str, VideoPoseResult]]:
         """
         Load all pose results from the checkpoint.
@@ -163,6 +258,8 @@ class Checkpointer:
 
             estimator_dir = os.path.join(self.poses_dir, estimator_name)
             results[estimator_name] = {}
+
+            progress_bar = tqdm(os.listdir(estimator_dir), desc=f"Loading pose results for {estimator_name}", unit="file")
             
             for pose_file in os.listdir(estimator_dir):
                 if not pose_file.endswith("_poses.json"):
@@ -172,6 +269,7 @@ class Checkpointer:
                 json_path = os.path.join(estimator_dir, pose_file)
                 video_pose_result = VideoPoseResult.from_json(json_path, video_name)
                 results[estimator_name][video_name] = video_pose_result
+                progress_bar.update(1)
                     
         return results 
 
@@ -193,3 +291,76 @@ class Checkpointer:
             inference_times = json.load(f)
             
         return inference_times
+
+    def save_evaluation_result(self, metric_name: str, model_name: str, video_name: str, result: MetricResult) -> None:
+        output_dir = self.evaluation_dir / metric_name / model_name
+        output_dir.mkdir(parents=True, exist_ok=True)
+        result = result.to_json() if result is not None else None
+        output_path = output_dir / f"{video_name}_result.json"
+        try:
+            with open(output_path, "w") as f:
+                json.dump(result, f, indent=4, cls=NumpyEncoder, allow_nan=False)
+            print(f'Saved evaluation result in {output_path}')
+        except Exception as e:
+            os.remove(output_path)
+            print(f'Exception file saving {output_path}: {e}')
+            
+    def exists_evaluation_result(self, metric_name: str, model_name: str, video_name: str) -> bool:
+        video_name = video_name.replace('_result', '') # TODO temporary solution
+        input_path = self.evaluation_dir / metric_name / model_name / f"{video_name}_result.json"
+        return input_path.exists() and os.path.getsize(input_path) > 0
+    
+    def load_evaluation_result(self, metric_name: str, model_name: str, video_name: str) -> Optional[MetricResult]:
+        video_name = video_name.replace('_result', '') # TODO temporary solution
+        input_path = self.evaluation_dir / metric_name / model_name / f"{video_name}_result.json"
+        if not input_path.exists():
+            return None
+        with open(input_path, "r") as f:
+            result_dict = json.load(f)
+        if result_dict is None:
+            return None
+        return MetricResult(
+            values=np.array(result_dict["values"], dtype=float),
+            axis_names=result_dict["axis_names"],
+            metric_name=result_dict["metric_name"],
+            video_name=result_dict["video_name"],
+            model_name=result_dict.get("model_name"),
+            unit=result_dict.get("unit")
+        )
+
+    def save_all_evaluation_results(self, results: Dict[str, Dict[str, Dict[str, MetricResult]]]):
+        '''
+            Dictionary mapping metric names to models to video names to `MetricResult` objects.
+        '''
+        output_path = self.evaluation_dir / 'combined_results.json'
+        output = {}
+        
+        for metric_name, model_results in results.items():
+            for model_name, video_results in model_results.items():
+                for video_name, evaluation_results in video_results.items():
+                    # creates empty dict if non-existent
+                    output.setdefault(metric_name, {}).setdefault(model_name, {})[video_name] = evaluation_results.to_json()
+
+        try:
+            with open(output_path, "w") as f:
+                json.dump(output, f, indent=4, cls=NumpyEncoder, allow_nan=False)
+            print(f'Saved combined evaluation result in {output_path}')
+        except Exception as e:
+            os.remove(output_path)
+            print(f'Exception file saving {output_path}: {e}')
+
+    def load_all_evaluation_results(self):
+        output_path = self.evaluation_dir / 'combined_results.json'
+        if not output_path.exists():
+            return None
+
+        with open(output_path, 'r') as f:
+            data = json.load(f)
+
+        metric_results = {}
+        for metric_name, model_results in data.items():
+            for model_name, video_results in model_results.items():
+                for video_name, evaluation_results in video_results.items():
+                    metric_results.setdefault(metric_name, {}).setdefault(model_name, {})[video_name] = MetricResult(evaluation_results['values'], evaluation_results['axis_names'], evaluation_results['metric_name'], evaluation_results['video_name'], evaluation_results['model_name'], evaluation_results['unit'])
+
+        return metric_results

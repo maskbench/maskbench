@@ -4,7 +4,7 @@ import numpy.ma as ma
 
 from evaluation.evaluator import Evaluator
 from evaluation.metrics import Metric, MetricResult, FRAME_AXIS, PERSON_AXIS, KEYPOINT_AXIS
-from inference.pose_result import VideoPoseResult, FramePoseResult, PersonPoseResult, PoseKeypoint
+from pose_result_class import VideoPoseResult, FramePoseResult, PersonPoseResult, PoseKeypoint
 from tests.utils import create_example_video_pose_result
 
 

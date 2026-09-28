@@ -1,3 +1,4 @@
+import logging
 import os
 import utils
 import cv2
@@ -10,7 +11,7 @@ from mediapipe.tasks.python.vision import (
     RunningMode,
 )
 
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from pose_result_class import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from models import PoseEstimator
 from keypoint_pairs import COCO_KEYPOINT_PAIRS, MEDIAPIPE_KEYPOINT_PAIRS, COCO_TO_MEDIAPIPE
 
@@ -27,7 +28,7 @@ class MediaPipePoseEstimator(PoseEstimator):
         super().__init__(name, config)
 
         weights_file = self.config.get("weights", "pose_landmarker_lite.task")
-        print("Using weights file: ", weights_file)
+        logging.info("Mediapipe: Using weights file: %s", weights_file)
         pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
         user_weights_file_path = os.path.join("/weights/user_weights", weights_file)
 

@@ -1,10 +1,11 @@
+import logging
 import os
 import torch
 import utils
 from ultralytics import YOLO
 
 from models import PoseEstimator
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from pose_result_class import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
 from keypoint_pairs import COCO_KEYPOINT_PAIRS
 
 class YoloPoseEstimator(PoseEstimator):
@@ -19,7 +20,7 @@ class YoloPoseEstimator(PoseEstimator):
         super().__init__(name, config)
 
         weights_file = self.config.get("weights", "yolo11n-pose.pt")
-        print("Using weights file: ", weights_file)
+        logging.info("YoloPose: Using weights file: %s", weights_file)
         pre_built_weights_file_path = os.path.join("/weights/pre_built", weights_file)
         user_weights_file_path = os.path.join("/weights/user_weights", weights_file)
 

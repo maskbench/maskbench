@@ -1,6 +1,6 @@
 import os
 import utils
-from inference import VideoPoseResult
+from pose_result_class import VideoPoseResult
 from models import PoseEstimator
 from keypoint_pairs import *
 
