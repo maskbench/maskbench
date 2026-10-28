@@ -48,7 +48,7 @@ class Dataset(ABC):
 
         gt_pose_results = {}
         for sample in self.video_samples:
-            video_name = os.path.splitext(os.path.basename(sample.video_path))[0]
+            video_name = sample.get_filename()
             json_path = os.path.join(self.gt_folder, f"{video_name}.json")
 
             if not os.path.exists(json_path):
