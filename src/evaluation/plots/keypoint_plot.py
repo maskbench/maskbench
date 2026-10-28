@@ -14,7 +14,7 @@ from .plot import Plot
 class CocoKeypointPlot(Plot):
     """Plot class for visualizing COCO keypoint metrics for different models. Assumes that all metrics have the same number of keypoints."""
     
-    def __init__(self, metric_name: str):
+    def __init__(self, metric_name: str, keypoint_names: Dict[int, str] = None):
         super().__init__(
             name=f"CocoKeypointPlot",
             config={
@@ -26,6 +26,7 @@ class CocoKeypointPlot(Plot):
             }
         )
         self.metric_name = metric_name
+        self.keypoint_names = keypoint_names or COCO_KEYPOINT_NAMES
         self.convert_to_magnitude = False
         if self.metric_name in ["Velocity", "Acceleration", "Jerk"]:
             self.convert_to_magnitude = True
@@ -64,12 +65,12 @@ class CocoKeypointPlot(Plot):
             median_model_keypoint_values = ma.median(np.stack(model_values, axis=0), axis=0)
             
             for keypoint_idx, value in enumerate(median_model_keypoint_values):
-                if keypoint_idx not in COCO_KEYPOINT_NAMES.keys():
+                if keypoint_idx not in self.keypoint_names.keys():
                     continue
 
                 plot_data.append({
                     'Model': model_name,
-                    'Keypoint': f"{COCO_KEYPOINT_NAMES[keypoint_idx]} ({keypoint_idx})",
+                    'Keypoint': f"{self.keypoint_names[keypoint_idx]} ({keypoint_idx})",
                     'Median Value': value
                 })
         

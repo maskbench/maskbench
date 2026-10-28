@@ -15,6 +15,8 @@ from rendering import PoseRenderer
 from evaluation import Evaluator, MaskBenchVisualizer
 from evaluation.metrics import Metric
 from scripts.raw_masked_experiment import run_raw_masked_experiment
+from keypoint_pairs import BODY13_KEYPOINT_NAMES, BODY13_KEYPOINT_PAIRS
+from utils import convert_video_pose_results_to_body13
 
 def main():
     config, config_file_path = load_config()
@@ -43,23 +45,34 @@ def main():
     execute_rendering = config.get("execute_rendering", True)
     render_poses_only = config.get("render_poses_only", False)
     execute_processing = config.get("execute_processing", True)
-    
-    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering, render_poses_only, execute_processing)
+    keypoint_format = config.get("keypoint_format", "coco")
+    if keypoint_format not in ("coco", "body13"):
+        raise ValueError(f"Invalid keypoint_format: {keypoint_format}. Must be 'coco' or 'body13'.")
+
+    run(dataset, pose_estimators, metrics, checkpointer, execute_evaluation, execute_rendering, render_poses_only, execute_processing, keypoint_format)
     print("Done")
 
 
-def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, execute_processing: bool):
+def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Metric], checkpointer: Checkpointer, execute_evaluation: bool, execute_rendering: bool, render_poses_only: bool, execute_processing: bool, keypoint_format: str = "coco"):
     inference_engine = InferenceEngine(dataset, pose_estimators, checkpointer, execute_processing)
     gt_pose_results = dataset.get_gt_pose_results()
     pose_results = inference_engine.run_parallel_tasks()
-    
+
+    # Poses are saved in COCO format during inference; body-13 is applied afterwards so checkpoints stay reusable
+    if keypoint_format == "body13":
+        print("Converting ground truth and pose estimator results to body-13 format.")
+        convert_video_pose_results_to_body13(gt_pose_results)
+        for estimator_results in pose_results.values():
+            convert_video_pose_results_to_body13(estimator_results)
+
     if execute_evaluation:
         print("Executing evaluation.")
         evaluator = Evaluator(metrics=metrics)
         metric_results = evaluator.evaluate(pose_results, gt_pose_results)
 
         visualizer = MaskBenchVisualizer(checkpointer)
-        visualizer.generate_all_plots(metric_results)
+        keypoint_names=BODY13_KEYPOINT_NAMES if keypoint_format == "body13" else None
+        visualizer.generate_all_plots(metric_results, keypoint_names=keypoint_names)
 
     if execute_rendering:
         print("Executing rendering.")
@@ -67,6 +80,8 @@ def run(dataset: Dataset, pose_estimators: List[PoseEstimator], metrics: List[Me
         if gt_pose_results and dataset.get_gt_keypoint_pairs() is not None:
             pose_results["GroundTruth"] = gt_pose_results
             estimators_point_pairs["GroundTruth"] = dataset.get_gt_keypoint_pairs()
+        if keypoint_format == "body13":
+            estimators_point_pairs = {name: BODY13_KEYPOINT_PAIRS for name in estimators_point_pairs}
 
         pose_renderer = PoseRenderer(dataset, estimators_point_pairs, checkpointer, render_poses_only)
         pose_renderer.render_all_videos(pose_results)

@@ -3,8 +3,9 @@ import cv2
 import glob
 import os
 import json
-from typing import List
-from inference import FramePoseResult, PersonPoseResult, PoseKeypoint
+from typing import Dict, List
+from inference import FramePoseResult, PersonPoseResult, PoseKeypoint, VideoPoseResult
+from keypoint_pairs import COCO_KEYPOINT_NAMES, COCO_TO_BODY13
 
 def get_color_palette() -> list:
     return [
@@ -27,6 +28,19 @@ def convert_keypoints_to_coco_format(frame_results: List[FramePoseResult], model
                     person.keypoints = coco_keypoints 
     
     return frame_results
+
+def convert_video_pose_results_to_body13(video_pose_results: Dict[str, VideoPoseResult]) -> Dict[str, VideoPoseResult]:
+    """
+    Reduce COCO (17 keypoints) pose results to body-13 format in place. Requires all persons to be in COCO format,
+    so pose estimators must be run with save_keypoints_in_coco_format: true.
+    """
+    for video_name, video_pose_result in video_pose_results.items():
+        for frame in video_pose_result.frames:
+            for person in frame.persons:
+                if len(person.keypoints) not in (0, len(COCO_KEYPOINT_NAMES)):
+                    raise ValueError(f"Cannot convert {video_name} to body-13 format: expected {len(COCO_KEYPOINT_NAMES)} COCO keypoints, got {len(person.keypoints)}.")
+        video_pose_result.frames = convert_keypoints_to_coco_format(video_pose_result.frames, COCO_TO_BODY13)
+    return video_pose_results
 
 def maskanyone_get_config(options: dict):
         """"Ensures MaskAnyone overlay strategy is valid. Sets hiding strategy to 'none', because it is not used by MaskBench."""

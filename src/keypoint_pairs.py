@@ -109,6 +109,33 @@ OPENPOSE_BODY25B_KEYPOINT_PAIRS = [
     (5, 6),
 ]
 
+# Body-13 format: COCO without eyes and ears. Used to compare against datasets whose head keypoints
+# do not match COCO (e.g. PoseTrack21 has head_bottom/head_top instead of eyes and placeholder ears).
+# Stores the COCO indices of the keypoints kept in body-13 format.
+COCO_TO_BODY13 = [
+    0,  # Nose
+    5,  # Left Shoulder
+    6,  # Right Shoulder
+    7,  # Left Elbow
+    8,  # Right Elbow
+    9,  # Left Wrist
+    10, # Right Wrist
+    11, # Left Hip
+    12, # Right Hip
+    13, # Left Knee
+    14, # Right Knee
+    15, # Left Ankle
+    16, # Right Ankle
+]
+
+BODY13_KEYPOINT_NAMES = {i: COCO_KEYPOINT_NAMES[coco_idx] for i, coco_idx in enumerate(COCO_TO_BODY13)}
+
+BODY13_KEYPOINT_PAIRS = [
+    (11, 9), (12, 10), (9, 7), (8, 10), (7, 8), (7, 1),
+    (8, 2), (1, 2), (1, 3), (2, 4), (3, 5), (4, 6),
+    (0, 1), (0, 2)
+]
+
 # Yolo and Coco have the same keypoint pairs since Yolo stores keypoints in Coco format
 COCO_KEYPOINT_PAIRS = [
     (15, 13), (16, 14), (13, 11), (12, 14), (11, 12), (11, 5),

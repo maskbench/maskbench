@@ -15,7 +15,7 @@ class MaskBenchVisualizer(Visualizer):
     This class contains specific plots and tables for the MaskBench project evaluation. 
     """
         
-    def generate_all_plots(self, metric_results: Dict[str, Dict[str, Dict[str, MetricResult]]]):
+    def generate_all_plots(self, metric_results: Dict[str, Dict[str, Dict[str, MetricResult]]], keypoint_names: Dict[int, str] = None):
         os.makedirs(self.plots_dir, exist_ok=True)
 
         if "Velocity" in metric_results.keys():
@@ -28,7 +28,7 @@ class MaskBenchVisualizer(Visualizer):
             fig, filename = acceleration_distribution_plot.draw(metric_results, add_title=False)
             self._save_plot(fig, filename)
 
-            coco_keypoint_plot = CocoKeypointPlot(metric_name="Acceleration")
+            coco_keypoint_plot = CocoKeypointPlot(metric_name="Acceleration", keypoint_names=keypoint_names)
             fig, filename = coco_keypoint_plot.draw(metric_results, add_title=False)
             self._save_plot(fig, filename)
 
